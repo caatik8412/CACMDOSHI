@@ -27,8 +27,6 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--c-bg); 
 
 .header { background: var(--c-primary); color: #fff; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-md); }
 .header-title { font-size: 16px; font-weight: 600; }
-.header-firms { display: flex; gap: 6px; flex-wrap: wrap; }
-.firm-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
 
 .summary-strip { display: flex; gap: 12px; padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--c-border); overflow-x: auto; }
 .sum-card { flex: 1; min-width: 130px; text-align: center; padding: 10px 8px; border-radius: var(--radius-sm); }
@@ -125,8 +123,8 @@ textarea { resize: vertical; min-height: 60px; }
 <body>
 
 <div class="header">
-  <div class="header-title"><i class="ti ti-chart-bar-popular" style="margin-right:8px;opacity:.8"></i>Outstanding Tracker</div>
-  <div class="header-firms" id="headerFirms"></div>
+  <div class="header-title">CA CM Doshi &amp; Co Billing <span style="font-size:11px;font-weight:400;opacity:.55;margin-left:10px;">Powered by CA Atik Bhayani</span></div>
+  
 </div>
 
 <div class="summary-strip" id="summaryStrip"></div>
@@ -253,8 +251,7 @@ textarea { resize: vertical; min-height: 60px; }
             <option>PARTNER</option><option>DIRECTOR</option><option>OTHER</option><option>HUF</option><option>FIRM</option>
           </select>
         </div>
-        <div class="form-group"><label>Mobile</label><input type="text" id="new-client-mobile" placeholder="10-digit number"></div>
-        <div class="form-group"><label>Primary Firm</label><select id="new-client-firm"></select></div>
+        <div class="form-group span2"><label>Mobile</label><input type="text" id="new-client-mobile" placeholder="10-digit number"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -291,10 +288,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Build all firm-dependent UI from the FIRMS array
 function buildFirmUI() {
-  // Header badges
-  document.getElementById('headerFirms').innerHTML =
-    FIRMS.map(f => `<span class="firm-badge" style="background:${f.bg};color:${f.color}">${f.label}</span>`).join('');
-
   // Summary strip
   const strip = document.getElementById('summaryStrip');
   strip.innerHTML =
@@ -320,7 +313,7 @@ function buildFirmUI() {
 
   // Firm dropdowns in all modals
   const firmOptions = FIRMS.map(f => `<option value="${f.label}">${f.label}</option>`).join('');
-  ['bill-firm','receipt-firm','new-client-firm'].forEach(id => {
+  ['bill-firm','receipt-firm'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = firmOptions;
   });
@@ -570,7 +563,7 @@ async function saveNewClient() {
     pan:document.getElementById('new-client-pan').value.trim().toUpperCase(),
     status:document.getElementById('new-client-status').value,
     mobile:document.getElementById('new-client-mobile').value.trim(),
-    firm:document.getElementById('new-client-firm').value });
+  });
   closeModal('addClientModal');
   showToast(`Client "${name}" added.`, 'success');
   loadData();
