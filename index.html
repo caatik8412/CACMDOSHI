@@ -17,9 +17,9 @@
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--c-bg);color:var(--c-text);font-size:14px;min-height:100vh;}
 
 /* HEADER */
-.header{background:var(--c-primary);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:200;box-shadow:var(--shadow-md);}
-.header-title{font-size:15px;font-weight:600;}
-.header-sub{font-size:11px;opacity:.55;font-weight:400;margin-left:10px;}
+.header{background:var(--c-primary);color:#fff;padding:0 20px;display:flex;align-items:center;height:60px;position:sticky;top:0;z-index:200;box-shadow:var(--shadow-md);}
+.header-title{font-size:16px;font-weight:700;line-height:1.2;}
+.header-sub{font-size:10px;opacity:.6;font-weight:400;display:block;margin-top:2px;letter-spacing:.3px;}
 
 /* TABS */
 .tabs{display:flex;background:#fff;border-bottom:1px solid var(--c-border);padding:0 24px;position:sticky;top:54px;z-index:100;}
@@ -194,7 +194,7 @@ textarea{resize:vertical;min-height:60px;}
 <!-- HEADER -->
 <div class="header">
   <div class="header-title">
-    CA CM Doshi &amp; Co Billing
+    CA CM Doshi &amp; Co<br>
     <span class="header-sub">Powered by CA Atik Bhayani</span>
   </div>
 </div>
@@ -723,6 +723,19 @@ async function saveBill(){
   closeModal('billModal');
   showToast(`Bill ₹${fmt(taxable+gst)} saved.`,'success');
   loadClients();
+  // Ask to print
+  const savedBill = {
+    billNo: document.getElementById('bill-number').value,
+    date: new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+    clientName: currentClientName,
+    firm: document.getElementById('bill-firm').value,
+    period: document.getElementById('bill-period').value,
+    taxable, gst, total: taxable+gst,
+    narration: document.getElementById('bill-narration').value,
+    items
+  };
+  printData = {type:'bill', data: savedBill};
+  openModal('printPickModal');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -758,6 +771,20 @@ async function saveReceipt(){
   closeModal('receiptModal');
   showToast(`Receipt ₹${fmt(amt)} saved.`,'success');
   loadClients();
+  // Ask to print
+  const savedReceipt = {
+    receiptNo: document.getElementById('receipt-number').value,
+    date: new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+    clientName: currentClientName,
+    firm: document.getElementById('receipt-firm').value,
+    amount: amt,
+    mode: document.getElementById('receipt-mode').value,
+    ref: document.getElementById('receipt-ref').value,
+    narration: document.getElementById('receipt-narration').value,
+  };
+  printData = {type:'receipt', data: savedReceipt};
+  // For receipt, go directly to print (no format choice needed)
+  setTimeout(()=>doPrint('receipt'), 400);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -934,12 +961,25 @@ async function saveNewClient(){
 //  APPS SCRIPT COMMS
 // ══════════════════════════════════════════════════════════════
 async function postToSheet(payload){
+  // Use GET with encoded payload — most reliable way to call Apps Script from browser
   try{
-    const formData=new FormData();
-    formData.append('payload',JSON.stringify(payload));
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:formData});
-    return {success:true};
-  }catch(e){showToast('Network error: '+e.message,'error');return null;}
+    const encoded = encodeURIComponent(JSON.stringify(payload));
+    const url = SCRIPT_URL + '?payload=' + encoded;
+    const res = await fetch(url, {redirect:'follow'});
+    const data = await res.json();
+    return data;
+  }catch(e){
+    // Fallback: try no-cors POST (response will be opaque but data saves)
+    try{
+      const formData=new FormData();
+      formData.append('payload',JSON.stringify(payload));
+      await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:formData});
+      return {success:true};
+    }catch(e2){
+      showToast('Network error: '+e2.message,'error');
+      return null;
+    }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
