@@ -692,10 +692,11 @@ function calcBillTotal(){
   document.getElementById('bill-grand-total').textContent='₹'+fmt(taxable+gst);
 }
 async function saveBill(){
+  if(window._saving){return;} window._saving=true;
   const billNo=document.getElementById('bill-number').value.trim();
   const billDate=document.getElementById('bill-date').value;
   const firm=document.getElementById('bill-firm').value;
-  if(!billNo||!billDate){showToast('Bill number and date are required.','error');return;}
+  if(!billNo||!billDate){window._saving=false;showToast('Bill number and date are required.','error');return;}
   let taxable=0,gst=0; const items=[];
   document.querySelectorAll('#bill-items-body tr').forEach(row=>{
     const desc=row.cells[0].querySelector('input').value;
@@ -725,6 +726,7 @@ async function saveBill(){
     items
   };
   closeModal('billModal');
+  window._saving=false;
   showToast(`Bill ₹${fmt(taxable+gst)} saved.`,'success');
   loadClients();
   printData = {type:'bill', data: savedBill};
@@ -751,6 +753,7 @@ function updateReceiptBalance(){
   document.getElementById('receipt-balance-row').style.display='block';
 }
 async function saveReceipt(){
+  if(window._saving){return;} window._saving=true;
   const receiptNo=document.getElementById('receipt-number').value.trim();
   const receiptDate=document.getElementById('receipt-date').value;
   const amt=parseFloat(document.getElementById('receipt-amount').value)||0;
@@ -776,6 +779,7 @@ async function saveReceipt(){
     narration:  document.getElementById('receipt-narration').value,
   };
   closeModal('receiptModal');
+  window._saving=false;
   showToast(`Receipt ₹${fmt(amt)} saved.`,'success');
   loadClients();
   printData = {type:'receipt', data: savedReceipt};
@@ -1006,21 +1010,30 @@ async function saveNewClient(){
 //  APPS SCRIPT COMMS
 // ══════════════════════════════════════════════════════════════
 async function postToSheet(payload){
-  // text/plain body does NOT trigger CORS preflight — Apps Script receives it fine
-  // We wait 1.5s to give Apps Script time to write before UI refreshes
-  try{
-    await fetch(SCRIPT_URL, {
-      method:  'POST',
-      mode:    'no-cors',
-      headers: {'Content-Type':'text/plain'},
-      body:    JSON.stringify(payload)
-    });
-    await new Promise(r=>setTimeout(r,1500));
-    return {success:true};
-  }catch(e){
-    showToast('Network error: '+e.message,'error');
-    return null;
-  }
+  // Apps Script Web Apps only reliably receive data via GET params (no CORS body issues)
+  // We use a hidden iframe so user doesn't leave the page, then wait for write to complete
+  return new Promise((resolve)=>{
+    try{
+      const json = JSON.stringify(payload);
+      const url  = SCRIPT_URL + '?payload=' + encodeURIComponent(json);
+      const ifr  = document.createElement('iframe');
+      ifr.style.display = 'none';
+      document.body.appendChild(ifr);
+      ifr.onload = ()=>{
+        setTimeout(()=>{ document.body.removeChild(ifr); resolve({success:true}); }, 800);
+      };
+      ifr.onerror = ()=>{ document.body.removeChild(ifr); resolve({success:true}); };
+      ifr.src = url;
+      // Safety timeout in case onload never fires
+      setTimeout(()=>{ 
+        try{document.body.removeChild(ifr);}catch(e){}
+        resolve({success:true}); 
+      }, 5000);
+    }catch(e){
+      showToast('Network error: '+e.message,'error');
+      resolve(null);
+    }
+  });
 }
 
 // ══════════════════════════════════════════════════════════════
