@@ -140,15 +140,7 @@ textarea{resize:vertical;min-height:60px;}
 .toast.success{background:var(--c-success);}
 .toast.error{background:var(--c-danger);}
 
-/* ── PRINT STYLES ─────────────────────────────────────────────────────── */
-@media print {
-  body * { visibility: hidden; }
-  #printArea, #printArea * { visibility: visible; }
-  #printArea { position: fixed; inset: 0; background: #fff; padding: 0; z-index: 99999; }
-}
-
-/* PRINT DOCUMENT */
-#printArea { display: none; }
+/* PRINT DOCUMENT — rendered into new window */
 .print-doc { width: 210mm; min-height: 297mm; padding: 14mm 16mm; background: #fff; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #0f172a; }
 .print-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6mm; padding-bottom: 4mm; border-bottom: 2px solid #1a3a5c; }
 .print-firm-name { font-size: 18px; font-weight: 700; color: #1a3a5c; margin-bottom: 3px; }
@@ -440,8 +432,6 @@ textarea{resize:vertical;min-height:60px;}
   </div>
 </div>
 
-<!-- PRINT AREA (hidden, shown only during print) -->
-<div id="printArea"></div>
 
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg"></span></div>
 
@@ -459,7 +449,7 @@ const FIRM_DETAILS = {
   'Prabha Computers':{ address:'Pandharpur, Maharashtra', pan:'XXXXX0000X', gstin:'27XXXXX0000X1ZX' },
 };
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywLxjndko9IgYNkvJBD1kcqiv_dUtYwXLhHl20-QCoibnsMBvETp8CnhvsuV1f1p2lVw/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywk5zmR_KkIkxuvxIXjaAA9EGAOJrCyx_HteGPaD-n8Lufgev41S0PMP0Mg-bCvBzcNQ/exec';
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 let allClients=[], allBills=[], allReceipts=[];
@@ -720,20 +710,23 @@ async function saveBill(){
     description:items.map(i=>i.desc).filter(Boolean).join('; '),
     hsnSac:items[0]?.hsn||'',taxable,gstRate:items[0]?.gstR||0,
     narration:document.getElementById('bill-narration').value,items});
+  // Capture print data BEFORE closing modal (fields get cleared after close)
+  const savedBill = {
+    billNo:     document.getElementById('bill-number').value,
+    date:       document.getElementById('bill-date').value
+                  ? new Date(document.getElementById('bill-date').value)
+                      .toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+                  : new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+    clientName: currentClientName,
+    firm:       document.getElementById('bill-firm').value,
+    period:     document.getElementById('bill-period').value,
+    taxable, gst, total: taxable+gst,
+    narration:  document.getElementById('bill-narration').value,
+    items
+  };
   closeModal('billModal');
   showToast(`Bill ₹${fmt(taxable+gst)} saved.`,'success');
   loadClients();
-  // Ask to print
-  const savedBill = {
-    billNo: document.getElementById('bill-number').value,
-    date: new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
-    clientName: currentClientName,
-    firm: document.getElementById('bill-firm').value,
-    period: document.getElementById('bill-period').value,
-    taxable, gst, total: taxable+gst,
-    narration: document.getElementById('bill-narration').value,
-    items
-  };
   printData = {type:'bill', data: savedBill};
   openModal('printPickModal');
 }
@@ -768,23 +761,25 @@ async function saveReceipt(){
     mode:document.getElementById('receipt-mode').value,
     ref:document.getElementById('receipt-ref').value,
     narration:document.getElementById('receipt-narration').value});
+  // Capture print data BEFORE closing modal
+  const savedReceipt = {
+    receiptNo:  document.getElementById('receipt-number').value,
+    date:       document.getElementById('receipt-date').value
+                  ? new Date(document.getElementById('receipt-date').value)
+                      .toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+                  : new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+    clientName: currentClientName,
+    firm:       document.getElementById('receipt-firm').value,
+    amount:     amt,
+    mode:       document.getElementById('receipt-mode').value,
+    ref:        document.getElementById('receipt-ref').value,
+    narration:  document.getElementById('receipt-narration').value,
+  };
   closeModal('receiptModal');
   showToast(`Receipt ₹${fmt(amt)} saved.`,'success');
   loadClients();
-  // Ask to print
-  const savedReceipt = {
-    receiptNo: document.getElementById('receipt-number').value,
-    date: new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
-    clientName: currentClientName,
-    firm: document.getElementById('receipt-firm').value,
-    amount: amt,
-    mode: document.getElementById('receipt-mode').value,
-    ref: document.getElementById('receipt-ref').value,
-    narration: document.getElementById('receipt-narration').value,
-  };
   printData = {type:'receipt', data: savedReceipt};
-  // For receipt, go directly to print (no format choice needed)
-  setTimeout(()=>doPrint('receipt'), 400);
+  doPrint('receipt');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -831,11 +826,61 @@ function openPrintPicker(type, data){
 function doPrint(format){
   closeModal('printPickModal');
   const {type,data}=printData;
-  let html='';
-  if(type==='bill') html=renderPrintBill(data,format);
-  else html=renderPrintReceipt(data);
-  document.getElementById('printArea').innerHTML=html;
-  setTimeout(()=>window.print(), 200);
+  let bodyHtml='';
+  if(type==='bill') bodyHtml=renderPrintBill(data,format);
+  else bodyHtml=renderPrintReceipt(data);
+
+  const printStyles = `
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#0f172a;background:#fff;}
+      .print-doc{width:100%;max-width:210mm;margin:0 auto;padding:14mm 16mm;min-height:297mm;}
+      .print-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;padding-bottom:4mm;border-bottom:2.5px solid #1a3a5c;}
+      .print-firm-name{font-size:18px;font-weight:700;color:#1a3a5c;margin-bottom:3px;}
+      .print-firm-sub{font-size:11px;color:#64748b;line-height:1.6;}
+      .print-doc-type{font-size:15px;font-weight:700;text-align:right;color:#1a3a5c;text-transform:uppercase;letter-spacing:1px;}
+      .print-doc-meta{font-size:11px;color:#64748b;text-align:right;margin-top:4px;line-height:1.7;}
+      .print-parties{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-bottom:6mm;}
+      .print-party{background:#f8fafc;border-radius:6px;padding:4mm;}
+      .print-party-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#64748b;margin-bottom:4px;}
+      .print-party-name{font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px;}
+      .print-party-detail{font-size:11px;color:#475569;line-height:1.5;}
+      .print-table{width:100%;border-collapse:collapse;margin-bottom:4mm;}
+      .print-table th{background:#1a3a5c;color:#fff;padding:7px 10px;text-align:left;font-size:11px;font-weight:600;}
+      .print-table th.right,.print-table td.right{text-align:right;}
+      .print-table td{padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:12px;}
+      .print-table tr:last-child td{border-bottom:none;}
+      .print-totals{display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-bottom:6mm;}
+      .print-total-row{display:flex;gap:20mm;font-size:12px;}
+      .print-total-row.grand{font-size:14px;font-weight:700;color:#1a3a5c;border-top:2px solid #1a3a5c;padding-top:5px;margin-top:4px;}
+      .print-total-label{min-width:35mm;text-align:right;color:#64748b;}
+      .print-total-val{min-width:28mm;text-align:right;font-weight:600;}
+      .print-amount-words{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:6px 10px;font-size:11px;color:#15803d;font-weight:500;margin-bottom:6mm;}
+      .print-footer{display:flex;justify-content:space-between;align-items:flex-end;padding-top:4mm;border-top:1px solid #e2e8f0;margin-top:auto;}
+      .print-powered{font-size:9px;color:#94a3b8;}
+      .print-sign{text-align:right;font-size:11px;color:#475569;line-height:1.8;}
+      .print-receipt-box{border:2px solid #1a3a5c;border-radius:8px;padding:6mm;margin-bottom:4mm;}
+      .print-receipt-title{font-size:20px;font-weight:700;color:#1a3a5c;text-align:center;margin-bottom:4mm;letter-spacing:1px;}
+      .print-receipt-amount-box{background:#1a3a5c;color:#fff;border-radius:6px;padding:4mm 6mm;text-align:center;margin-bottom:4mm;}
+      .print-receipt-amount-label{font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.6px;}
+      .print-receipt-amount-val{font-size:26px;font-weight:700;margin:3px 0;}
+      .print-receipt-amount-words{font-size:11px;opacity:.85;}
+      .print-receipt-grid{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:4mm;}
+      .print-receipt-field-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin-bottom:2px;}
+      .print-receipt-field-val{font-size:13px;font-weight:600;color:#0f172a;}
+      @media print{body{margin:0;} .no-print{display:none;}}
+    </style>`;
+
+  const win = window.open('','_blank','width=900,height=700');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print</title>'+printStyles+'</head><body>');
+  win.document.write('<div class="no-print" style="padding:12px 20px;background:#1a3a5c;display:flex;gap:12px;align-items:center;">');
+  win.document.write('<span style="color:#fff;font-size:13px;font-weight:500;">CA CM Doshi &amp; Co Billing</span>');
+  win.document.write('<button onclick="window.print()" style="margin-left:auto;padding:7px 20px;background:#fff;color:#1a3a5c;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">🖨 Print</button>');
+  win.document.write('<button onclick="window.close()" style="padding:7px 16px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:6px;cursor:pointer;font-size:13px;">Close</button>');
+  win.document.write('</div>');
+  win.document.write(bodyHtml);
+  win.document.write('</body></html>');
+  win.document.close();
 }
 
 function renderPrintBill(b, format){
@@ -961,24 +1006,20 @@ async function saveNewClient(){
 //  APPS SCRIPT COMMS
 // ══════════════════════════════════════════════════════════════
 async function postToSheet(payload){
-  // Use GET with encoded payload — most reliable way to call Apps Script from browser
+  // text/plain body does NOT trigger CORS preflight — Apps Script receives it fine
+  // We wait 1.5s to give Apps Script time to write before UI refreshes
   try{
-    const encoded = encodeURIComponent(JSON.stringify(payload));
-    const url = SCRIPT_URL + '?payload=' + encoded;
-    const res = await fetch(url, {redirect:'follow'});
-    const data = await res.json();
-    return data;
+    await fetch(SCRIPT_URL, {
+      method:  'POST',
+      mode:    'no-cors',
+      headers: {'Content-Type':'text/plain'},
+      body:    JSON.stringify(payload)
+    });
+    await new Promise(r=>setTimeout(r,1500));
+    return {success:true};
   }catch(e){
-    // Fallback: try no-cors POST (response will be opaque but data saves)
-    try{
-      const formData=new FormData();
-      formData.append('payload',JSON.stringify(payload));
-      await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:formData});
-      return {success:true};
-    }catch(e2){
-      showToast('Network error: '+e2.message,'error');
-      return null;
-    }
+    showToast('Network error: '+e.message,'error');
+    return null;
   }
 }
 
