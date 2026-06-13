@@ -67,10 +67,6 @@ tr.row:hover{background:#f8fafc;}
 tr.row td{padding:8px 12px;vertical-align:middle;}
 .cname{font-weight:500;font-size:13px;}
 .cbadge{display:inline-flex;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;margin-top:2px;}
-.obadge{display:inline-flex;padding:2px 6px;border-radius:8px;font-size:10px;font-weight:600;}
-.ob-h{background:#fef2f2;color:var(--red);}
-.ob-m{background:#fffbeb;color:#b45309;}
-.ob-l{background:#f0fdf4;color:var(--green);}
 .amt{text-align:right;font-size:13px;font-weight:600;white-space:nowrap;}
 .amt0{color:#cbd5e1;font-weight:400;}
 .amtt{color:var(--navy);font-weight:700;}
@@ -399,7 +395,7 @@ textarea{resize:vertical;min-height:56px;}
 // ─────────────────────────────────────────────────────────────
 // CONFIG
 // ─────────────────────────────────────────────────────────────
-const URL = 'https://script.google.com/macros/s/AKfycbxMRRVcC3tOJ6elKcRrYHcHe_qL76QJGmNbRitVG8vk1k8APo4QkYz5BrHqZGhtzMUZ4A/exec';
+const URL = 'https://script.google.com/macros/s/AKfycbywk5zmR_KkIkxuvxIXjaAA9EGAOJrCyx_HteGPaD-n8Lufgev41S0PMP0Mg-bCvBzcNQ/exec';
 
 // ─────────────────────────────────────────────────────────────
 // STATE
@@ -469,7 +465,7 @@ function buildFirmUI() {
     return '<th class="r" style="color:'+f.color+'">'+esc(f.label)+'</th>';
   }).join('');
   document.getElementById('chead').innerHTML =
-    '<tr><th>Client</th><th>Status</th><th>Last Activity</th>'+th+'<th class="r">Total</th><th class="r">Actions</th></tr>';
+    '<tr><th>Client</th><th>Status</th>'+th+'<th class="r">Total</th><th class="r">Actions</th></tr>';
 
   // Firm dropdowns
   var opts = FIRMS.map(function(f){ return '<option>'+esc(f.label)+'</option>'; }).join('');
@@ -526,7 +522,7 @@ function renderClients() {
     return !q || c.name.toLowerCase().includes(q) || (c.group||'').toLowerCase().includes(q) || (c.pan||'').toLowerCase().includes(q);
   });
 
-  var cols = 3 + FIRMS.length + 2;
+  var cols = 2 + FIRMS.length + 2;
   if (!filtered.length) {
     document.getElementById('cbody').innerHTML = '<tr><td colspan="'+cols+'"><div class="empty"><i class="ti ti-search-off"></i>No clients found.</div></td></tr>';
     updSummary([]);
@@ -562,10 +558,6 @@ function clientRow(c) {
     return '<td class="amt'+(v>0?'':' amt0')+'" style="'+(v>0?'color:'+f.color:'')+'">'+(v>0?'₹'+fmt(v):'—')+'</td>';
   }).join('');
 
-  var ob = tot>50000?'h':tot>15000?'m':'l';
-  var obCls = {'h':'ob-h','m':'ob-m','l':'ob-l'}[ob];
-  var obLbl = {'h':'High','m':'Mid','l':'Low'}[ob];
-
   var smap = {
     '44AB':'background:#eff6ff;color:#1d4ed8','44AD':'background:#f0fdf4;color:#15803d',
     '8% BUSINESS':'background:#f5f3ff;color:#6d28d9','PARTNER':'background:#fff7ed;color:#c2410c',
@@ -575,9 +567,9 @@ function clientRow(c) {
   var ss = smap[c.status] || 'background:#f1f5f9;color:#475569';
 
   return '<tr class="row">'
-    +'<td><div class="cname">'+esc(c.name)+'</div>'+(tot>0?'<span class="obadge '+obCls+'">'+obLbl+'</span>':'<span style="font-size:11px;color:#cbd5e1;">Nil</span>')+'</td>'
+    +'<td><div class="cname">'+esc(c.name)+'</div></td>'
     +'<td><span class="cbadge" style="'+ss+'">'+esc(c.status||'—')+'</span></td>'
-    +'<td style="font-size:12px;color:var(--muted);">'+esc(c.lastActivity||'—')+'</td>'
+
     +firmCols
     +'<td class="amt amtt">'+(tot>0?'₹'+fmt(tot):'—')+'</td>'
     +'<td><div class="acts">'
@@ -904,42 +896,41 @@ function doPrint(fmt){
 }
 
 function printCSS(){
-  return '<style>*{box-sizing:border-box;margin:0;padding:0;}'
-    +'body{font-family:"Segoe UI",Arial,sans-serif;font-size:12px;color:#0f172a;}'
-    +'.doc{width:100%;max-width:210mm;margin:0 auto;padding:14mm 16mm;}'
-    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;padding-bottom:4mm;border-bottom:2.5px solid #1a3a5c;}'
-    +'.pfirm{font-size:18px;font-weight:700;color:#1a3a5c;}'
-    +'.pfsub{font-size:11px;color:#64748b;margin-top:3px;line-height:1.6;}'
-    +'.pdtype{font-size:15px;font-weight:700;color:#1a3a5c;text-align:right;text-transform:uppercase;letter-spacing:1px;}'
-    +'.pdmeta{font-size:11px;color:#64748b;text-align:right;margin-top:4px;line-height:1.7;}'
-    +'.pparties{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-bottom:6mm;}'
-    +'.pparty{background:#f8fafc;border-radius:6px;padding:4mm;}'
-    +'.pplbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#64748b;margin-bottom:3px;}'
-    +'.ppname{font-size:13px;font-weight:600;}'
+  return '<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:Arial,sans-serif;font-size:12px;color:#000;background:#fff;}'
+    +'.doc{width:100%;max-width:190mm;margin:0 auto;padding:12mm 14mm;}'
+    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5mm;padding-bottom:3mm;border-bottom:1.5px solid #000;}'
+    +'.pfirm{font-size:14px;font-weight:bold;}'
+    +'.pfsub{font-size:10px;color:#444;margin-top:2px;line-height:1.5;}'
+    +'.pdtype{font-size:13px;font-weight:bold;text-align:right;text-transform:uppercase;}'
+    +'.pdmeta{font-size:11px;color:#444;text-align:right;margin-top:3px;line-height:1.6;}'
+    +'.pparties{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-bottom:5mm;}'
+    +'.pparty{border:1px solid #ccc;padding:3mm;}'
+    +'.pplbl{font-size:9px;font-weight:bold;text-transform:uppercase;color:#555;margin-bottom:2px;}'
+    +'.ppname{font-size:12px;font-weight:bold;}'
     +'.ptbl{width:100%;border-collapse:collapse;margin-bottom:4mm;}'
-    +'.ptbl th{background:#1a3a5c;color:#fff;padding:7px 10px;text-align:left;font-size:11px;}'
+    +'.ptbl th{border:1px solid #000;padding:5px 8px;text-align:left;font-size:11px;background:#f0f0f0;}'
     +'.ptbl th.r,.ptbl td.r{text-align:right;}'
-    +'.ptbl td{padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:12px;}'
-    +'.ptbl tr:last-child td{border-bottom:none;}'
-    +'.ptots{display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-bottom:5mm;}'
-    +'.ptrow{display:flex;gap:20mm;font-size:12px;}'
-    +'.ptrow.grand{font-size:14px;font-weight:700;color:#1a3a5c;border-top:2px solid #1a3a5c;padding-top:5px;margin-top:3px;}'
-    +'.ptlbl{min-width:35mm;text-align:right;color:#64748b;}'
-    +'.ptval{min-width:28mm;text-align:right;font-weight:600;}'
-    +'.pwords{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:6px 10px;font-size:11px;color:#15803d;font-weight:500;margin-bottom:5mm;}'
-    +'.pfooter{display:flex;justify-content:space-between;align-items:flex-end;padding-top:4mm;border-top:1px solid #e2e8f0;margin-top:4mm;}'
-    +'.ppow{font-size:9px;color:#94a3b8;}'
-    +'.psign{text-align:right;font-size:11px;color:#475569;line-height:2;}'
-    +'.rbox{border:2px solid #1a3a5c;border-radius:8px;padding:6mm;margin-bottom:4mm;}'
-    +'.rtitle{font-size:22px;font-weight:700;color:#1a3a5c;text-align:center;margin-bottom:4mm;letter-spacing:1px;}'
-    +'.ramtbox{background:#1a3a5c;color:#fff;border-radius:6px;padding:4mm 6mm;text-align:center;margin-bottom:4mm;}'
-    +'.ramtlbl{font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.6px;}'
-    +'.ramtval{font-size:26px;font-weight:700;margin:3px 0;}'
-    +'.ramtw{font-size:11px;opacity:.85;}'
-    +'.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:4mm;}'
-    +'.rflbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin-bottom:2px;}'
-    +'.rfval{font-size:13px;font-weight:600;}'
-    +'@media print{.no-print{display:none!important;}}</style>';
+    +'.ptbl td{padding:6px 8px;border:1px solid #ccc;font-size:11px;}'
+    +'.ptots{margin-bottom:4mm;}'
+    +'.ptrow{display:flex;justify-content:flex-end;gap:15mm;font-size:11px;padding:2px 0;}'
+    +'.ptrow.grand{font-size:13px;font-weight:bold;border-top:1.5px solid #000;padding-top:4px;margin-top:3px;}'
+    +'.ptlbl{min-width:30mm;text-align:right;color:#444;}'
+    +'.ptval{min-width:25mm;text-align:right;}'
+    +'.pwords{border:1px solid #ccc;padding:5px 8px;font-size:11px;margin-bottom:5mm;}'
+    +'.pfooter{display:flex;justify-content:space-between;align-items:flex-end;padding-top:3mm;border-top:1px solid #ccc;margin-top:5mm;}'
+    +'.pcab{font-size:11px;font-weight:bold;}'
+    +'.psign{text-align:right;font-size:11px;line-height:2;}'
+    +'.rtitle{font-size:16px;font-weight:bold;text-align:center;margin-bottom:5mm;border-bottom:1.5px solid #000;padding-bottom:3mm;}'
+    +'.rtbl{width:100%;border-collapse:collapse;margin-bottom:5mm;}'
+    +'.rtbl td{padding:6px 10px;border-bottom:1px solid #ddd;font-size:11px;}'
+    +'.rtbl td:first-child{color:#555;width:40%;}'
+    +'.rtbl td:last-child{font-weight:bold;}'
+    +'.ramt{text-align:center;font-size:18px;font-weight:bold;border:1.5px solid #000;padding:5mm;margin-bottom:5mm;}'
+    +'.rwords{font-size:11px;color:#444;text-align:center;margin-bottom:5mm;}'
+    +'@media print{.no-print{display:none!important;}}'
+    +'</style>';
 }
 
 function billHTML(b,f){
@@ -971,30 +962,31 @@ function billHTML(b,f){
     +'<div class="ptrow grand"><span class="ptlbl">Total Amount</span><span class="ptval">₹'+fmt(tot)+'</span></div>'
     +'</div>'
     +'<div class="pwords">Rupees: '+numWords(Math.round(tot))+' Only</div>'
-    +'<div class="pfooter"><div class="ppow">Powered by CA Atik Bhayani</div>'
+    +'<div class="pfooter"><div class="pcab">CA AB</div>'
     +'<div class="psign">For '+esc(b.firm)+'<br><br><br>Authorised Signatory</div></div></div>';
 }
 
 function recHTML(r){
-  return '<div class="doc"><div class="phdr"><div>'
+  return '<div class="doc">'
+    +'<div class="phdr"><div>'
     +'<div class="pfirm">'+esc(r.firm)+'</div>'
     +'<div class="pfsub">Pandharpur, Maharashtra</div>'
     +'</div><div>'
     +'<div class="pdtype">Receipt Voucher</div>'
     +'<div class="pdmeta">Receipt No: <strong>'+esc(r.receiptNo)+'</strong><br>Date: <strong>'+esc(r.date)+'</strong></div>'
     +'</div></div>'
-    +'<div class="rbox"><div class="rtitle">RECEIPT</div>'
-    +'<div class="ramtbox"><div class="ramtlbl">Amount Received</div>'
-    +'<div class="ramtval">₹'+fmt(r.amount)+'</div>'
-    +'<div class="ramtw">'+numWords(Math.round(r.amount))+' Only</div></div>'
-    +'<div class="rgrid">'
-    +'<div><div class="rflbl">Received From</div><div class="rfval">'+esc(r.clientName)+'</div></div>'
-    +'<div><div class="rflbl">Mode of Payment</div><div class="rfval">'+esc(r.mode)+'</div></div>'
-    +'<div><div class="rflbl">Reference / UTR</div><div class="rfval">'+esc(r.ref||'—')+'</div></div>'
-    +'<div><div class="rflbl">Narration</div><div class="rfval">'+esc(r.narration||'—')+'</div></div>'
-    +'</div></div>'
-    +'<div class="pfooter"><div class="ppow">Powered by CA Atik Bhayani</div>'
-    +'<div class="psign">For '+esc(r.firm)+'<br><br><br>Authorised Signatory</div></div></div>';
+    +'<div class="rtitle">RECEIPT</div>'
+    +'<div class="ramt">₹ '+fmt(r.amount)+'</div>'
+    +'<div class="rwords">Rupees: '+numWords(Math.round(r.amount))+' Only</div>'
+    +'<table class="rtbl">'
+    +'<tr><td>Received From</td><td>'+esc(r.clientName)+'</td></tr>'
+    +'<tr><td>Mode of Payment</td><td>'+esc(r.mode)+'</td></tr>'
+    +'<tr><td>Reference / UTR</td><td>'+esc(r.ref||'—')+'</td></tr>'
+    +'<tr><td>Narration</td><td>'+esc(r.narration||'—')+'</td></tr>'
+    +'</table>'
+    +'<div class="pfooter"><div class="pcab">CA AB</div>'
+    +'<div class="psign">For '+esc(r.firm)+'<br><br><br>Authorised Signatory</div></div>'
+    +'</div>';
 }
 
 // ─────────────────────────────────────────────────────────────
