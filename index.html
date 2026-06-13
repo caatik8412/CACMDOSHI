@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:,">
-<title>CA CM Doshi &amp; Company | Bhayani Business Sol&#x207F;</title>
+<title>CA CM Doshi &amp; Company — Billing Tracker</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
 :root{
@@ -16,20 +16,14 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
-
-/* ── HEADER ── */
 .hdr{background:var(--navy);padding:14px 20px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 .hdr-title{font-size:18px;font-weight:700;color:#fff;letter-spacing:.3px;}
 .hdr-sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:3px;}
-
-/* ── TABS ── */
 .tabs{display:flex;background:#fff;border-bottom:1px solid var(--border);overflow-x:auto;}
 .tab{padding:12px 20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px;}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
 .tab:hover{color:var(--text);}
 .panel{display:none;}.panel.active{display:block;}
-
-/* ── TOOLBAR ── */
 .bar{display:flex;align-items:center;gap:8px;padding:12px 20px;background:#fff;border-bottom:1px solid var(--border);flex-wrap:wrap;}
 .sbox{position:relative;flex:1;min-width:160px;max-width:280px;}
 .sbox i{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;}
@@ -44,8 +38,6 @@ input[type=date].dt{padding:7px 8px;border:1px solid var(--border);border-radius
 .btn-r{background:#fef2f2;color:var(--red);border:1px solid #fca5a5;}.btn-r:hover{background:#fee2e2;}
 .btn-sm{padding:5px 10px;font-size:12px;}
 .btn:disabled{opacity:.5;cursor:not-allowed;}
-
-/* ── SUMMARY ── */
 .sumstrip{display:flex;gap:10px;padding:12px 20px;background:#fff;border-bottom:1px solid var(--border);overflow-x:auto;}
 .sumcard{flex:1;min-width:120px;text-align:center;padding:10px 8px;border-radius:var(--rs);}
 .sumcard.tot{background:var(--navy);}
@@ -53,8 +45,6 @@ input[type=date].dt{padding:7px 8px;border:1px solid var(--border);border-radius
 .sumcard.tot .sumlbl{color:#93c5fd;}
 .sumcard.tot .sumval{color:#fff;}
 .sumval{font-size:16px;font-weight:700;}
-
-/* ── TABLE ── */
 .twrap{padding:14px 20px;}
 .tbox{background:#fff;border-radius:var(--r);border:1px solid var(--border);overflow:auto;box-shadow:var(--sh);}
 table{width:100%;border-collapse:collapse;}
@@ -68,6 +58,10 @@ tr.row:hover{background:#f8fafc;}
 tr.row td{padding:8px 12px;vertical-align:middle;}
 .cname{font-weight:500;font-size:13px;}
 .cbadge{display:inline-flex;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;margin-top:2px;}
+.obadge{display:inline-flex;padding:2px 6px;border-radius:8px;font-size:10px;font-weight:600;}
+.ob-h{background:#fef2f2;color:var(--red);}
+.ob-m{background:#fffbeb;color:#b45309;}
+.ob-l{background:#f0fdf4;color:var(--green);}
 .amt{text-align:right;font-size:13px;font-weight:600;white-space:nowrap;}
 .amt0{color:#cbd5e1;font-weight:400;}
 .amtt{color:var(--navy);font-weight:700;}
@@ -86,8 +80,6 @@ tr.row td{padding:8px 12px;vertical-align:middle;}
 .fetch-msg{text-align:center;padding:50px;}
 .fetch-msg i{font-size:40px;display:block;margin-bottom:10px;color:var(--muted);opacity:.3;}
 .fetch-msg p{color:var(--muted);margin-bottom:14px;}
-
-/* ── MODAL ── */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:500;align-items:center;justify-content:center;}
 .moverlay.open{display:flex;}
 .modal{background:#fff;border-radius:var(--r);width:520px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.18);}
@@ -117,8 +109,6 @@ textarea{resize:vertical;min-height:56px;}
 .btots{display:flex;justify-content:flex-end;gap:18px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
 .btot-lbl{font-size:11px;color:var(--muted);}
 .btot-big{font-size:15px;font-weight:700;color:var(--navy);}
-
-/* ── LEDGER ── */
 .le{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
 .le:last-child{border-bottom:none;}
 .le-dt{font-size:11px;color:var(--muted);}
@@ -126,8 +116,6 @@ textarea{resize:vertical;min-height:56px;}
 .le-ft{display:inline-block;font-size:10px;padding:1px 7px;border-radius:8px;margin-top:2px;font-weight:600;}
 .le-dr{color:var(--red);font-weight:700;font-size:13px;text-align:right;}
 .le-cr{color:var(--green);font-weight:700;font-size:13px;text-align:right;}
-
-/* ── SETTINGS ── */
 .set-section{background:#fff;border-radius:var(--r);border:1px solid var(--border);padding:18px;margin-bottom:16px;}
 .set-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
 .firm-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;margin:4px;}
@@ -135,8 +123,6 @@ textarea{resize:vertical;min-height:56px;}
 .stat-box{background:var(--bg);border-radius:var(--rs);padding:12px;text-align:center;}
 .stat-n{font-size:22px;font-weight:700;color:var(--navy);}
 .stat-l{font-size:11px;color:var(--muted);margin-top:2px;}
-
-/* ── TOAST ── */
 .toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:var(--r);font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:9999;display:none;align-items:center;gap:8px;}
 .toast.show{display:flex;}
 .toast.ok{background:var(--green);}
@@ -145,13 +131,11 @@ textarea{resize:vertical;min-height:56px;}
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="hdr">
-  <div class="hdr-title">CA CM Doshi &amp; Company &mdash; Billing Tracker</div>
+  <div class="hdr-title">CA CM Doshi &amp; Company — Billing Tracker</div>
   <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup></div>
 </div>
 
-<!-- TABS -->
 <div class="tabs">
   <div class="tab active" onclick="switchTab('clients')"><i class="ti ti-users"></i>Clients</div>
   <div class="tab" onclick="switchTab('bills')"><i class="ti ti-file-invoice"></i>Bills</div>
@@ -159,7 +143,6 @@ textarea{resize:vertical;min-height:56px;}
   <div class="tab" onclick="switchTab('settings')"><i class="ti ti-settings"></i>Settings</div>
 </div>
 
-<!-- CLIENTS -->
 <div id="p-clients" class="panel active">
   <div class="sumstrip" id="sumstrip"></div>
   <div class="bar">
@@ -175,7 +158,6 @@ textarea{resize:vertical;min-height:56px;}
   </div></div>
 </div>
 
-<!-- BILLS -->
 <div id="p-bills" class="panel">
   <div class="bar">
     <div class="sbox"><i class="ti ti-search"></i><input id="bsearch" placeholder="Search client / bill no…" oninput="renderBills()"></div>
@@ -185,15 +167,11 @@ textarea{resize:vertical;min-height:56px;}
   <div class="twrap"><div class="tbox">
     <table>
       <thead><tr><th>Bill No.</th><th>Date</th><th>Client</th><th>Firm</th><th>Period</th><th class="r">Taxable</th><th class="r">Total</th><th class="r">Actions</th></tr></thead>
-      <tbody id="bbody"><tr><td colspan="8"><div class="fetch-msg">
-        <i class="ti ti-file-invoice"></i><p>Click Fetch Bills to load records.</p>
-        <button class="btn btn-p btn-sm" onclick="fetchBills()"><i class="ti ti-database-import"></i> Fetch Bills</button>
-      </div></td></tr></tbody>
+      <tbody id="bbody"><tr><td colspan="8"><div class="fetch-msg"><i class="ti ti-file-invoice"></i><p>Click Fetch Bills to load records.</p><button class="btn btn-p btn-sm" onclick="fetchBills()"><i class="ti ti-database-import"></i> Fetch Bills</button></div></td></tr></tbody>
     </table>
   </div></div>
 </div>
 
-<!-- RECEIPTS -->
 <div id="p-receipts" class="panel">
   <div class="bar">
     <label style="font-size:12px;color:var(--muted);">From</label>
@@ -206,15 +184,11 @@ textarea{resize:vertical;min-height:56px;}
   <div class="twrap"><div class="tbox">
     <table>
       <thead><tr><th>Receipt No.</th><th>Date</th><th>Client</th><th>Firm</th><th>Mode</th><th>Reference</th><th class="r">Amount</th><th class="r">Actions</th></tr></thead>
-      <tbody id="rbody"><tr><td colspan="8"><div class="fetch-msg">
-        <i class="ti ti-receipt"></i><p>Select date range and click Fetch Receipts.</p>
-        <button class="btn btn-p btn-sm" onclick="fetchReceipts()"><i class="ti ti-database-import"></i> Fetch Receipts</button>
-      </div></td></tr></tbody>
+      <tbody id="rbody"><tr><td colspan="8"><div class="fetch-msg"><i class="ti ti-receipt"></i><p>Select date range and click Fetch Receipts.</p><button class="btn btn-p btn-sm" onclick="fetchReceipts()"><i class="ti ti-database-import"></i> Fetch Receipts</button></div></td></tr></tbody>
     </table>
   </div></div>
 </div>
 
-<!-- SETTINGS -->
 <div id="p-settings" class="panel">
   <div class="twrap" style="max-width:680px;">
     <div class="set-section">
@@ -226,7 +200,7 @@ textarea{resize:vertical;min-height:56px;}
       </div>
     </div>
     <div class="set-section">
-      <div class="set-title"><i class="ti ti-chart-bar"></i> Summary &nbsp;<span style="font-size:11px;font-weight:400;color:var(--muted);">— Bhayani Business Sol<sup>n</sup> · Powered by CA Atik Bhayani</span></div>
+      <div class="set-title"><i class="ti ti-chart-bar"></i> Summary</div>
       <div class="stat-grid">
         <div class="stat-box"><div class="stat-n" id="st-clients">—</div><div class="stat-l">Clients</div></div>
         <div class="stat-box"><div class="stat-n" id="st-bills">—</div><div class="stat-l">Bills</div></div>
@@ -246,7 +220,6 @@ textarea{resize:vertical;min-height:56px;}
   </div>
 </div>
 
-<!-- MODAL: ADD BILL -->
 <div class="moverlay" id="mAddBill">
   <div class="modal">
     <div class="mhdr">
@@ -282,7 +255,6 @@ textarea{resize:vertical;min-height:56px;}
   </div>
 </div>
 
-<!-- MODAL: ADD RECEIPT -->
 <div class="moverlay" id="mAddReceipt">
   <div class="modal">
     <div class="mhdr">
@@ -314,7 +286,6 @@ textarea{resize:vertical;min-height:56px;}
   </div>
 </div>
 
-<!-- MODAL: LEDGER -->
 <div class="moverlay" id="mLedger">
   <div class="modal">
     <div class="mhdr">
@@ -325,7 +296,6 @@ textarea{resize:vertical;min-height:56px;}
   </div>
 </div>
 
-<!-- MODAL: ADD CLIENT -->
 <div class="moverlay" id="mAddClient">
   <div class="modal">
     <div class="mhdr">
@@ -350,7 +320,6 @@ textarea{resize:vertical;min-height:56px;}
   </div>
 </div>
 
-<!-- MODAL: PRINT PICK -->
 <div class="moverlay" id="mPrint">
   <div class="modal" style="width:360px;">
     <div class="mhdr">
@@ -377,15 +346,11 @@ textarea{resize:vertical;min-height:56px;}
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="tmsg"></span></div>
 
 <script>
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywk5zmR_KkIkxuvxIXjaAA9EGAOJrCyx_HteGPaD-n8Lufgev41S0PMP0Mg-bCvBzcNQ/exec';
+// ── CONFIG ── CHANGE URL HERE ONLY ────────────────────────────
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMRRVcC3tOJ6elKcRrYHcHe_qL76QJGmNbRitVG8vk1k8APo4QkYz5BrHqZGhtzMUZ4A/exec';
 
-var FIRMS       = [];
-var allClients  = [];
-var allBills    = [];
-var allReceipts = [];
-var curId       = '', curName = '', curOut = 0;
-var printData   = null;
-var busy        = false;
+var FIRMS=[], allClients=[], allBills=[], allReceipts=[];
+var curId='', curName='', curOut=0, printData=null, busy=false;
 
 window.onload = function() {
   var today = new Date().toISOString().split('T')[0];
@@ -399,19 +364,16 @@ window.onload = function() {
 
 function api(params, cb) {
   var qs = Object.keys(params).map(function(k){
-    return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);
   }).join('&');
-  fetch(SCRIPT_URL + '?' + qs)
+  fetch(SCRIPT_URL+'?'+qs)
     .then(function(r){ return r.json(); })
-    .then(function(d){
-      if (d.error) toast(d.error, 'err');
-      if (cb) cb(d);
-    })
-    .catch(function(e){ toast('Network error: ' + e.message, 'err'); });
+    .then(function(d){ if(d.error) toast(d.error,'err'); if(cb) cb(d); })
+    .catch(function(e){ toast('Network error: '+e.message,'err'); });
 }
 
 function loadConfig() {
-  api({ action:'getConfig' }, function(d) {
+  api({action:'getConfig'}, function(d) {
     FIRMS = d.firms || [];
     buildFirmUI();
     loadAll();
@@ -422,53 +384,41 @@ function buildFirmUI() {
   var s = FIRMS.map(function(f){
     return '<div class="sumcard" style="background:'+f.bg+'">'
       +'<div class="sumlbl" style="color:'+f.color+'">'+esc(f.label)+'</div>'
-      +'<div class="sumval" style="color:'+f.color+'" id="sf-'+slug(f.label)+'">₹0</div>'
-      +'</div>';
-  }).join('') + '<div class="sumcard tot"><div class="sumlbl">Grand Total</div><div class="sumval" id="sf-total">₹0</div></div>';
+      +'<div class="sumval" style="color:'+f.color+'" id="sf-'+slug(f.label)+'">₹0</div></div>';
+  }).join('')+'<div class="sumcard tot"><div class="sumlbl">Grand Total</div><div class="sumval" id="sf-total">₹0</div></div>';
   document.getElementById('sumstrip').innerHTML = s;
 
-  var th = FIRMS.map(function(f){
-    return '<th class="r" style="color:'+f.color+'">'+esc(f.label)+'</th>';
-  }).join('');
+  var th = FIRMS.map(function(f){ return '<th class="r" style="color:'+f.color+'">'+esc(f.label)+'</th>'; }).join('');
   document.getElementById('chead').innerHTML =
-    '<tr><th>Client</th><th>Status</th>'+th+'<th class="r">Total</th><th class="r">Actions</th></tr>';
+    '<tr><th>Client</th><th>Status</th><th>Last Activity</th>'+th+'<th class="r">Total</th><th class="r">Actions</th></tr>';
 
   var opts = FIRMS.map(function(f){ return '<option>'+esc(f.label)+'</option>'; }).join('');
-  ['b-firm','r-firm'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.innerHTML = opts;
-  });
+  ['b-firm','r-firm'].forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=opts; });
 
   document.getElementById('bfirm').innerHTML =
-    '<option value="">All Firms</option>' +
-    FIRMS.map(function(f){ return '<option>'+esc(f.label)+'</option>'; }).join('');
+    '<option value="">All Firms</option>'+FIRMS.map(function(f){ return '<option>'+esc(f.label)+'</option>'; }).join('');
 
-  var fc = FIRMS.map(function(f){
+  document.getElementById('firmsList').innerHTML = FIRMS.map(function(f){
     return '<span class="firm-chip" style="background:'+f.bg+';color:'+f.color+'">'+esc(f.label)+'</span>';
-  }).join('');
-  document.getElementById('firmsList').innerHTML = fc || '<span style="color:var(--muted);font-size:13px;">No firms configured.</span>';
+  }).join('') || '<span style="color:var(--muted);font-size:13px;">No firms configured.</span>';
 }
 
 function addFirm() {
   var name = document.getElementById('newFirmName').value.trim();
-  if (!name) { toast('Enter firm name', 'err'); return; }
-  api({ action:'addFirm', firm: name }, function(d) {
-    if (d.ok) {
-      document.getElementById('newFirmName').value = '';
-      toast('Firm added — reloading…', 'ok');
-      loadConfig();
-    }
+  if(!name){ toast('Enter firm name','err'); return; }
+  api({action:'addFirm', firm:name}, function(d){
+    if(d.ok){ document.getElementById('newFirmName').value=''; toast('Firm added — reloading…','ok'); loadConfig(); }
   });
 }
 
 function loadAll() {
-  var cols = 2 + FIRMS.length + 2;
+  var cols = 3+FIRMS.length+2;
   document.getElementById('cbody').innerHTML =
     '<tr class="ldg"><td colspan="'+cols+'"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading clients…</div></td></tr>';
-  api({ action:'getAll' }, function(d) {
-    allClients = d.clients || [];
+  api({action:'getAll'}, function(d){
+    allClients = d.clients||[];
     var sel = document.getElementById('rclient');
-    sel.innerHTML = '<option value="">All Clients</option>' +
+    sel.innerHTML = '<option value="">All Clients</option>'+
       allClients.map(function(c){ return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>'; }).join('');
     document.getElementById('st-clients').textContent = allClients.length;
     renderClients();
@@ -478,87 +428,79 @@ function loadAll() {
 function renderClients() {
   var q = document.getElementById('csearch').value.toLowerCase();
   var filtered = allClients.filter(function(c){
-    return !q || c.name.toLowerCase().includes(q) || (c.group||'').toLowerCase().includes(q) || (c.pan||'').toLowerCase().includes(q);
+    return !q||c.name.toLowerCase().includes(q)||(c.group||'').toLowerCase().includes(q)||(c.pan||'').toLowerCase().includes(q);
   });
-  var cols = 2 + FIRMS.length + 2;
-  if (!filtered.length) {
-    document.getElementById('cbody').innerHTML = '<tr><td colspan="'+cols+'"><div class="empty"><i class="ti ti-search-off"></i>No clients found.</div></td></tr>';
-    updSummary([]);
-    return;
+  var cols = 3+FIRMS.length+2;
+  if(!filtered.length){
+    document.getElementById('cbody').innerHTML='<tr><td colspan="'+cols+'"><div class="empty"><i class="ti ti-search-off"></i>No clients found.</div></td></tr>';
+    updSummary([]); return;
   }
-  var groups = {}, nogrp = [];
-  filtered.forEach(function(c){
-    if (c.group) { if (!groups[c.group]) groups[c.group]=[]; groups[c.group].push(c); }
-    else nogrp.push(c);
-  });
-  var rows = '';
+  var groups={}, nogrp=[];
+  filtered.forEach(function(c){ if(c.group){if(!groups[c.group])groups[c.group]=[];groups[c.group].push(c);}else nogrp.push(c); });
+  var rows='';
   Object.keys(groups).sort().forEach(function(g){
-    rows += '<tr class="grp"><td colspan="'+cols+'"><i class="ti ti-folder"></i>'+esc(g)+'</td></tr>';
-    groups[g].forEach(function(c){ rows += clientRow(c); });
+    rows+='<tr class="grp"><td colspan="'+cols+'"><i class="ti ti-folder"></i>'+esc(g)+'</td></tr>';
+    groups[g].forEach(function(c){ rows+=clientRow(c); });
   });
-  if (nogrp.length) {
-    rows += '<tr class="grp" style="background:#475569"><td colspan="'+cols+'"><i class="ti ti-user"></i>Other Clients</td></tr>';
-    nogrp.forEach(function(c){ rows += clientRow(c); });
+  if(nogrp.length){
+    rows+='<tr class="grp" style="background:#475569"><td colspan="'+cols+'"><i class="ti ti-user"></i>Other Clients</td></tr>';
+    nogrp.forEach(function(c){ rows+=clientRow(c); });
   }
-  document.getElementById('cbody').innerHTML = rows;
+  document.getElementById('cbody').innerHTML=rows;
   updSummary(filtered);
 }
 
 function clientRow(c) {
-  var tot = 0;
-  var firmCols = FIRMS.map(function(f){
-    var v = c.byFirm[f.label] || 0;
-    tot += v;
+  var tot=0;
+  var firmCols=FIRMS.map(function(f){
+    var v=c.byFirm[f.label]||0; tot+=v;
     return '<td class="amt'+(v>0?'':' amt0')+'" style="'+(v>0?'color:'+f.color:'')+'">'+(v>0?'₹'+fmt(v):'—')+'</td>';
   }).join('');
-  var smap = {
-    '44AB':'background:#eff6ff;color:#1d4ed8','44AD':'background:#f0fdf4;color:#15803d',
+  var ob=tot>50000?'h':tot>15000?'m':'l';
+  var obCls={'h':'ob-h','m':'ob-m','l':'ob-l'}[ob];
+  var obLbl={'h':'High','m':'Mid','l':'Low'}[ob];
+  var smap={'44AB':'background:#eff6ff;color:#1d4ed8','44AD':'background:#f0fdf4;color:#15803d',
     '8% BUSINESS':'background:#f5f3ff;color:#6d28d9','PARTNER':'background:#fff7ed;color:#c2410c',
     'DIRECTOR':'background:#fdf4ff;color:#7e22ce','OTHER':'background:#f1f5f9;color:#475569',
-    'HUF':'background:#fefce8;color:#854d0e','FIRM':'background:#ecfdf5;color:#065f46'
-  };
-  var ss = smap[c.status] || 'background:#f1f5f9;color:#475569';
+    'HUF':'background:#fefce8;color:#854d0e','FIRM':'background:#ecfdf5;color:#065f46'};
+  var ss=smap[c.status]||'background:#f1f5f9;color:#475569';
   return '<tr class="row">'
-    +'<td><div class="cname">'+esc(c.name)+'</div></td>'
+    +'<td><div class="cname">'+esc(c.name)+'</div>'+(tot>0?'<span class="obadge '+obCls+'">'+obLbl+'</span>':'<span style="font-size:11px;color:#cbd5e1;">Nil</span>')+'</td>'
     +'<td><span class="cbadge" style="'+ss+'">'+esc(c.status||'—')+'</span></td>'
+    +'<td style="font-size:12px;color:var(--muted);">'+esc(c.lastActivity||'—')+'</td>'
     +firmCols
     +'<td class="amt amtt">'+(tot>0?'₹'+fmt(tot):'—')+'</td>'
     +'<td><div class="acts">'
       +'<button class="icn ib" title="Add Bill" onclick="openBill(\''+c.id+'\',\''+esc(c.name)+'\')"><i class="ti ti-file-invoice"></i></button>'
       +'<button class="icn ir" title="Add Receipt" onclick="openRec(\''+c.id+'\',\''+esc(c.name)+'\','+tot+')"><i class="ti ti-receipt"></i></button>'
       +'<button class="icn il" title="Ledger" onclick="openLedger(\''+c.id+'\',\''+esc(c.name)+'\')"><i class="ti ti-book"></i></button>'
-    +'</div></td>'
-  +'</tr>';
+    +'</div></td></tr>';
 }
 
 function updSummary(clients) {
   FIRMS.forEach(function(f){
-    var t = clients.reduce(function(s,c){ return s+(c.byFirm[f.label]||0); }, 0);
-    var el = document.getElementById('sf-'+slug(f.label));
-    if (el) el.textContent = '₹'+fmt(t);
+    var t=clients.reduce(function(s,c){ return s+(c.byFirm[f.label]||0); },0);
+    var el=document.getElementById('sf-'+slug(f.label)); if(el) el.textContent='₹'+fmt(t);
   });
-  var grand = clients.reduce(function(s,c){ return s+Object.values(c.byFirm).reduce(function(a,b){return a+b;},0); }, 0);
-  document.getElementById('sf-total').textContent = '₹'+fmt(grand);
+  var grand=clients.reduce(function(s,c){ return s+Object.values(c.byFirm).reduce(function(a,b){return a+b;},0); },0);
+  document.getElementById('sf-total').textContent='₹'+fmt(grand);
 }
 
-function openBill(id, name) {
+function openBill(id,name){
   curId=id; curName=name;
-  document.getElementById('b-cname').textContent = name;
-  document.getElementById('b-no').value = '';
-  document.getElementById('b-period').value = '';
-  document.getElementById('b-nar').value = '';
-  document.getElementById('b-items').innerHTML = itemRow();
-  calcTots();
-  openM('mAddBill');
+  document.getElementById('b-cname').textContent=name;
+  document.getElementById('b-no').value='';
+  document.getElementById('b-period').value='';
+  document.getElementById('b-nar').value='';
+  document.getElementById('b-items').innerHTML=itemRow();
+  calcTots(); openM('mAddBill');
 }
-function itemRow() {
-  return '<tr>'
-    +'<td><input type="text" placeholder="Service description"></td>'
+function itemRow(){
+  return '<tr><td><input type="text" placeholder="Service description"></td>'
     +'<td><input type="text" placeholder="998231"></td>'
     +'<td><input type="number" placeholder="0" class="ia" oninput="calcTots()"></td>'
     +'<td><input type="number" placeholder="18" class="ig" oninput="calcTots()"></td>'
-    +'<td><button class="delbtn" onclick="delRow(this)"><i class="ti ti-x"></i></button></td>'
-  +'</tr>';
+    +'<td><button class="delbtn" onclick="delRow(this)"><i class="ti ti-x"></i></button></td></tr>';
 }
 function addRow(){ document.getElementById('b-items').insertAdjacentHTML('beforeend',itemRow()); }
 function delRow(btn){ if(document.querySelectorAll('#b-items tr').length>1){btn.closest('tr').remove();calcTots();} }
@@ -589,42 +531,29 @@ function saveBill(){
     tax+=a; gst+=a*g/100;
     if(desc||a) items.push({desc:desc,hsn:hsn,amt:a,gstR:g});
   });
-  var pd={
-    billNo:no,
-    date:new Date(dt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
-    clientName:curName, firm:firm,
-    period:document.getElementById('b-period').value,
-    taxable:tax, gst:gst, total:tax+gst,
-    narration:document.getElementById('b-nar').value,
-    items:items
-  };
+  var pd={billNo:no, date:new Date(dt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+    clientName:curName, firm:firm, period:document.getElementById('b-period').value,
+    taxable:tax, gst:gst, total:tax+gst, narration:document.getElementById('b-nar').value, items:items};
   busy=true;
   document.getElementById('saveBillBtn').disabled=true;
   document.getElementById('saveBillBtn').textContent='Saving…';
-  api({
-    action:'addBill', billNo:no, billDate:dt,
-    clientId:curId, clientName:curName, firm:firm,
+  api({action:'addBill', billNo:no, billDate:dt, clientId:curId, clientName:curName, firm:firm,
     description:items.map(function(i){return i.desc;}).filter(Boolean).join('; '),
-    period:document.getElementById('b-period').value,
-    taxable:tax, gstRate:items.length?items[0].gstR:0,
-    narration:document.getElementById('b-nar').value
+    period:document.getElementById('b-period').value, taxable:tax,
+    gstRate:items.length?items[0].gstR:0, narration:document.getElementById('b-nar').value
   }, function(d){
     busy=false;
     document.getElementById('saveBillBtn').disabled=false;
     document.getElementById('saveBillBtn').innerHTML='<i class="ti ti-device-floppy"></i> Save Bill';
-    if(d.ok){
-      closeM('mAddBill'); toast('Bill saved ✓','ok'); loadAll();
-      printData={type:'bill',data:pd}; openM('mPrint');
-    } else { toast(d.error||'Save failed','err'); }
+    if(d.ok){ closeM('mAddBill'); toast('Bill saved ✓','ok'); loadAll(); printData={type:'bill',data:pd}; openM('mPrint'); }
+    else toast(d.error||'Save failed','err');
   });
 }
 
 function fetchBills(){
   document.getElementById('bbody').innerHTML='<tr class="ldg"><td colspan="8"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Fetching…</div></td></tr>';
-  api({ action:'getBills' }, function(d){
-    allBills=d.bills||[];
-    document.getElementById('st-bills').textContent=allBills.length;
-    renderBills();
+  api({action:'getBills'}, function(d){
+    allBills=d.bills||[]; document.getElementById('st-bills').textContent=allBills.length; renderBills();
   });
 }
 function renderBills(){
@@ -636,8 +565,7 @@ function renderBills(){
     return true;
   });
   if(!list.length){ document.getElementById('bbody').innerHTML='<tr><td colspan="8"><div class="empty"><i class="ti ti-file-off"></i>No bills found.</div></td></tr>'; return; }
-  var fi={};
-  FIRMS.forEach(function(f){ fi[f.label]=f; });
+  var fi={}; FIRMS.forEach(function(f){ fi[f.label]=f; });
   document.getElementById('bbody').innerHTML=list.map(function(b){
     var f=fi[b.firm]||{color:'#64748b',bg:'#f1f5f9'};
     return '<tr class="row">'
@@ -648,11 +576,11 @@ function renderBills(){
       +'<td style="font-size:12px;color:var(--muted);">'+esc(b.period||'—')+'</td>'
       +'<td class="amt">₹'+fmt(b.taxable)+'</td>'
       +'<td class="amt amtt">₹'+fmt(b.total)+'</td>'
-      +'<td><div class="acts"><button class="icn ip" onclick=\'printBill('+JSON.stringify(b)+')\' ><i class="ti ti-printer"></i></button></div></td>'
+      +'<td><div class="acts"><button class="icn ip" onclick="printBill(\''+esc(JSON.stringify(b).replace(/'/g,"\\\'"))+'\')"><i class="ti ti-printer"></i></button></div></td>'
     +'</tr>';
   }).join('');
 }
-function printBill(b){ printData={type:'bill',data:b}; openM('mPrint'); }
+function printBill(raw){ printData={type:'bill',data:JSON.parse(raw)}; openM('mPrint'); }
 
 function openRec(id,name,out){
   curId=id; curName=name; curOut=out;
@@ -677,31 +605,21 @@ function saveReceipt(){
   var amt=parseFloat(document.getElementById('r-amt').value)||0;
   var firm=document.getElementById('r-firm').value;
   if(!no||!dt||!amt||!firm){ toast('Receipt no, date, amount and firm required','err'); return; }
-  var pd={
-    receiptNo:no,
-    date:new Date(dt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
-    clientName:curName, firm:firm, amount:amt,
-    mode:document.getElementById('r-mode').value,
-    ref:document.getElementById('r-ref').value,
-    narration:document.getElementById('r-nar').value
-  };
+  var pd={receiptNo:no, date:new Date(dt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+    clientName:curName, firm:firm, amount:amt, mode:document.getElementById('r-mode').value,
+    ref:document.getElementById('r-ref').value, narration:document.getElementById('r-nar').value};
   busy=true;
   document.getElementById('saveRecBtn').disabled=true;
   document.getElementById('saveRecBtn').textContent='Saving…';
-  api({
-    action:'addReceipt', receiptNo:no, receiptDate:dt,
-    clientId:curId, clientName:curName, firm:firm, amount:amt,
-    mode:document.getElementById('r-mode').value,
-    ref:document.getElementById('r-ref').value,
-    narration:document.getElementById('r-nar').value
+  api({action:'addReceipt', receiptNo:no, receiptDate:dt, clientId:curId, clientName:curName,
+    firm:firm, amount:amt, mode:document.getElementById('r-mode').value,
+    ref:document.getElementById('r-ref').value, narration:document.getElementById('r-nar').value
   }, function(d){
     busy=false;
     document.getElementById('saveRecBtn').disabled=false;
     document.getElementById('saveRecBtn').innerHTML='<i class="ti ti-device-floppy"></i> Save Receipt';
-    if(d.ok){
-      closeM('mAddReceipt'); toast('Receipt saved ✓','ok'); loadAll();
-      printData={type:'receipt',data:pd}; doPrint('receipt');
-    } else { toast(d.error||'Save failed','err'); }
+    if(d.ok){ closeM('mAddReceipt'); toast('Receipt saved ✓','ok'); loadAll(); printData={type:'receipt',data:pd}; doPrint('receipt'); }
+    else toast(d.error||'Save failed','err');
   });
 }
 
@@ -711,16 +629,13 @@ function fetchReceipts(){
   var cid=document.getElementById('rclient').value;
   if(!from||!to){ toast('Select date range','err'); return; }
   document.getElementById('rbody').innerHTML='<tr class="ldg"><td colspan="8"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Fetching…</div></td></tr>';
-  api({ action:'getReceipts', from:from, to:to, clientId:cid }, function(d){
-    allReceipts=d.receipts||[];
-    document.getElementById('st-receipts').textContent=allReceipts.length;
-    renderReceipts();
+  api({action:'getReceipts', from:from, to:to, clientId:cid}, function(d){
+    allReceipts=d.receipts||[]; document.getElementById('st-receipts').textContent=allReceipts.length; renderReceipts();
   });
 }
 function renderReceipts(){
   if(!allReceipts.length){ document.getElementById('rbody').innerHTML='<tr><td colspan="8"><div class="empty"><i class="ti ti-receipt-off"></i>No receipts for selected filters.</div></td></tr>'; return; }
-  var fi={};
-  FIRMS.forEach(function(f){ fi[f.label]=f; });
+  var fi={}; FIRMS.forEach(function(f){ fi[f.label]=f; });
   var total=0;
   var rows=allReceipts.map(function(r){
     total+=r.amount;
@@ -733,37 +648,33 @@ function renderReceipts(){
       +'<td style="font-size:12px;">'+esc(r.mode)+'</td>'
       +'<td style="font-size:12px;color:var(--muted);font-family:monospace;">'+esc(r.ref||'—')+'</td>'
       +'<td class="amt" style="color:var(--green);font-weight:700;">₹'+fmt(r.amount)+'</td>'
-      +'<td><div class="acts"><button class="icn ip" onclick=\'printRec('+JSON.stringify(r)+')\' ><i class="ti ti-printer"></i></button></div></td>'
+      +'<td><div class="acts"><button class="icn ip" onclick="printRec(\''+esc(JSON.stringify(r).replace(/'/g,"\\\'"))+'\')"><i class="ti ti-printer"></i></button></div></td>'
     +'</tr>';
   }).join('');
   rows+='<tr style="background:#f0fdf4;"><td colspan="6" style="text-align:right;font-weight:600;padding:10px 12px;color:var(--green);">Total Received</td><td class="amt" style="color:var(--green);font-weight:700;padding:10px 12px;">₹'+fmt(total)+'</td><td></td></tr>';
   document.getElementById('rbody').innerHTML=rows;
 }
-function printRec(r){ printData={type:'receipt',data:r}; doPrint('receipt'); }
+function printRec(raw){ printData={type:'receipt',data:JSON.parse(raw)}; doPrint('receipt'); }
 
 function openLedger(id,name){
   document.getElementById('led-name').textContent=name;
   document.getElementById('led-body').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);">Loading…</div>';
   openM('mLedger');
-  api({ action:'getLedger', clientId:id }, function(d){
+  api({action:'getLedger', clientId:id}, function(d){
     var entries=d.entries||[];
     if(!entries.length){ document.getElementById('led-body').innerHTML='<div class="empty"><i class="ti ti-inbox"></i>No entries yet.</div>'; return; }
-    var fi={};
-    FIRMS.forEach(function(f){ fi[f.label]=f; });
+    var fi={}; FIRMS.forEach(function(f){ fi[f.label]=f; });
     var bal=0;
     var html=entries.map(function(e){
       if(e.type==='bill') bal+=e.amount; else bal-=e.amount;
       var f=fi[e.firm]||{color:'#64748b',bg:'#f1f5f9'};
-      return '<div class="le">'
-        +'<div><div class="le-dt">'+esc(e.date)+'</div><div class="le-ds">'+esc(e.desc)+'</div>'
+      return '<div class="le"><div><div class="le-dt">'+esc(e.date)+'</div><div class="le-ds">'+esc(e.desc)+'</div>'
         +'<span class="le-ft" style="background:'+f.bg+';color:'+f.color+'">'+esc(e.firm)+'</span></div>'
-        +'<div style="text-align:right;min-width:80px;"><div class="'+(e.type==='bill'?'le-dr':'le-cr')+'">'+(e.type==='bill'?'Dr':'Cr')+' ₹'+fmt(e.amount)+'</div></div>'
-        +'</div>';
+        +'<div style="text-align:right;min-width:80px;"><div class="'+(e.type==='bill'?'le-dr':'le-cr')+'">'+(e.type==='bill'?'Dr':'Cr')+' ₹'+fmt(e.amount)+'</div></div></div>';
     }).join('');
     html+='<div style="display:flex;justify-content:space-between;padding:12px 0 0;border-top:2px solid var(--border);margin-top:4px;">'
       +'<span style="font-weight:600;">Balance Outstanding</span>'
-      +'<span style="font-weight:700;font-size:16px;color:'+(bal>0?'var(--red)':'var(--green)')+'">₹'+fmt(Math.abs(bal))+'</span>'
-      +'</div>';
+      +'<span style="font-weight:700;font-size:16px;color:'+(bal>0?'var(--red)':'var(--green)')+'">₹'+fmt(Math.abs(bal))+'</span></div>';
     document.getElementById('led-body').innerHTML=html;
   });
 }
@@ -771,12 +682,9 @@ function openLedger(id,name){
 function saveClient(){
   var name=document.getElementById('nc-name').value.trim();
   if(!name){ toast('Name is required','err'); return; }
-  api({
-    action:'addClient', name:name,
-    group:document.getElementById('nc-group').value.trim(),
+  api({action:'addClient', name:name, group:document.getElementById('nc-group').value.trim(),
     pan:document.getElementById('nc-pan').value.trim().toUpperCase(),
-    status:document.getElementById('nc-status').value,
-    mobile:document.getElementById('nc-mobile').value.trim()
+    status:document.getElementById('nc-status').value, mobile:document.getElementById('nc-mobile').value.trim()
   }, function(d){
     if(d.ok){ closeM('mAddClient'); toast('Client added ✓','ok'); loadAll(); }
     else toast(d.error||'Failed','err');
@@ -786,58 +694,59 @@ function saveClient(){
 function doPrint(format){
   closeM('mPrint');
   var d=printData.data;
-  var html = printData.type==='bill' ? billHTML(d,format) : recHTML(d);
+  var html=printData.type==='bill'?billHTML(d,format):recHTML(d);
   var w=window.open('','_blank');
   w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print</title>'+printCSS()+'</head><body>');
   w.document.write('<div class="no-print" style="background:#1a3a5c;padding:10px 16px;display:flex;gap:10px;align-items:center;">');
   w.document.write('<span style="color:#fff;font-weight:600;font-size:13px;">CA CM Doshi &amp; Company</span>');
-  w.document.write('<button onclick="window.print()" style="margin-left:auto;padding:6px 18px;background:#fff;color:#1a3a5c;border:none;border-radius:5px;font-weight:600;cursor:pointer;">🖨 Print</button>');
+  w.document.write('<button onclick="window.print()" style="margin-left:auto;padding:6px 18px;background:#fff;color:#1a3a5c;border:none;border-radius:5px;font-weight:600;cursor:pointer;">&#128424; Print</button>');
   w.document.write('<button onclick="window.close()" style="padding:6px 14px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;cursor:pointer;">Close</button>');
   w.document.write('</div>'+html+'</body></html>');
   w.document.close();
 }
 
 function printCSS(){
-  return '<style>'
-    +'*{box-sizing:border-box;margin:0;padding:0;}'
-    +'body{font-family:Arial,sans-serif;font-size:12px;color:#000;background:#fff;}'
-    +'.doc{width:100%;max-width:190mm;margin:0 auto;padding:10mm 12mm;}'
-    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5mm;padding-bottom:3mm;border-bottom:1.5px solid #000;}'
-    +'.pfirm{font-size:15px;font-weight:bold;}'
-    +'.pfsub{font-size:10px;color:#444;margin-top:2px;}'
-    +'.pdtype{font-size:13px;font-weight:bold;text-align:right;text-transform:uppercase;}'
-    +'.pdmeta{font-size:11px;color:#444;text-align:right;margin-top:3px;line-height:1.6;}'
-    +'.pparties{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-bottom:5mm;}'
-    +'.pparty{border:1px solid #ccc;padding:3mm;}'
-    +'.pplbl{font-size:9px;font-weight:bold;text-transform:uppercase;color:#555;margin-bottom:2px;}'
-    +'.ppname{font-size:12px;font-weight:bold;}'
+  return '<style>*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:"Segoe UI",Arial,sans-serif;font-size:12px;color:#0f172a;}'
+    +'.doc{width:100%;max-width:210mm;margin:0 auto;padding:14mm 16mm;}'
+    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;padding-bottom:4mm;border-bottom:2.5px solid #1a3a5c;}'
+    +'.pfirm{font-size:18px;font-weight:700;color:#1a3a5c;}'
+    +'.pfsub{font-size:11px;color:#64748b;margin-top:3px;line-height:1.6;}'
+    +'.pdtype{font-size:15px;font-weight:700;color:#1a3a5c;text-align:right;text-transform:uppercase;letter-spacing:1px;}'
+    +'.pdmeta{font-size:11px;color:#64748b;text-align:right;margin-top:4px;line-height:1.7;}'
+    +'.pparties{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-bottom:6mm;}'
+    +'.pparty{background:#f8fafc;border-radius:6px;padding:4mm;}'
+    +'.pplbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#64748b;margin-bottom:3px;}'
+    +'.ppname{font-size:13px;font-weight:600;}'
     +'.ptbl{width:100%;border-collapse:collapse;margin-bottom:4mm;}'
-    +'.ptbl th{border:1px solid #000;padding:5px 8px;text-align:left;font-size:11px;background:#f0f0f0;}'
+    +'.ptbl th{background:#1a3a5c;color:#fff;padding:7px 10px;text-align:left;font-size:11px;}'
     +'.ptbl th.r,.ptbl td.r{text-align:right;}'
-    +'.ptbl td{padding:6px 8px;border:1px solid #ccc;font-size:11px;}'
-    +'.ptots{margin-bottom:4mm;}'
-    +'.ptrow{display:flex;justify-content:flex-end;gap:15mm;font-size:11px;padding:2px 0;}'
-    +'.ptrow.grand{font-size:13px;font-weight:bold;border-top:1.5px solid #000;padding-top:4px;margin-top:3px;}'
-    +'.ptlbl{min-width:30mm;text-align:right;color:#444;}'
-    +'.ptval{min-width:25mm;text-align:right;}'
-    +'.pwords{border:1px solid #ccc;padding:5px 8px;font-size:11px;margin-bottom:4mm;}'
-    +'.pfooter{display:flex;justify-content:space-between;align-items:flex-end;padding-top:3mm;border-top:1px solid #ccc;margin-top:5mm;}'
-    +'.pcab{font-size:9px;font-weight:400;color:#888;letter-spacing:.3px;}'
-    +'.psign{text-align:right;font-size:11px;line-height:2;}'
-    +'.rtitle{font-size:16px;font-weight:bold;text-align:center;margin-bottom:4mm;border-bottom:1.5px solid #000;padding-bottom:3mm;}'
-    +'.rtbl{width:100%;border-collapse:collapse;margin-bottom:4mm;}'
-    +'.rtbl td{padding:6px 10px;border-bottom:1px solid #ddd;font-size:11px;}'
-    +'.rtbl td:first-child{color:#555;width:40%;}'
-    +'.rtbl td:last-child{font-weight:bold;}'
-    +'.ramt{text-align:center;font-size:20px;font-weight:bold;border:1.5px solid #000;padding:4mm;margin-bottom:4mm;}'
-    +'.rwords{font-size:11px;color:#444;text-align:center;margin-bottom:5mm;}'
-    +'@media print{.no-print{display:none!important;}}'
-    +'</style>';
+    +'.ptbl td{padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:12px;}'
+    +'.ptbl tr:last-child td{border-bottom:none;}'
+    +'.ptots{display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-bottom:5mm;}'
+    +'.ptrow{display:flex;gap:20mm;font-size:12px;}'
+    +'.ptrow.grand{font-size:14px;font-weight:700;color:#1a3a5c;border-top:2px solid #1a3a5c;padding-top:5px;margin-top:3px;}'
+    +'.ptlbl{min-width:35mm;text-align:right;color:#64748b;}'
+    +'.ptval{min-width:28mm;text-align:right;font-weight:600;}'
+    +'.pwords{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:6px 10px;font-size:11px;color:#15803d;font-weight:500;margin-bottom:5mm;}'
+    +'.pfooter{display:flex;justify-content:space-between;align-items:flex-end;padding-top:4mm;border-top:1px solid #e2e8f0;margin-top:4mm;}'
+    +'.ppow{font-size:9px;color:#aaa;font-weight:400;}'
+    +'.psign{text-align:right;font-size:11px;color:#475569;line-height:2;}'
+    +'.rbox{border:2px solid #1a3a5c;border-radius:8px;padding:6mm;margin-bottom:4mm;}'
+    +'.rtitle{font-size:22px;font-weight:700;color:#1a3a5c;text-align:center;margin-bottom:4mm;letter-spacing:1px;}'
+    +'.ramtbox{background:#1a3a5c;color:#fff;border-radius:6px;padding:4mm 6mm;text-align:center;margin-bottom:4mm;}'
+    +'.ramtlbl{font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.6px;}'
+    +'.ramtval{font-size:26px;font-weight:700;margin:3px 0;}'
+    +'.ramtw{font-size:11px;opacity:.85;}'
+    +'.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:4mm;}'
+    +'.rflbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin-bottom:2px;}'
+    +'.rfval{font-size:13px;font-weight:600;}'
+    +'@media print{.no-print{display:none!important;}}</style>';
 }
 
-function billHTML(b, f){
-  var isTax = f==='tax';
-  var items = b.items||[{desc:b.description||'Professional Services',hsn:b.hsnSac||'998231',amt:b.taxable,gstR:b.gstRate||0}];
+function billHTML(b,f){
+  var isTax=f==='tax';
+  var items=b.items||[{desc:b.description||'Professional Services',hsn:b.hsnSac||'998231',amt:b.taxable,gstR:b.gstRate||0}];
   var tax=b.taxable||0, gst=b.gst||0, tot=b.total||tax+gst;
   var irows=items.map(function(it){
     var a=it.amt||0, g=it.gstR||0;
@@ -845,55 +754,53 @@ function billHTML(b, f){
       +(isTax?'<td class="r">'+g+'%</td><td class="r">₹'+fmt(a*g/100)+'</td>':'')
       +'<td class="r">₹'+fmt(isTax?a+a*g/100:a)+'</td></tr>';
   }).join('');
-  return '<div class="doc">'
-    +'<div class="phdr"><div><div class="pfirm">'+esc(b.firm)+'</div><div class="pfsub">Pandharpur, Maharashtra</div></div>'
-    +'<div><div class="pdtype">'+(isTax?'Tax Invoice':'Bill of Supply')+'</div>'
+  return '<div class="doc"><div class="phdr"><div>'
+    +'<div class="pfirm">'+esc(b.firm)+'</div><div class="pfsub">Pandharpur, Maharashtra</div>'
+    +'</div><div><div class="pdtype">'+(isTax?'Tax Invoice':'Bill of Supply')+'</div>'
     +'<div class="pdmeta">Bill No: <strong>'+esc(b.billNo)+'</strong><br>Date: <strong>'+esc(b.date)+'</strong>'+(b.period?'<br>Period: '+esc(b.period):'')+'</div></div></div>'
     +'<div class="pparties"><div class="pparty"><div class="pplbl">From</div><div class="ppname">'+esc(b.firm)+'</div></div>'
     +'<div class="pparty"><div class="pplbl">Bill To</div><div class="ppname">'+esc(b.clientName)+'</div></div></div>'
     +'<table class="ptbl"><thead><tr>'
     +'<th style="width:44%">Description</th><th style="width:12%">HSN/SAC</th><th class="r" style="width:14%">Amount</th>'
     +(isTax?'<th class="r" style="width:10%">GST%</th><th class="r" style="width:12%">GST Amt</th>':'')
-    +'<th class="r" style="width:'+(isTax?'8':'14')+'%">Total</th>'
-    +'</tr></thead><tbody>'+irows+'</tbody></table>'
+    +'<th class="r" style="width:'+(isTax?'8':'14')+'%">Total</th></tr></thead><tbody>'+irows+'</tbody></table>'
     +'<div class="ptots">'
     +'<div class="ptrow"><span class="ptlbl">Taxable Amount</span><span class="ptval">₹'+fmt(tax)+'</span></div>'
     +(isTax?'<div class="ptrow"><span class="ptlbl">GST Amount</span><span class="ptval">₹'+fmt(gst)+'</span></div>':'')
-    +'<div class="ptrow grand"><span class="ptlbl">Total Amount</span><span class="ptval">₹'+fmt(tot)+'</span></div>'
-    +'</div>'
+    +'<div class="ptrow grand"><span class="ptlbl">Total Amount</span><span class="ptval">₹'+fmt(tot)+'</span></div></div>'
     +'<div class="pwords">Rupees: '+numWords(Math.round(tot))+' Only</div>'
-    +'<div class="pfooter"><div class="pcab">Bhayani Business Sol<sup>n</sup></div>'
-    +'<div class="psign">For '+esc(b.firm)+'<br><br><br>Authorised Signatory</div></div>'
-    +'</div>';
+    +'<div class="pfooter">'
+    +'<div class="ppow">Bhayani Business Sol<sup>n</sup></div>'
+    +'<div class="psign">For '+esc(b.firm)+'<br><br><br>Authorised Signatory</div></div></div>';
 }
 
 function recHTML(r){
-  return '<div class="doc">'
-    +'<div class="phdr"><div><div class="pfirm">'+esc(r.firm)+'</div><div class="pfsub">Pandharpur, Maharashtra</div></div>'
-    +'<div><div class="pdtype">Receipt Voucher</div>'
+  return '<div class="doc"><div class="phdr"><div>'
+    +'<div class="pfirm">'+esc(r.firm)+'</div><div class="pfsub">Pandharpur, Maharashtra</div>'
+    +'</div><div><div class="pdtype">Receipt Voucher</div>'
     +'<div class="pdmeta">Receipt No: <strong>'+esc(r.receiptNo)+'</strong><br>Date: <strong>'+esc(r.date)+'</strong></div></div></div>'
-    +'<div class="rtitle">RECEIPT</div>'
-    +'<div class="ramt">₹ '+fmt(r.amount)+'</div>'
-    +'<div class="rwords">Rupees: '+numWords(Math.round(r.amount))+' Only</div>'
-    +'<table class="rtbl">'
-    +'<tr><td>Received From</td><td>'+esc(r.clientName)+'</td></tr>'
-    +'<tr><td>Mode of Payment</td><td>'+esc(r.mode)+'</td></tr>'
-    +'<tr><td>Reference / UTR</td><td>'+esc(r.ref||'—')+'</td></tr>'
-    +'<tr><td>Narration</td><td>'+esc(r.narration||'—')+'</td></tr>'
-    +'</table>'
-    +'<div class="pfooter"><div class="pcab">Bhayani Business Sol<sup>n</sup></div>'
-    +'<div class="psign">For '+esc(r.firm)+'<br><br><br>Authorised Signatory</div></div>'
-    +'</div>';
+    +'<div class="rbox"><div class="rtitle">RECEIPT</div>'
+    +'<div class="ramtbox"><div class="ramtlbl">Amount Received</div>'
+    +'<div class="ramtval">₹'+fmt(r.amount)+'</div>'
+    +'<div class="ramtw">'+numWords(Math.round(r.amount))+' Only</div></div>'
+    +'<div class="rgrid">'
+    +'<div><div class="rflbl">Received From</div><div class="rfval">'+esc(r.clientName)+'</div></div>'
+    +'<div><div class="rflbl">Mode of Payment</div><div class="rfval">'+esc(r.mode)+'</div></div>'
+    +'<div><div class="rflbl">Reference / UTR</div><div class="rfval">'+esc(r.ref||'—')+'</div></div>'
+    +'<div><div class="rflbl">Narration</div><div class="rfval">'+esc(r.narration||'—')+'</div></div>'
+    +'</div></div>'
+    +'<div class="pfooter">'
+    +'<div class="ppow">Bhayani Business Sol<sup>n</sup></div>'
+    +'<div class="psign">For '+esc(r.firm)+'<br><br><br>Authorised Signatory</div></div></div>';
 }
 
 function clearCache(){
   allClients=[]; allBills=[]; allReceipts=[];
-  toast('Cache cleared — reloading…','ok');
-  loadConfig();
+  toast('Cache cleared — reloading…','ok'); loadConfig();
 }
 function testConnection(){
   document.getElementById('connStatus').textContent='Testing…';
-  api({ action:'getConfig' }, function(d){
+  api({action:'getConfig'}, function(d){
     if(d.firms) document.getElementById('connStatus').innerHTML='<span style="color:var(--green);font-weight:600;">✓ Connected — '+d.firms.length+' firms loaded</span>';
     else document.getElementById('connStatus').innerHTML='<span style="color:var(--red);">✗ '+(d.error||'Unknown error')+'</span>';
   });
@@ -924,8 +831,7 @@ function toast(msg,type){
   var t=document.getElementById('toast');
   document.getElementById('tmsg').textContent=msg;
   t.className='toast show'+(type?' '+type:'');
-  clearTimeout(t._t);
-  t._t=setTimeout(function(){t.classList.remove('show');},3500);
+  clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},3500);
 }
 function fmt(n){ return Math.round(n).toLocaleString('en-IN'); }
 function slug(s){ return s.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'').toLowerCase(); }
