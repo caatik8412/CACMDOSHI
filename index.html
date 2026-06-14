@@ -386,7 +386,7 @@ function buildFirmUI() {
 
   var th = FIRMS.map(function(f){ return '<th class="r" style="color:'+f.color+'">'+esc(f.label)+'</th>'; }).join('');
   document.getElementById('chead').innerHTML =
-    '<tr><th>Client</th><th>Status</th><th>Last Activity</th>'+th+'<th class="r">Total</th><th class="r">Actions</th></tr>';
+    '<tr><th>Client</th><th>Status</th>'+th+'<th class="r">Total</th><th class="r">Actions</th></tr>';
 
   var opts = FIRMS.map(function(f){ return '<option>'+esc(f.label)+'</option>'; }).join('');
   ['b-firm','r-firm'].forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=opts; });
@@ -408,7 +408,7 @@ function addFirm() {
 }
 
 function loadAll() {
-  var cols = 3+FIRMS.length+2;
+  var cols = 2+FIRMS.length+2;
   document.getElementById('cbody').innerHTML =
     '<tr class="ldg"><td colspan="'+cols+'"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading clients…</div></td></tr>';
   api({action:'getAll'}, function(d){
@@ -426,7 +426,7 @@ function renderClients() {
   var filtered = allClients.filter(function(c){
     return !q||c.name.toLowerCase().includes(q)||(c.group||'').toLowerCase().includes(q)||(c.pan||'').toLowerCase().includes(q);
   });
-  var cols = 3+FIRMS.length+2;
+  var cols = 2+FIRMS.length+2;
   if(!filtered.length){
     document.getElementById('cbody').innerHTML='<tr><td colspan="'+cols+'"><div class="empty"><i class="ti ti-search-off"></i>No clients found.</div></td></tr>';
     updSummary([]); return;
@@ -467,7 +467,6 @@ function clientRow(c) {
   return '<tr class="row">'
     +'<td><div class="cname">'+esc(c.name)+'</div></td>'
     +'<td><span class="cbadge" style="'+ss+'">'+esc(c.status||'—')+'</span></td>'
-    +'<td style="font-size:12px;color:var(--muted);">'+esc(c.lastActivity||'—')+'</td>'
     +firmCols
     +'<td class="amt amtt">'+(tot>0?'₹'+fmt(tot):'—')+'</td>'
     +'<td><div class="acts">'
