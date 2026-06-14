@@ -18,7 +18,7 @@
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
 .hdr{background:var(--navy);padding:14px 20px;text-align:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 .hdr-title{font-size:18px;font-weight:700;color:#fff;letter-spacing:.3px;}
-.hdr-sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:3px;}
+.hdr-sub{font-size:12px;color:rgba(255,255,255,.75);margin-top:3px;font-weight:500;}
 .tabs{display:flex;background:#fff;border-bottom:1px solid var(--border);overflow-x:auto;}
 .tab{padding:12px 20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px;}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
@@ -123,9 +123,28 @@ textarea{resize:vertical;min-height:56px;}
 .toast.show{display:flex;}
 .toast.ok{background:var(--green);}
 .toast.err{background:var(--red);}
+
+/* ── SPLASH ── */
+.splash{position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s ease;}
+.splash.hide{opacity:0;pointer-events:none;}
+.splash-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;}
+.splash-sub{font-size:13px;color:rgba(255,255,255,.6);text-align:center;margin-top:2px;}
+.splash-pow{font-size:12px;color:rgba(255,255,255,.45);margin-top:8px;}
+.splash-sp{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+.splash-bar{width:200px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;margin-top:4px;overflow:hidden;}
+.splash-bar-fill{height:100%;width:0%;background:#fff;border-radius:2px;transition:width 4.8s ease;}
 </style>
 </head>
 <body>
+
+<!-- SPLASH SCREEN -->
+<div class="splash" id="splash">
+  <div class="splash-sp"></div>
+  <div class="splash-title">CA CM Doshi &amp; Company</div>
+  <div class="splash-sub">Billing Tracker &mdash; Loading your data&hellip;</div>
+  <div class="splash-bar"><div class="splash-bar-fill" id="splashBar"></div></div>
+  <div class="splash-pow">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup></div>
+</div>
 
 <div class="hdr">
   <div class="hdr-title">CA CM Doshi &amp; Company — Billing Tracker</div>
@@ -349,6 +368,10 @@ var FIRMS=[], allClients=[], allBills=[], allReceipts=[];
 var curId='', curName='', curOut=0, printData=null, busy=false;
 
 window.onload = function() {
+  // Splash — always hides after 5 seconds no matter what
+  setTimeout(function(){ document.getElementById('splashBar').style.width='100%'; }, 100);
+  setTimeout(function(){ hideSplash(); }, 5000);
+
   var today = new Date().toISOString().split('T')[0];
   document.getElementById('b-date').value = today;
   document.getElementById('r-date').value = today;
@@ -357,6 +380,12 @@ window.onload = function() {
   document.getElementById('rfrom').value  = fm.toISOString().split('T')[0];
   loadConfig();
 };
+
+function hideSplash() {
+  var s = document.getElementById('splash');
+  s.classList.add('hide');
+  setTimeout(function(){ s.style.display='none'; }, 500);
+}
 
 function api(params, cb) {
   var qs = Object.keys(params).map(function(k){
@@ -418,6 +447,7 @@ function loadAll() {
       allClients.map(function(c){ return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>'; }).join('');
     document.getElementById('st-clients').textContent = allClients.length;
     renderClients();
+    hideSplash();
   });
 }
 
@@ -729,7 +759,7 @@ function printCSS(){
     +'.ptval{min-width:28mm;text-align:right;font-weight:600;}'
     +'.pwords{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:6px 10px;font-size:11px;color:#15803d;font-weight:500;margin-bottom:5mm;}'
     +'.pfooter{display:flex;justify-content:space-between;align-items:flex-end;padding-top:4mm;border-top:1px solid #e2e8f0;margin-top:4mm;}'
-    +'.ppow{font-size:9px;color:#aaa;font-weight:400;}'
+    +'.ppow{font-size:9px;color:#444;font-weight:600;letter-spacing:.3px;}'
     +'.psign{text-align:right;font-size:11px;color:#475569;line-height:2;}'
     +'.rbox{border:2px solid #1a3a5c;border-radius:8px;padding:6mm;margin-bottom:4mm;}'
     +'.rtitle{font-size:22px;font-weight:700;color:#1a3a5c;text-align:center;margin-bottom:4mm;letter-spacing:1px;}'
