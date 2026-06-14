@@ -58,10 +58,6 @@ tr.row:hover{background:#f8fafc;}
 tr.row td{padding:8px 12px;vertical-align:middle;}
 .cname{font-weight:500;font-size:13px;}
 .cbadge{display:inline-flex;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;margin-top:2px;}
-.obadge{display:inline-flex;padding:2px 6px;border-radius:8px;font-size:10px;font-weight:600;}
-.ob-h{background:#fef2f2;color:var(--red);}
-.ob-m{background:#fffbeb;color:#b45309;}
-.ob-l{background:#f0fdf4;color:var(--green);}
 .amt{text-align:right;font-size:13px;font-weight:600;white-space:nowrap;}
 .amt0{color:#cbd5e1;font-weight:400;}
 .amtt{color:var(--navy);font-weight:700;}
@@ -462,16 +458,14 @@ function clientRow(c) {
     var v=c.byFirm[f.label]||0; tot+=v;
     return '<td class="amt'+(v>0?'':' amt0')+'" style="'+(v>0?'color:'+f.color:'')+'">'+(v>0?'₹'+fmt(v):'—')+'</td>';
   }).join('');
-  var ob=tot>50000?'h':tot>15000?'m':'l';
-  var obCls={'h':'ob-h','m':'ob-m','l':'ob-l'}[ob];
-  var obLbl={'h':'High','m':'Mid','l':'Low'}[ob];
+
   var smap={'44AB':'background:#eff6ff;color:#1d4ed8','44AD':'background:#f0fdf4;color:#15803d',
     '8% BUSINESS':'background:#f5f3ff;color:#6d28d9','PARTNER':'background:#fff7ed;color:#c2410c',
     'DIRECTOR':'background:#fdf4ff;color:#7e22ce','OTHER':'background:#f1f5f9;color:#475569',
     'HUF':'background:#fefce8;color:#854d0e','FIRM':'background:#ecfdf5;color:#065f46'};
   var ss=smap[c.status]||'background:#f1f5f9;color:#475569';
   return '<tr class="row">'
-    +'<td><div class="cname">'+esc(c.name)+'</div>'+(tot>0?'<span class="obadge '+obCls+'">'+obLbl+'</span>':'<span style="font-size:11px;color:#cbd5e1;">Nil</span>')+'</td>'
+    +'<td><div class="cname">'+esc(c.name)+'</div></td>'
     +'<td><span class="cbadge" style="'+ss+'">'+esc(c.status||'—')+'</span></td>'
     +'<td style="font-size:12px;color:var(--muted);">'+esc(c.lastActivity||'—')+'</td>'
     +firmCols
