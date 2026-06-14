@@ -626,7 +626,7 @@ function saveBill(){
     tax+=a; gst+=a*g/100;
     if(desc||a) items.push({desc:desc,hsn:hsn,amt:a,gstR:g});
   });
-  var pd={billNo:no, date:new Date(dt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+  var pd={billNo:no, date:(function(s){var p=s.split('-'),m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return p[2]+' '+m[+p[1]-1]+' '+p[0];})(dt),
     clientName:curName, firm:firm, period:document.getElementById('b-period').value,
     taxable:tax, gst:gst, total:tax+gst, narration:document.getElementById('b-nar').value, items:items};
   busy=true;
@@ -700,7 +700,7 @@ function saveReceipt(){
   var amt=parseFloat(document.getElementById('r-amt').value)||0;
   var firm=document.getElementById('r-firm').value;
   if(!no||!dt||!amt||!firm){ toast('Receipt no, date, amount and firm required','err'); return; }
-  var pd={receiptNo:no, date:new Date(dt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+  var pd={receiptNo:no, date:(function(s){var p=s.split('-'),m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return p[2]+' '+m[+p[1]-1]+' '+p[0];})(dt),
     clientName:curName, firm:firm, amount:amt, mode:document.getElementById('r-mode').value,
     ref:document.getElementById('r-ref').value, narration:document.getElementById('r-nar').value};
   busy=true;
@@ -731,13 +731,11 @@ function fetchReceipts(){
 }
 function renderReceipts(){
   var firmF = document.getElementById('rfirm').value;
-  var filtered = firmF ? allReceipts.filter(function(r){ return r.firm===firmF; }) : allReceipts;
-  if(!filtered.length){ document.getElementById('rbody').innerHTML='<tr><td colspan="8"><div class="empty"><i class="ti ti-receipt-off"></i>No receipts for selected filters.</div></td></tr>'; return; }
-  allReceipts = filtered;
-  if(!allReceipts.length){ document.getElementById('rbody').innerHTML='<tr><td colspan="8"><div class="empty"><i class="ti ti-receipt-off"></i>No receipts for selected filters.</div></td></tr>'; return; }
+  var display = firmF ? allReceipts.filter(function(r){ return r.firm===firmF; }) : allReceipts.slice();
+  if(!display.length){ document.getElementById('rbody').innerHTML='<tr><td colspan="8"><div class="empty"><i class="ti ti-receipt-off"></i>No receipts for selected filters.</div></td></tr>'; return; }
   var fi={}; FIRMS.forEach(function(f){ fi[f.label]=f; });
   var total=0;
-  var rows=allReceipts.map(function(r){
+  var rows=display.map(function(r){
     total+=r.amount;
     var f=fi[r.firm]||{color:'#64748b',bg:'#f1f5f9'};
     return '<tr class="row">'
