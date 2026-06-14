@@ -448,6 +448,11 @@ textarea{resize:vertical;min-height:56px;}
 // ── CONFIG ────────────────────────────────────────────────────
 var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyYjO04N90u8CREVaAYSOQqLXcomWWytAqDPJ_UZ37X2PedCrhsVDmiJAzDioJWbR9mdw/exec';
 var USERS = { 'CACMD': 'Cmdoshi@123' };
+var FIRM_DETAILS = {
+  'CM Doshi':        { printName:'C M Doshi and Co',    address:'Pandharpur, Maharashtra', gstin:'27AEWPD6934J1ZW', defaultGST:18, isGST:true  },
+  'PR Phade':        { printName:'Piyush R Phade & Co', address:'Pandharpur, Maharashtra', gstin:'',               defaultGST:0,  isGST:false },
+  'Prabha Computers':{ printName:'Prabha Computers',    address:'Pandharpur, Maharashtra', gstin:'',               defaultGST:0,  isGST:false }
+};
 
 // ── STATE ─────────────────────────────────────────────────────
 var FIRMS=[], allClients=[], allBills=[], allReceipts=[];
@@ -711,7 +716,12 @@ function saveBill(){
     busy=false;
     document.getElementById('saveBillBtn').disabled=false;
     document.getElementById('saveBillBtn').innerHTML='<i class="ti ti-device-floppy"></i> Save Bill';
-    if(d.ok){closeM('mAddBill');toast('Bill saved ✓','ok');loadAll();printData={type:'bill',data:pd};openM('mPrint');}
+    if(d.ok){
+      closeM('mAddBill');toast('Bill saved ✓','ok');loadAll();
+      printData={type:'bill',data:pd};
+      var pfd=FIRM_DETAILS[pd.firm]||{isGST:false};
+      if(pfd.isGST) openM('mPrint'); else doPrint('bos');
+    }
     else toast(d.error||'Save failed','err');
   });
 }
@@ -764,7 +774,8 @@ function renderBills(){
 }
 function printBillRow(btn){
   printData={type:'bill',data:JSON.parse(btn.getAttribute('data-b').replace(/&#39;/g,"'"))};
-  openM('mPrint');
+  var pfd=FIRM_DETAILS[printData.data.firm]||{isGST:false};
+  if(pfd.isGST) openM('mPrint'); else doPrint('bos');
 }
 
 // ── RECEIPT MODAL ─────────────────────────────────────────────
@@ -889,7 +900,13 @@ function saveClient(){
     status:document.getElementById('nc-status').value,
     mobile:document.getElementById('nc-mobile').value.trim()
   },function(d){
-    if(d.ok){closeM('mAddClient');toast('Client added ✓','ok');loadAll();}
+    if(d.ok){
+      closeM('mAddClient');
+      toast('Client added ✓','ok');
+      // Turn off outstanding filter so new client (zero balance) is visible
+      document.getElementById('outOnly').checked=false;
+      loadAll();
+    }
     else toast(d.error||'Failed','err');
   });
 }
@@ -965,34 +982,42 @@ function printCSS(){
     +'@media print{.no-print{display:none!important;}}</style>';
 }
 
-function billHTML(b,f){
-  var isTax=f==='tax';
-  var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:b.gstRate||0}];
-  var tax=b.taxable||0,gst=b.gst||0,tot=b.total||tax+gst;
+function billHTML(b,fmt_unused){
+  var fd=FIRM_DETAILS[b.firm]||{printName:b.firm,address:'Pandharpur, Maharashtra',gstin:'',defaultGST:0,isGST:false};
+  var isTax=fd.isGST;
+  var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:fd.defaultGST}];
+  var tax=0,gst=0;
+  items.forEach(function(it){ var a=it.amt||0,g=isTax?(it.gstR||fd.defaultGST):0; tax+=a; gst+=a*g/100; });
+  var tot=tax+gst;
   var irows=items.map(function(it){
-    var a=it.amt||0,g=it.gstR||0;
-    return '<tr><td>'+esc(it.desc||'')+'</td><td>'+esc(it.hsn||'')+'</td><td class="r">₹'+fmt(a)+'</td>'
+    var a=it.amt||0,g=isTax?(it.gstR||fd.defaultGST):0;
+    return '<tr><td>'+esc(it.desc||'')+'</td><td>'+esc(it.hsn||'998231')+'</td><td class="r">₹'+fmt(a)+'</td>'
       +(isTax?'<td class="r">'+g+'%</td><td class="r">₹'+fmt(a*g/100)+'</td>':'')
       +'<td class="r">₹'+fmt(isTax?a+a*g/100:a)+'</td></tr>';
   }).join('');
-  return '<div class="doc"><div class="phdr"><div><div class="pfirm">'+esc(b.firm)+'</div><div class="pfsub">Pandharpur, Maharashtra</div></div>'
+  return '<div class="doc">'
+    +'<div class="phdr"><div><div class="pfirm">'+esc(fd.printName)+'</div>'
+    +'<div class="pfsub">'+esc(fd.address)+(fd.gstin?'<br>GSTIN: '+esc(fd.gstin):'')+'</div></div>'
     +'<div><div class="pdtype">'+(isTax?'Tax Invoice':'Bill of Supply')+'</div>'
     +'<div class="pdmeta">Bill No: <strong>'+esc(b.billNo)+'</strong><br>Date: <strong>'+esc(b.date)+'</strong>'+(b.period?'<br>Period: '+esc(b.period):'')+'</div></div></div>'
-    +'<div class="pparties"><div class="pparty"><div class="pplbl">From</div><div class="ppname">'+esc(b.firm)+'</div></div>'
+    +'<div class="pparties"><div class="pparty"><div class="pplbl">From</div><div class="ppname">'+esc(fd.printName)+'</div>'+(fd.gstin?'<div style="font-size:10px;color:#555;margin-top:2px;">GSTIN: '+esc(fd.gstin)+'</div>':'')+'</div>'
     +'<div class="pparty"><div class="pplbl">Bill To</div><div class="ppname">'+esc(b.clientName)+'</div></div></div>'
-    +'<table class="ptbl"><thead><tr><th style="width:44%">Description</th><th style="width:12%">HSN/SAC</th><th class="r" style="width:14%">Amount</th>'
+    +'<table class="ptbl"><thead><tr>'
+    +'<th style="width:44%">Description</th><th style="width:12%">HSN/SAC</th><th class="r" style="width:14%">Amount</th>'
     +(isTax?'<th class="r" style="width:10%">GST%</th><th class="r" style="width:12%">GST Amt</th>':'')
-    +'<th class="r" style="width:'+(isTax?'8':'14')+'%">Total</th></tr></thead><tbody>'+irows+'</tbody></table>'
+    +'<th class="r" style="width:'+(isTax?'8':'14')+'%">Total</th>'
+    +'</tr></thead><tbody>'+irows+'</tbody></table>'
     +'<div class="ptots"><div class="ptrow"><span class="ptlbl">Taxable Amount</span><span class="ptval">₹'+fmt(tax)+'</span></div>'
-    +(isTax?'<div class="ptrow"><span class="ptlbl">GST Amount</span><span class="ptval">₹'+fmt(gst)+'</span></div>':'')
+    +(isTax?'<div class="ptrow"><span class="ptlbl">GST @ '+fd.defaultGST+'%</span><span class="ptval">₹'+fmt(gst)+'</span></div>':'')
     +'<div class="ptrow grand"><span class="ptlbl">Total Amount</span><span class="ptval">₹'+fmt(tot)+'</span></div></div>'
     +'<div class="pwords">Rupees: '+numWords(Math.round(tot))+' Only</div>'
     +'<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div>'
-    +'<div class="psign">For '+esc(b.firm)+'<br><br><br>Authorised Signatory</div></div></div>';
+    +'<div class="psign">For '+esc(fd.printName)+'<br><br><br>Authorised Signatory</div></div></div>';
 }
 
 function recHTML(r){
-  return '<div class="doc"><div class="phdr"><div><div class="pfirm">'+esc(r.firm)+'</div><div class="pfsub">Pandharpur, Maharashtra</div></div>'
+  var fd=FIRM_DETAILS[r.firm]||{printName:r.firm,address:'Pandharpur, Maharashtra'};
+  return '<div class="doc"><div class="phdr"><div><div class="pfirm">'+esc(fd.printName)+'</div><div class="pfsub">'+esc(fd.address)+'</div></div>'
     +'<div><div class="pdtype">Receipt Voucher</div>'
     +'<div class="pdmeta">Receipt No: <strong>'+esc(r.receiptNo)+'</strong><br>Date: <strong>'+esc(r.date)+'</strong></div></div></div>'
     +'<div class="rtitle">RECEIPT</div>'
@@ -1005,7 +1030,7 @@ function recHTML(r){
     +'<tr><td>Narration</td><td>'+esc(r.narration||'—')+'</td></tr>'
     +'</table>'
     +'<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div>'
-    +'<div class="psign">For '+esc(r.firm)+'<br><br><br>Authorised Signatory</div></div></div>';
+    +'<div class="psign">For '+esc(fd.printName)+'<br><br><br>Authorised Signatory</div></div></div>';
 }
 
 // ── SETTINGS ─────────────────────────────────────────────────
