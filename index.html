@@ -133,12 +133,51 @@ textarea{resize:vertical;min-height:56px;}
 .splash-sp{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
 .splash-bar{width:200px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;margin-top:4px;overflow:hidden;}
 .splash-bar-fill{height:100%;width:0%;background:#fff;border-radius:2px;transition:width 4.8s ease;}
+
+/* ── LOGIN ── */
+.login-wrap{position:fixed;inset:0;background:var(--navy);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;}
+.login-box{background:#fff;border-radius:12px;padding:36px 32px;width:340px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.3);}
+.login-logo{text-align:center;margin-bottom:24px;}
+.login-logo-title{font-size:17px;font-weight:700;color:var(--navy);line-height:1.3;}
+.login-logo-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.login-logo-pow{font-size:10px;color:#aaa;margin-top:6px;}
+.login-divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.login-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.login-field label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);}
+.login-field input{padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;outline:none;width:100%;font-family:inherit;}
+.login-field input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,168,.1);}
+.login-btn{width:100%;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px;letter-spacing:.3px;}
+.login-btn:hover{background:var(--accent);}
+.login-err{color:var(--red);font-size:12px;text-align:center;margin-top:8px;display:none;}
 </style>
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-title">CA CM Doshi &amp; Company</div>
+      <div class="login-logo-sub">Billing &amp; Outstanding Tracker</div>
+      <div class="login-logo-pow">Powered by Bhayani Business Sol<sup style="font-size:8px;">n</sup></div>
+    </div>
+    <hr class="login-divider">
+    <div class="login-field">
+      <label>User ID</label>
+      <input type="text" id="loginId" placeholder="Enter User ID" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter Password" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Login</button>
+    <div class="login-err" id="loginErr">❌ Invalid User ID or Password</div>
+  </div>
+</div>
+
 <!-- SPLASH SCREEN -->
-<div class="splash" id="splash">
+<div class="splash" id="splash" style="display:none;">
   <div class="splash-sp"></div>
   <div class="splash-title">CA CM Doshi &amp; Company</div>
   <div class="splash-sub">Billing Tracker &mdash; Loading your data&hellip;</div>
@@ -367,11 +406,31 @@ var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMRRVcC3tOJ6elKcRrYHc
 var FIRMS=[], allClients=[], allBills=[], allReceipts=[];
 var curId='', curName='', curOut=0, printData=null, busy=false;
 
-window.onload = function() {
-  // Splash — always hides after 5 seconds no matter what
-  setTimeout(function(){ document.getElementById('splashBar').style.width='100%'; }, 100);
-  setTimeout(function(){ hideSplash(); }, 5000);
+// ── CREDENTIALS (will move to server-side later) ──────────────
+var USERS = { 'CACMD': 'Cmdoshi@123' };
 
+function doLogin() {
+  var id   = document.getElementById('loginId').value.trim();
+  var pass = document.getElementById('loginPass').value;
+  if (USERS[id] && USERS[id] === pass) {
+    // Hide login, show splash, start loading
+    document.getElementById('loginWrap').style.display = 'none';
+    document.getElementById('splash').style.display    = 'flex';
+    // Animate bar, hide splash after 5s
+    setTimeout(function(){ document.getElementById('splashBar').style.width='100%'; }, 100);
+    setTimeout(function(){ hideSplash(); }, 5000);
+    // Start data load
+    initApp();
+  } else {
+    var err = document.getElementById('loginErr');
+    err.style.display = 'block';
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginPass').focus();
+    setTimeout(function(){ err.style.display='none'; }, 3000);
+  }
+}
+
+function initApp() {
   var today = new Date().toISOString().split('T')[0];
   document.getElementById('b-date').value = today;
   document.getElementById('r-date').value = today;
@@ -379,6 +438,11 @@ window.onload = function() {
   var fm = new Date(); fm.setDate(1);
   document.getElementById('rfrom').value  = fm.toISOString().split('T')[0];
   loadConfig();
+}
+
+window.onload = function() {
+  // Just focus the login ID field on load
+  document.getElementById('loginId').focus();
 };
 
 function hideSplash() {
