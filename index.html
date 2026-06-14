@@ -165,16 +165,17 @@ textarea{resize:vertical;min-height:56px;}
       <div class="login-logo-pow">Powered by Bhayani Business Sol<sup style="font-size:8px;">n</sup></div>
     </div>
     <hr class="login-divider">
-    <div class="login-field">
-      <label>User ID</label>
-      <input type="text" id="loginId" placeholder="Enter User ID" autocomplete="username">
-    </div>
-    <div class="login-field">
-      <label>Password</label>
-      <input type="password" id="loginPass" placeholder="Enter Password" autocomplete="current-password"
-        onkeydown="if(event.key==='Enter') doLogin()">
-    </div>
-    <button class="login-btn" onclick="doLogin()">Login</button>
+    <form onsubmit="doLogin();return false;" autocomplete="on">
+      <div class="login-field">
+        <label>User ID</label>
+        <input type="text" id="loginId" placeholder="Enter User ID" autocomplete="username">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Enter Password" autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn">Login</button>
+    </form>
     <div class="login-err" id="loginErr">❌ Invalid User ID or Password</div>
   </div>
 </div>
@@ -477,8 +478,12 @@ function initApp() {
   document.getElementById('b-date').value = today;
   document.getElementById('r-date').value = today;
   document.getElementById('rto').value    = today;
-  var fm = new Date(); fm.setDate(1);
-  document.getElementById('rfrom').value  = fm.toISOString().split('T')[0];
+  // Default from = 01 April of current financial year
+  var d = new Date();
+  var fyStart = d.getMonth() >= 3
+    ? new Date(d.getFullYear(), 3, 1)      // Apr this year
+    : new Date(d.getFullYear()-1, 3, 1);   // Apr last year
+  document.getElementById('rfrom').value  = fyStart.toISOString().split('T')[0];
   loadConfig();
 }
 
@@ -728,8 +733,17 @@ function saveBill(){
 }
 
 function fetchBills(){
+  // Set default date range if empty (full FY)
+  if(!document.getElementById('bfrom').value){
+    var d=new Date();
+    var fyStart=d.getMonth()>=3?new Date(d.getFullYear(),3,1):new Date(d.getFullYear()-1,3,1);
+    document.getElementById('bfrom').value=fyStart.toISOString().split('T')[0];
+    document.getElementById('bto').value=new Date().toISOString().split('T')[0];
+  }
+  var from=document.getElementById('bfrom').value;
+  var to=document.getElementById('bto').value;
   document.getElementById('bbody').innerHTML='<tr class="ldg"><td colspan="8"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Fetching…</div></td></tr>';
-  api({action:'getBills'}, function(d){
+  api({action:'getBills',from:from,to:to}, function(d){
     allBills=d.bills||[]; document.getElementById('st-bills').textContent=allBills.length; renderBills();
   });
 }
