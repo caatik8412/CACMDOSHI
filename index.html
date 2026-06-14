@@ -748,6 +748,8 @@ function renderBills(){
     if(q&&!b.clientName.toLowerCase().includes(q)&&!b.billNo.toLowerCase().includes(q)) return false;
     return true;
   });
+  // Sort reverse date — latest first
+  list.sort(function(a,b){ return parseDate(b.rawDate||b.date)-parseDate(a.rawDate||a.date); });
   if(!list.length){document.getElementById('bbody').innerHTML='<tr><td colspan="8"><div class="empty"><i class="ti ti-file-off"></i>No bills found.</div></td></tr>';return;}
   // Summary strip
   var bTot={},bGrand=0;
@@ -837,6 +839,8 @@ function fetchReceipts(){
 function renderReceipts(){
   var firmF=document.getElementById('rfirm').value;
   var display=firmF?allReceipts.filter(function(r){return r.firm===firmF;}):allReceipts.slice();
+  // Sort reverse date — latest first
+  display.sort(function(a,b){ return parseDate(b.rawDate||b.date)-parseDate(a.rawDate||a.date); });
   if(!display.length){document.getElementById('rbody').innerHTML='<tr><td colspan="8"><div class="empty"><i class="ti ti-receipt-off"></i>No receipts found.</div></td></tr>';return;}
   var fi={};FIRMS.forEach(function(f){fi[f.label]=f;});
   var total=0,rTot={};
@@ -1079,6 +1083,16 @@ function toast(msg,type){
   document.getElementById('tmsg').textContent=msg;
   t.className='toast show'+(type?' '+type:'');
   clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},3500);
+}
+function parseDate(s){
+  if(!s||s==='—') return 0;
+  // Handle yyyy-MM-dd
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s).getTime();
+  // Handle "14 Jun 2026"
+  var m={'Jan':0,'Feb':1,'Mar':2,'Apr':3,'May':4,'Jun':5,'Jul':6,'Aug':7,'Sep':8,'Oct':9,'Nov':10,'Dec':11};
+  var p=s.split(' ');
+  if(p.length===3) return new Date(parseInt(p[2]),m[p[1]]||0,parseInt(p[0])).getTime();
+  return new Date(s).getTime();
 }
 function fmtDate(s){
   var p=s.split('-'),m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
