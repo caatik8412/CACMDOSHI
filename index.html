@@ -123,6 +123,9 @@ textarea{resize:vertical;min-height:56px;}
 .toast.show{display:flex;}
 .toast.ok{background:var(--green);}
 .toast.err{background:var(--red);}
+.toggle-wrap{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--navy);white-space:nowrap;background:#e8f0f8;padding:5px 12px;border-radius:20px;border:1px solid #bfdbfe;}
+.toggle-wrap input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;}
+.toggle-lbl{color:var(--navy);}
 
 /* ── SPLASH ── */
 .splash{position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s ease;}
@@ -201,6 +204,10 @@ textarea{resize:vertical;min-height:56px;}
   <div class="sumstrip" id="sumstrip"></div>
   <div class="bar">
     <div class="sbox"><i class="ti ti-search"></i><input id="csearch" placeholder="Search client / group…" oninput="renderClients()"></div>
+    <label class="toggle-wrap" title="Show only clients with outstanding balance">
+      <input type="checkbox" id="outstandingOnly" onchange="renderClients()" checked>
+      <span class="toggle-lbl">Outstanding Only</span>
+    </label>
     <button class="btn btn-o" onclick="loadAll()"><i class="ti ti-refresh"></i> Refresh</button>
     <button class="btn btn-p" onclick="openM('mAddClient')"><i class="ti ti-user-plus"></i> Add Client</button>
     <button class="btn btn-o btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> Export</button>
@@ -213,6 +220,7 @@ textarea{resize:vertical;min-height:56px;}
 </div>
 
 <div id="p-bills" class="panel">
+  <div class="sumstrip" id="bsumstrip" style="display:none;"></div>
   <div class="bar">
     <div class="sbox"><i class="ti ti-search"></i><input id="bsearch" placeholder="Search client / bill no…" oninput="renderBills()"></div>
     <select class="sel" id="bfirm" onchange="renderBills()"><option value="">All Firms</option></select>
@@ -227,13 +235,18 @@ textarea{resize:vertical;min-height:56px;}
 </div>
 
 <div id="p-receipts" class="panel">
-  <div class="bar">
-    <label style="font-size:12px;color:var(--muted);white-space:nowrap;">From</label>
-    <input type="date" class="dt" id="rfrom">
-    <label style="font-size:12px;color:var(--muted);white-space:nowrap;">To</label>
-    <input type="date" class="dt" id="rto">
-    <select class="sel" id="rclient" style="max-width:180px;"><option value="">All Clients</option></select>
-    <select class="sel" id="rfirm" style="max-width:160px;"><option value="">All Firms</option></select>
+  <div class="sumstrip" id="rsumstrip" style="display:none;"></div>
+  <div class="bar" style="gap:6px;">
+    <div style="display:flex;align-items:center;gap:4px;">
+      <label style="font-size:11px;color:var(--muted);white-space:nowrap;">From</label>
+      <input type="date" class="dt" id="rfrom" style="padding:5px 8px;font-size:12px;width:130px;">
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;">
+      <label style="font-size:11px;color:var(--muted);white-space:nowrap;">To</label>
+      <input type="date" class="dt" id="rto" style="padding:5px 8px;font-size:12px;width:130px;">
+    </div>
+    <select class="sel" id="rclient" style="max-width:170px;font-size:12px;padding:5px 8px;"><option value="">All Clients</option></select>
+    <select class="sel" id="rfirm" style="max-width:150px;font-size:12px;padding:5px 8px;"><option value="">All Firms</option></select>
     <button class="btn btn-p" onclick="fetchReceipts()"><i class="ti ti-database-import"></i> Fetch Receipts</button>
   </div>
   <div class="twrap"><div class="tbox">
@@ -268,6 +281,34 @@ textarea{resize:vertical;min-height:56px;}
       <button class="btn btn-r" onclick="clearCache()"><i class="ti ti-trash"></i> Clear Cache &amp; Reload</button>
     </div>
     <div class="set-section">
+      <div class="set-title"><i class="ti ti-calendar-stats"></i> Opening Balance Entry</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Add outstanding balance as on a specific date without entering old bills.</p>
+      <div class="fg2" style="margin-bottom:0;">
+        <div class="fg">
+          <label class="lbl">Client</label>
+          <select id="ob-client" style="font-size:13px;"></select>
+        </div>
+        <div class="fg">
+          <label class="lbl">Firm</label>
+          <select id="ob-firm" style="font-size:13px;"></select>
+        </div>
+        <div class="fg">
+          <label class="lbl">As On Date</label>
+          <input type="date" id="ob-date" style="font-size:13px;">
+        </div>
+        <div class="fg">
+          <label class="lbl">Amount (₹)</label>
+          <input type="number" id="ob-amount" placeholder="0" style="font-size:13px;">
+        </div>
+        <div class="fg sp2">
+          <label class="lbl">Narration</label>
+          <input type="text" id="ob-nar" placeholder="e.g. Opening Balance as on 01/06/2026" style="font-size:13px;">
+        </div>
+      </div>
+      <button class="btn btn-p btn-sm" style="margin-top:12px;" onclick="saveOpeningBalance()"><i class="ti ti-plus"></i> Add Opening Balance</button>
+    </div>
+
+    <div class="set-section">
       <div class="set-title"><i class="ti ti-link"></i> Connection</div>
       <div id="connStatus" style="font-size:13px;margin-bottom:10px;"></div>
       <button class="btn btn-o btn-sm" onclick="testConnection()"><i class="ti ti-plug"></i> Test Connection</button>
@@ -286,7 +327,7 @@ textarea{resize:vertical;min-height:56px;}
       <div class="fg2">
         <div class="fg"><label class="lbl">Bill Number *</label><input id="b-no" placeholder="CMD/25-26/001"></div>
         <div class="fg"><label class="lbl">Bill Date *</label><input type="date" id="b-date"></div>
-        <div class="fg"><label class="lbl">Firm *</label><select id="b-firm"></select></div>
+        <div class="fg"><label class="lbl">Firm *</label><select id="b-firm" onchange="suggestBillNo()"></select></div>
         <div class="fg"><label class="lbl">Service Period</label><input id="b-period" placeholder="FY 2024-25"></div>
       </div>
       <hr class="hdivider">
@@ -321,7 +362,7 @@ textarea{resize:vertical;min-height:56px;}
       <div class="fg2">
         <div class="fg"><label class="lbl">Receipt Number *</label><input id="r-no" placeholder="RV/25-26/001"></div>
         <div class="fg"><label class="lbl">Receipt Date *</label><input type="date" id="r-date"></div>
-        <div class="fg"><label class="lbl">Firm *</label><select id="r-firm"></select></div>
+        <div class="fg"><label class="lbl">Firm *</label><select id="r-firm" onchange="suggestRecNo()"></select></div>
         <div class="fg"><label class="lbl">Amount (₹) *</label><input type="number" id="r-amt" placeholder="0" oninput="updBal()"></div>
         <div class="fg"><label class="lbl">Mode</label>
           <select id="r-mode"><option>Bank Transfer (NEFT/RTGS)</option><option>UPI</option><option>Cheque</option><option>Cash</option><option>IMPS</option></select>
@@ -402,7 +443,7 @@ textarea{resize:vertical;min-height:56px;}
 
 <script>
 // ── CONFIG ── CHANGE URL HERE ONLY ────────────────────────────
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMRRVcC3tOJ6elKcRrYHcHe_qL76QJGmNbRitVG8vk1k8APo4QkYz5BrHqZGhtzMUZ4A/exec';
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2Q7n7hq0yBDz65JOw5rZWbVBc3Ppe3r3De48LRe30ktfJ6vWvWVKhwqDZYFYrmvIqlg/exec';
 
 var FIRMS=[], allClients=[], allBills=[], allReceipts=[];
 var curId='', curName='', curOut=0, printData=null, busy=false;
@@ -519,8 +560,14 @@ function loadAll() {
 
 function renderClients() {
   var q = document.getElementById('csearch').value.toLowerCase();
+  var outOnly = document.getElementById('outstandingOnly').checked;
   var filtered = allClients.filter(function(c){
-    return !q||c.name.toLowerCase().includes(q)||(c.group||'').toLowerCase().includes(q)||(c.pan||'').toLowerCase().includes(q);
+    if(q && !c.name.toLowerCase().includes(q) && !(c.group||'').toLowerCase().includes(q) && !(c.pan||'').toLowerCase().includes(q)) return false;
+    if(outOnly){
+      var tot = Object.values(c.byFirm).reduce(function(a,b){return a+b;},0);
+      if(tot <= 0) return false;
+    }
+    return true;
   });
   var cols = 2+FIRMS.length+2;
   if(!filtered.length){
@@ -548,7 +595,7 @@ function renderClients() {
   updSummary(filtered);
 }
 
-function clientRow(c) {
+function clientRow(c, gkey) {
   var tot=0;
   var firmCols=FIRMS.map(function(f){
     var v=c.byFirm[f.label]||0; tot+=v;
@@ -560,7 +607,8 @@ function clientRow(c) {
     'DIRECTOR':'background:#fdf4ff;color:#7e22ce','OTHER':'background:#f1f5f9;color:#475569',
     'HUF':'background:#fefce8;color:#854d0e','FIRM':'background:#ecfdf5;color:#065f46'};
   var ss=smap[c.status]||'background:#f1f5f9;color:#475569';
-  return '<tr class="row">'
+  var hidden = gkey ? 'display:none;' : '';
+  return '<tr class="row" data-grp="'+(gkey||'')+'" style="'+hidden+'">'
     +'<td><div class="cname">'+esc(c.name)+'</div></td>'
     +'<td><span class="cbadge" style="'+ss+'">'+esc(c.status||'—')+'</span></td>'
     +firmCols
@@ -570,6 +618,17 @@ function clientRow(c) {
       +'<button class="icn ir" title="Add Receipt" onclick="openRec(\''+c.id+'\',\''+esc(c.name)+'\','+tot+')"><i class="ti ti-receipt"></i></button>'
       +'<button class="icn il" title="Ledger" onclick="openLedger(\''+c.id+'\',\''+esc(c.name)+'\')"><i class="ti ti-book"></i></button>'
     +'</div></td></tr>';
+}
+
+var openGroups = {};
+function toggleGroup(key){
+  var icon = document.getElementById('gi-'+key);
+  var isOpen = openGroups[key];
+  openGroups[key] = !isOpen;
+  document.querySelectorAll('tr[data-grp="'+key+'"]').forEach(function(tr){
+    tr.style.display = isOpen ? 'none' : '';
+  });
+  if(icon) icon.textContent = isOpen ? '▶' : '▼';
 }
 
 function updSummary(clients) {
@@ -588,7 +647,30 @@ function openBill(id,name){
   document.getElementById('b-period').value='';
   document.getElementById('b-nar').value='';
   document.getElementById('b-items').innerHTML=itemRow();
-  calcTots(); openM('mAddBill');
+  calcTots();
+  suggestBillNo();
+  openM('mAddBill');
+}
+
+// Auto bill/receipt number — fetched from server to avoid duplicates
+function suggestBillNo(){
+  var firm = document.getElementById('b-firm').value;
+  if(!firm) return;
+  document.getElementById('b-no').value = 'Fetching…';
+  api({action:'getNextNo', firm:firm, type:'bill'}, function(d){
+    if(d.ok) document.getElementById('b-no').value = d.number;
+    else { document.getElementById('b-no').value = ''; toast('Could not get bill number','err'); }
+  });
+}
+
+function suggestRecNo(){
+  var firm = document.getElementById('r-firm').value;
+  if(!firm) return;
+  document.getElementById('r-no').value = 'Fetching…';
+  api({action:'getNextNo', firm:firm, type:'receipt'}, function(d){
+    if(d.ok) document.getElementById('r-no').value = d.number;
+    else { document.getElementById('r-no').value = ''; toast('Could not get receipt number','err'); }
+  });
 }
 function itemRow(){
   return '<tr><td><input type="text" placeholder="Service description"></td>'
@@ -663,7 +745,8 @@ function renderBills(){
   var fi={}; FIRMS.forEach(function(f){ fi[f.label]=f; });
   document.getElementById('bbody').innerHTML=list.map(function(b){
     var f=fi[b.firm]||{color:'#64748b',bg:'#f1f5f9'};
-    return '<tr class="row">'
+    var hidden = gkey ? 'display:none;' : '';
+  return '<tr class="row" data-grp="'+(gkey||'')+'" style="'+hidden+'">'
       +'<td style="font-weight:600;">'+esc(b.billNo)+'</td>'
       +'<td style="font-size:12px;color:var(--muted);">'+esc(b.date)+'</td>'
       +'<td style="font-weight:500;">'+esc(b.clientName)+'</td>'
@@ -685,6 +768,7 @@ function openRec(id,name,out){
   document.getElementById('r-ref').value='';
   document.getElementById('r-nar').value='';
   document.getElementById('r-bal').style.display='none';
+  suggestRecNo();
   openM('mAddReceipt');
 }
 function updBal(){
@@ -738,7 +822,8 @@ function renderReceipts(){
   var rows=display.map(function(r){
     total+=r.amount;
     var f=fi[r.firm]||{color:'#64748b',bg:'#f1f5f9'};
-    return '<tr class="row">'
+    var hidden = gkey ? 'display:none;' : '';
+  return '<tr class="row" data-grp="'+(gkey||'')+'" style="'+hidden+'">'
       +'<td style="font-weight:600;">'+esc(r.receiptNo)+'</td>'
       +'<td style="font-size:12px;color:var(--muted);">'+esc(r.date)+'</td>'
       +'<td style="font-weight:500;">'+esc(r.clientName)+'</td>'
@@ -751,6 +836,19 @@ function renderReceipts(){
   }).join('');
   rows+='<tr style="background:#f0fdf4;"><td colspan="6" style="text-align:right;font-weight:600;padding:10px 12px;color:var(--green);">Total Received</td><td class="amt" style="color:var(--green);font-weight:700;padding:10px 12px;">₹'+fmt(total)+'</td><td></td></tr>';
   document.getElementById('rbody').innerHTML=rows;
+
+  // Build receipt summary strip
+  var rTotals={}, rCount=display.length;
+  display.forEach(function(r){ rTotals[r.firm]=(rTotals[r.firm]||0)+r.amount; });
+  var rstrip='<div class="sumcard tot" style="min-width:110px;"><div class="sumlbl">Total Receipts</div><div class="sumval">'+rCount+'</div></div>';
+  FIRMS.forEach(function(f){
+    if(rTotals[f.label]){
+      rstrip+='<div class="sumcard" style="background:'+f.bg+';min-width:110px;"><div class="sumlbl" style="color:'+f.color+'">'+esc(f.label)+'</div><div class="sumval" style="color:'+f.color+'">₹'+fmt(rTotals[f.label])+'</div></div>';
+    }
+  });
+  rstrip+='<div class="sumcard" style="background:#f0fdf4;min-width:110px;"><div class="sumlbl" style="color:var(--green);">Total Received</div><div class="sumval" style="color:var(--green);">₹'+fmt(total)+'</div></div>';
+  var rss=document.getElementById('rsumstrip');
+  rss.innerHTML=rstrip; rss.style.display='flex';
 }
 function printRec(raw){ printData={type:'receipt',data:JSON.parse(raw)}; doPrint('receipt'); }
 
@@ -774,6 +872,31 @@ function openLedger(id,name){
       +'<span style="font-weight:600;">Balance Outstanding</span>'
       +'<span style="font-weight:700;font-size:16px;color:'+(bal>0?'var(--red)':'var(--green)')+'">₹'+fmt(Math.abs(bal))+'</span></div>';
     document.getElementById('led-body').innerHTML=html;
+  });
+}
+
+function saveOpeningBalance(){
+  var clientId = document.getElementById('ob-client').value;
+  var clientName = document.getElementById('ob-client').options[document.getElementById('ob-client').selectedIndex].text;
+  var firm   = document.getElementById('ob-firm').value;
+  var date   = document.getElementById('ob-date').value;
+  var amount = parseFloat(document.getElementById('ob-amount').value)||0;
+  var nar    = document.getElementById('ob-nar').value.trim() || 'Opening Balance';
+  if(!clientId||!firm||!date||!amount){ toast('All fields required for opening balance','err'); return; }
+  // Use server-side numbering for opening balance too
+  api({action:'getNextNo', firm:firm, type:'bill'}, function(nb){
+    var billNo = nb.ok ? nb.number.replace('/'+nb.number.split('/')[1]+'/','/OB/') : 'OB/'+Date.now();
+    api({action:'addBill', billNo:billNo, billDate:date,
+    clientId:clientId, clientName:clientName, firm:firm,
+    description:nar, period:'Opening Balance', taxable:amount, gstRate:0, narration:nar
+  }, function(d){
+    if(d.ok){
+      toast('Opening balance added ✓','ok');
+      document.getElementById('ob-amount').value='';
+      document.getElementById('ob-nar').value='';
+      loadAll();
+    } else toast(d.error||'Failed','err');
+    });
   });
 }
 
@@ -920,7 +1043,17 @@ function switchTab(t){
   var tabs=['clients','bills','receipts','settings'];
   document.querySelectorAll('.tab').forEach(function(el,i){ el.classList.toggle('active',tabs[i]===t); });
   tabs.forEach(function(id){ document.getElementById('p-'+id).classList.toggle('active',id===t); });
-  if(t==='settings') document.getElementById('st-clients').textContent=allClients.length;
+  if(t==='settings'){
+    document.getElementById('st-clients').textContent=allClients.length;
+    // Populate opening balance client dropdown
+    var obcl = document.getElementById('ob-client');
+    obcl.innerHTML = allClients.map(function(c){ return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>'; }).join('');
+    var obfm = document.getElementById('ob-firm');
+    obfm.innerHTML = FIRMS.map(function(f){ return '<option>'+esc(f.label)+'</option>'; }).join('');
+    // Set default date to today
+    var od = document.getElementById('ob-date');
+    if(!od.value) od.value = new Date().toISOString().split('T')[0];
+  }
 }
 function openM(id){ document.getElementById(id).classList.add('open'); }
 function closeM(id){ document.getElementById(id).classList.remove('open'); }
