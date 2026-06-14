@@ -221,24 +221,25 @@ textarea{resize:vertical;min-height:56px;}
   <div class="twrap"><div class="tbox">
     <table>
       <thead><tr><th>Bill No.</th><th>Date</th><th>Client</th><th>Firm</th><th>Period</th><th class="r">Taxable</th><th class="r">Total</th><th class="r">Actions</th></tr></thead>
-      <tbody id="bbody"><tr><td colspan="8"><div class="fetch-msg"><i class="ti ti-file-invoice"></i><p>Click Fetch Bills to load records.</p><button class="btn btn-p btn-sm" onclick="fetchBills()"><i class="ti ti-database-import"></i> Fetch Bills</button></div></td></tr></tbody>
+      <tbody id="bbody"><tr><td colspan="8"><div class="fetch-msg"><i class="ti ti-file-invoice"></i><p>Click Fetch Bills to load records.</p></div></td></tr></tbody>
     </table>
   </div></div>
 </div>
 
 <div id="p-receipts" class="panel">
   <div class="bar">
-    <label style="font-size:12px;color:var(--muted);">From</label>
+    <label style="font-size:12px;color:var(--muted);white-space:nowrap;">From</label>
     <input type="date" class="dt" id="rfrom">
-    <label style="font-size:12px;color:var(--muted);">To</label>
+    <label style="font-size:12px;color:var(--muted);white-space:nowrap;">To</label>
     <input type="date" class="dt" id="rto">
-    <select class="sel" id="rclient" style="max-width:200px;"><option value="">All Clients</option></select>
+    <select class="sel" id="rclient" style="max-width:180px;"><option value="">All Clients</option></select>
+    <select class="sel" id="rfirm" style="max-width:160px;"><option value="">All Firms</option></select>
     <button class="btn btn-p" onclick="fetchReceipts()"><i class="ti ti-database-import"></i> Fetch Receipts</button>
   </div>
   <div class="twrap"><div class="tbox">
     <table>
       <thead><tr><th>Receipt No.</th><th>Date</th><th>Client</th><th>Firm</th><th>Mode</th><th>Reference</th><th class="r">Amount</th><th class="r">Actions</th></tr></thead>
-      <tbody id="rbody"><tr><td colspan="8"><div class="fetch-msg"><i class="ti ti-receipt"></i><p>Select date range and click Fetch Receipts.</p><button class="btn btn-p btn-sm" onclick="fetchReceipts()"><i class="ti ti-database-import"></i> Fetch Receipts</button></div></td></tr></tbody>
+      <tbody id="rbody"><tr><td colspan="8"><div class="fetch-msg"><i class="ti ti-receipt"></i><p>Select date range and click Fetch Receipts.</p></div></td></tr></tbody>
     </table>
   </div></div>
 </div>
@@ -484,8 +485,9 @@ function buildFirmUI() {
   var opts = FIRMS.map(function(f){ return '<option>'+esc(f.label)+'</option>'; }).join('');
   ['b-firm','r-firm'].forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=opts; });
 
-  document.getElementById('bfirm').innerHTML =
-    '<option value="">All Firms</option>'+FIRMS.map(function(f){ return '<option>'+esc(f.label)+'</option>'; }).join('');
+  var firmFilterOpts = '<option value="">All Firms</option>'+FIRMS.map(function(f){ return '<option>'+esc(f.label)+'</option>'; }).join('');
+  document.getElementById('bfirm').innerHTML = firmFilterOpts;
+  document.getElementById('rfirm').innerHTML = firmFilterOpts;
 
   document.getElementById('firmsList').innerHTML = FIRMS.map(function(f){
     return '<span class="firm-chip" style="background:'+f.bg+';color:'+f.color+'">'+esc(f.label)+'</span>';
@@ -720,13 +722,18 @@ function fetchReceipts(){
   var from=document.getElementById('rfrom').value;
   var to=document.getElementById('rto').value;
   var cid=document.getElementById('rclient').value;
+  var firm=document.getElementById('rfirm').value;
   if(!from||!to){ toast('Select date range','err'); return; }
   document.getElementById('rbody').innerHTML='<tr class="ldg"><td colspan="8"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Fetching…</div></td></tr>';
-  api({action:'getReceipts', from:from, to:to, clientId:cid}, function(d){
+  api({action:'getReceipts', from:from, to:to, clientId:cid, firmFilter:firm}, function(d){
     allReceipts=d.receipts||[]; document.getElementById('st-receipts').textContent=allReceipts.length; renderReceipts();
   });
 }
 function renderReceipts(){
+  var firmF = document.getElementById('rfirm').value;
+  var filtered = firmF ? allReceipts.filter(function(r){ return r.firm===firmF; }) : allReceipts;
+  if(!filtered.length){ document.getElementById('rbody').innerHTML='<tr><td colspan="8"><div class="empty"><i class="ti ti-receipt-off"></i>No receipts for selected filters.</div></td></tr>'; return; }
+  allReceipts = filtered;
   if(!allReceipts.length){ document.getElementById('rbody').innerHTML='<tr><td colspan="8"><div class="empty"><i class="ti ti-receipt-off"></i>No receipts for selected filters.</div></td></tr>'; return; }
   var fi={}; FIRMS.forEach(function(f){ fi[f.label]=f; });
   var total=0;
