@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:,">
-<title>CA CM Doshi &amp; Company — Client Manager</title>
+<title>CA CM Doshi &amp; Company — Billing Tracker</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
 :root{
@@ -135,8 +135,6 @@ textarea{resize:vertical;min-height:56px;}
 .itbl th{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:5px 7px;background:#f8fafc;border:1px solid var(--border);}
 .itbl td{padding:4px 5px;border:1px solid var(--border);}
 .itbl input{border:none;padding:4px 6px;font-size:13px;outline:none;background:transparent;width:100%;}
-.itbl select.isel{border:none;padding:4px 6px;font-size:12px;outline:none;background:transparent;width:100%;cursor:pointer;}
-.itbl select.isel:focus{background:#f0f7ff;border-radius:3px;}
 .itbl input:focus{background:#f0f7ff;border-radius:3px;}
 .addbtn{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-size:12px;font-weight:500;cursor:pointer;background:none;border:none;padding:0;margin-top:6px;}
 .delbtn{color:var(--red);background:none;border:none;cursor:pointer;font-size:14px;padding:2px;}
@@ -170,7 +168,7 @@ textarea{resize:vertical;min-height:56px;}
   <div class="login-box">
     <div class="login-logo">
       <div class="login-logo-title">CA CM Doshi &amp; Company</div>
-      <div class="login-logo-sub">Client Manager</div>
+      <div class="login-logo-sub">Billing &amp; Outstanding Tracker</div>
       <div class="login-logo-pow">Powered by Bhayani Business Sol<sup style="font-size:8px;">n</sup></div>
     </div>
     <hr class="login-divider">
@@ -193,20 +191,20 @@ textarea{resize:vertical;min-height:56px;}
 <div class="splash" id="splash">
   <div class="splash-sp"></div>
   <div class="splash-title">CA CM Doshi &amp; Company</div>
-  <div class="splash-sub">Client Manager — Loading your data…</div>
+  <div class="splash-sub">Billing Tracker — Loading your data…</div>
   <div class="splash-bar"><div class="splash-fill" id="splashFill"></div></div>
   <div class="splash-pow">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup></div>
 </div>
 
 <!-- HEADER -->
 <div class="hdr">
-  <div class="hdr-title">CA CM Doshi &amp; Company — Client Manager</div>
-  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v2.1 · 15Jun26</span></div>
+  <div class="hdr-title">CA CM Doshi &amp; Company — Billing Tracker</div>
+  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup></div>
 </div>
 
 <!-- TABS -->
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('clients')"><i class="ti ti-users"></i>Client Masterdata</div>
+  <div class="tab active" onclick="switchTab('clients')"><i class="ti ti-users"></i>Clients</div>
   <div class="tab" onclick="switchTab('bills')"><i class="ti ti-file-invoice"></i>Bills</div>
   <div class="tab" onclick="switchTab('receipts')"><i class="ti ti-receipt"></i>Receipts</div>
   <div class="tab" onclick="switchTab('settings')"><i class="ti ti-settings"></i>Settings</div>
@@ -224,7 +222,6 @@ textarea{resize:vertical;min-height:56px;}
     <button class="btn btn-o" onclick="loadAll()"><i class="ti ti-refresh"></i> Refresh</button>
     <button class="btn btn-p" onclick="openM('mAddClient')"><i class="ti ti-user-plus"></i> Add Client</button>
     <button class="btn btn-o btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> Export</button>
-    <button class="btn btn-o btn-sm" onclick="printGroupView()"><i class="ti ti-printer"></i> Print View</button>
   </div>
   <div class="twrap"><div class="tbox">
     <table><thead id="chead"></thead><tbody id="cbody">
@@ -459,31 +456,6 @@ textarea{resize:vertical;min-height:56px;}
 // ── CONFIG ────────────────────────────────────────────────────
 var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyYjO04N90u8CREVaAYSOQqLXcomWWytAqDPJ_UZ37X2PedCrhsVDmiJAzDioJWbR9mdw/exec';
 var USERS = { 'CACMD': 'Cmdoshi@123' };
-
-// ── SERVICES LIST ─────────────────────────────────────────────
-var SERVICES = [
-  'Tax Audit - 44AB',
-  'Tax Audit - 44ADA',
-  'Income Tax Return Filing',
-  'Income Tax TDS Filing',
-  'Income Tax Assessment',
-  'VAT Return Filing',
-  'VAT Audit Return Filing',
-  'VAT Registration',
-  'GST Return Filing (M)',
-  'GST Return Filing (Q)',
-  'GSTR 9',
-  'GSTR 9C',
-  'DRC-03',
-  'GST Department Audit',
-  'GST Office Visiting Fees',
-  'GST Registration',
-  'GST Cancellation',
-  'GST Refund Application Filling Fees',
-  'GST Notice Handling Fees',
-  'Certification Charges',
-  'Other'
-];
 var FIRM_DETAILS = {
   'CM Doshi':        { printName:'C M Doshi and Co',    address:'Pandharpur, Maharashtra', gstin:'27AEWPD6934J1ZW', defaultGST:18, isGST:true  },
   'PR Phade':        { printName:'Piyush R Phade & Co', address:'Pandharpur, Maharashtra', gstin:'',               defaultGST:0,  isGST:false },
@@ -541,14 +513,8 @@ function api(params,cb){
   }).join('&');
   fetch(SCRIPT_URL+'?'+qs)
     .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.error) toast(d.error,'err');
-      if(cb) cb(d);
-    })
-    .catch(function(e){
-      toast('Network error: '+e.message,'err');
-      if(cb) cb({error:e.message});
-    });
+    .then(function(d){if(d.error)toast(d.error,'err'); if(cb)cb(d);})
+    .catch(function(e){toast('Network error: '+e.message,'err');});
 }
 
 // ── CONFIG / FIRMS ────────────────────────────────────────────
@@ -601,17 +567,7 @@ function loadAll(){
   document.getElementById('cbody').innerHTML=
     '<tr class="ldg"><td colspan="'+cols+'"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading clients…</div></td></tr>';
   api({action:'getAll'},function(d){
-    if(!d || d.error){
-      toast('getAll error: '+(d?d.error:'no response'),'err');
-      document.getElementById('cbody').innerHTML='<tr><td colspan="'+cols+'"><div class="empty"><i class="ti ti-alert-circle"></i>Error loading clients: '+(d?esc(d.error):'no response')+'</div></td></tr>';
-      hideSplash();
-      return;
-    }
     allClients=d.clients||[];
-    if(allClients.length===0){
-      // Try live fallback message
-      toast('No clients in Balances sheet — run rebuildAllBalances()','err');
-    }
     var sel=document.getElementById('rclient');
     sel.innerHTML='<option value="">All Clients</option>'+
       allClients.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('');
@@ -637,27 +593,14 @@ function renderClients(){
 
   // Group (case-insensitive)
   var groups={},glabel={},nogrp=[];
-  window._grpData={}; window._grpLabel={};
   filtered.forEach(function(c){
-    if(c.group){var k=c.group.trim().toLowerCase();if(!groups[k]){groups[k]=[];glabel[k]=c.group.trim();}groups[k].push(c);window._grpData[k]=groups[k];window._grpLabel[k]=glabel[k];}
+    if(c.group){var k=c.group.trim().toLowerCase();if(!groups[k]){groups[k]=[];glabel[k]=c.group.trim();}groups[k].push(c);}
     else nogrp.push(c);
   });
 
   var rows='';
   Object.keys(groups).sort().forEach(function(g){
-    // Calculate group totals
-    var gTot=0, gFirmTots={};
-    FIRMS.forEach(function(f){gFirmTots[f.label]=0;});
-    groups[g].forEach(function(c){
-      FIRMS.forEach(function(f){ var v=c.byFirm[f.label]||0; gFirmTots[f.label]+=v; gTot+=v; });
-    });
-    var gFirmStr=FIRMS.map(function(f){
-      var v=gFirmTots[f.label];
-      return v>0?'<span style="background:rgba(255,255,255,.15);color:#fff;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600;margin-left:6px;">'+esc(f.label)+' ₹'+fmt(v)+'</span>':'';
-    }).join('');
-    var gTotStr=gTot>0?'<span style="float:right;font-weight:700;font-size:12px;margin-right:8px;">₹'+fmt(gTot)+'</span>':'';
-    var gPrintBtn='<button data-gkey="'+g+'" onclick="window._printGrp(this)" style="float:right;background:rgba(255,255,255,.2);border:none;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;margin-right:6px;" title="Print Group"><i class="ti ti-printer" style="font-size:12px;"></i></button>';
-    rows+='<tr class="grp"><td colspan="'+cols+'"><i class="ti ti-folder" style="margin-right:5px;opacity:.75;vertical-align:-2px;"></i><strong>'+esc(glabel[g])+'</strong>'+gFirmStr+gTotStr+gPrintBtn+'</td></tr>';
+    rows+='<tr class="grp"><td colspan="'+cols+'"><i class="ti ti-folder"></i>'+esc(glabel[g])+'</td></tr>';
     groups[g].forEach(function(c){rows+=cRow(c);});
   });
   if(nogrp.length){
@@ -692,129 +635,6 @@ function cRow(c){
   +'</tr>';
 }
 
-function printGroup(gkey){
-  var clients=window._grpData[gkey]||[];
-  var label=window._grpLabel[gkey]||gkey;
-  if(!clients.length){toast('No clients in group','err');return;}
-  var today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-
-  // Build table rows
-  var trows='';
-  clients.forEach(function(c){
-    var tot=0;
-    var fCols=FIRMS.map(function(f){
-      var v=c.byFirm[f.label]||0; tot+=v;
-      return '<td style="text-align:right;padding:6px 8px;font-size:11px;">'+(v>0?'₹'+fmt(v):'—')+'</td>';
-    }).join('');
-    trows+='<tr style="border-bottom:1px solid #e2e8f0;">'
-      +'<td style="padding:6px 8px;font-size:11px;font-weight:500;">'+esc(c.name)+'</td>'
-      +'<td style="padding:6px 8px;font-size:10px;color:#64748b;">'+esc(c.status||'')+'</td>'
-      +fCols
-      +'<td style="text-align:right;padding:6px 8px;font-size:11px;font-weight:700;color:#1a3a5c;">'+(tot>0?'₹'+fmt(tot):'—')+'</td>'
-    +'</tr>';
-  });
-
-  // Build totals row
-  var gTot=0;
-  var fTotCols=FIRMS.map(function(f){
-    var v=clients.reduce(function(s,c){return s+(c.byFirm[f.label]||0);},0); gTot+=v;
-    return '<td style="text-align:right;padding:7px 8px;font-size:11px;font-weight:700;border-top:1.5px solid #1a3a5c;">'+(v>0?'₹'+fmt(v):'—')+'</td>';
-  }).join('');
-  trows+='<tr style="background:#f8fafc;">'
-    +'<td colspan="2" style="padding:7px 8px;font-size:11px;font-weight:700;border-top:1.5px solid #1a3a5c;">Total</td>'
-    +fTotCols
-    +'<td style="text-align:right;padding:7px 8px;font-size:12px;font-weight:700;color:#1a3a5c;border-top:1.5px solid #1a3a5c;">₹'+fmt(gTot)+'</td>'
-  +'</tr>';
-
-  // Firm header cols
-  var fHdrs=FIRMS.map(function(f){
-    return '<th style="text-align:right;padding:6px 8px;font-size:10px;font-weight:700;text-transform:uppercase;background:#1a3a5c;color:'+f.color+';">'+esc(f.label)+'</th>';
-  }).join('');
-
-  var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+label+' — Outstanding</title>'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:12px;color:#000;}'
-    +'.doc{padding:10mm 12mm;max-width:210mm;margin:0 auto;}'
-    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5mm;padding-bottom:3mm;border-bottom:2px solid #1a3a5c;}'
-    +'.pfirm{font-size:15px;font-weight:bold;color:#1a3a5c;}.psub{font-size:11px;color:#64748b;margin-top:3px;}'
-    +'.grp-title{font-size:13px;font-weight:700;color:#1a3a5c;margin-bottom:4mm;text-transform:uppercase;letter-spacing:.5px;}'
-    +'table{width:100%;border-collapse:collapse;}'
-    +'th{padding:6px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;background:#1a3a5c;color:#fff;}'
-    +'.pfooter{display:flex;justify-content:space-between;margin-top:8mm;padding-top:3mm;border-top:1px solid #ccc;}'
-    +'.ppow{font-size:9px;color:#444;font-weight:600;}'
-    +'@media print{.no-print{display:none!important;}}</style></head><body>');
-  w.document.write('<div class="no-print" style="background:#1a3a5c;padding:10px 16px;display:flex;gap:10px;align-items:center;">');
-  w.document.write('<span style="color:#fff;font-weight:600;font-size:13px;">'+esc(label)+' — Outstanding Statement</span>');
-  w.document.write('<button onclick="window.print()" style="margin-left:auto;padding:6px 18px;background:#fff;color:#1a3a5c;border:none;border-radius:5px;font-weight:600;cursor:pointer;">&#128424; Print</button>');
-  w.document.write('<button onclick="window.close()" style="padding:6px 14px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;cursor:pointer;">Close</button>');
-  w.document.write('</div>');
-  w.document.write('<div class="doc">');
-  w.document.write('<div class="phdr"><div><div class="pfirm">CA CM Doshi &amp; Company</div><div class="psub">Outstanding Statement</div></div>'
-    +'<div style="text-align:right;"><div style="font-size:11px;color:#64748b;">As on '+today+'</div></div></div>');
-  w.document.write('<div class="grp-title">&#128193; '+esc(label)+'</div>');
-  w.document.write('<table><thead><tr>'
-    +'<th style="width:38%;">Name</th>'
-    +'<th style="width:10%;">Status</th>'
-    +fHdrs
-    +'<th style="text-align:right;padding:6px 8px;font-size:10px;font-weight:700;text-transform:uppercase;background:#1a3a5c;color:#fff;">Total</th>'
-    +'</tr></thead><tbody>'+trows+'</tbody></table>');
-  w.document.write('<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div>'
-    +'<div style="font-size:9px;color:#aaa;">CA CM Doshi &amp; Company</div></div>');
-  w.document.write('</div></body></html>');
-  w.document.close();
-}
-
-window._printGrp = function(btn){
-  var key = btn.getAttribute('data-gkey');
-  printGroup(key);
-};
-
-function printGroupView(){
-  // Print what is currently visible in the client table
-  var fi={};FIRMS.forEach(function(f){fi[f.label]=f;});
-  var firmHdrs=FIRMS.map(function(f){return '<th style="text-align:right;padding:5px 8px;font-size:11px;background:#1a3a5c;color:'+f.color+'">'+esc(f.label)+'</th>';}).join('');
-  var rows=document.querySelectorAll('#cbody tr');
-  var tableRows='';
-  rows.forEach(function(tr){
-    if(tr.classList.contains('grp')){
-      var cols=2+FIRMS.length+2;
-      tableRows+='<tr><td colspan="'+cols+'" style="background:#1a3a5c;color:#fff;padding:6px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">'+tr.innerText.trim()+'</td></tr>';
-    } else if(tr.classList.contains('row')){
-      var tds=tr.querySelectorAll('td');
-      var rowHtml='<tr style="border-bottom:1px solid #e2e8f0;">';
-      for(var i=0;i<tds.length-1;i++){ // skip Actions column
-        var align=i>1?'text-align:right;':'';
-        rowHtml+='<td style="padding:6px 8px;font-size:11px;'+align+'">'+tds[i].innerText.trim()+'</td>';
-      }
-      rowHtml+='</tr>';
-      tableRows+=rowHtml;
-    }
-  });
-  var firmHdrsFull='<th style="padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:#64748b;">Client</th>'
-    +'<th style="padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:#64748b;">Status</th>'
-    +FIRMS.map(function(f){return '<th style="text-align:right;padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:'+f.color+'">'+esc(f.label)+'</th>';}).join('')
-    +'<th style="text-align:right;padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:#1a3a5c;">Total</th>';
-  var today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Outstanding Report</title>'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:12px;}'
-    +'.doc{padding:10mm 12mm;}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;padding-bottom:3mm;border-bottom:2px solid #1a3a5c;}'
-    +'.title{font-size:16px;font-weight:bold;color:#1a3a5c;}.sub{font-size:11px;color:#64748b;margin-top:3px;}'
-    +'table{width:100%;border-collapse:collapse;}th{border-bottom:1px solid #e2e8f0;}'
-    +'@media print{.no-print{display:none!important;}}</style></head><body>');
-  w.document.write('<div class="no-print" style="background:#1a3a5c;padding:10px 16px;display:flex;gap:10px;align-items:center;">');
-  w.document.write('<span style="color:#fff;font-weight:600;font-size:13px;">Outstanding Report</span>');
-  w.document.write('<button onclick="window.print()" style="margin-left:auto;padding:6px 18px;background:#fff;color:#1a3a5c;border:none;border-radius:5px;font-weight:600;cursor:pointer;">&#128424; Print</button>');
-  w.document.write('<button onclick="window.close()" style="padding:6px 14px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;cursor:pointer;">Close</button>');
-  w.document.write('</div><div class="doc">');
-  w.document.write('<div class="hdr"><div><div class="title">CA CM Doshi &amp; Company</div><div class="sub">Outstanding Report</div></div>'
-    +'<div style="text-align:right;"><div style="font-size:11px;color:#64748b;">As on '+today+'</div>'
-    +'<div style="font-size:10px;color:#aaa;margin-top:3px;">Bhayani Business Sol<sup>n</sup></div></div></div>');
-  w.document.write('<table><thead><tr>'+firmHdrsFull+'</tr></thead><tbody>'+tableRows+'</tbody></table>');
-  w.document.write('</div></body></html>');
-  w.document.close();
-}
-
 function updSum(clients){
   FIRMS.forEach(function(f){
     var t=clients.reduce(function(s,c){return s+(c.byFirm[f.label]||0);},0);
@@ -835,55 +655,13 @@ function openBill(id,name){
   calcTots();suggestBillNo();openM('mAddBill');
 }
 function iRow(){
-  var opts=SERVICES.map(function(s){
-    return '<option value="'+esc(s)+'">'+esc(s)+'</option>';
-  }).join('');
-  return '<tr>'
-    +'<td style="padding:0;">'
-      +'<select class="isel" onchange="handleSvcSel(this)" style="width:100%;border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;">'
-        +'<option value="">— Select Service —</option>'+opts
-      +'</select>'
-      +'<input type="text" class="idesc" placeholder="Describe service…" style="display:none;width:100%;border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;">'
-    +'</td>'
-    +'<td><input type="text" class="ihsn" placeholder="998231" style="border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;width:100%;"></td>'
-    +'<td><input type="number" placeholder="0" class="ia" oninput="calcTots()" style="border:none;padding:4px 6px;font-size:13px;background:transparent;outline:none;width:100%;"></td>'
-    +'<td><input type="number" placeholder="18" class="ig" oninput="calcTots()" style="border:none;padding:4px 6px;font-size:13px;background:transparent;outline:none;width:100%;"></td>'
-    +'<td><button class="delbtn" onclick="delRow(this)"><i class="ti ti-x"></i></button></td>'
-    +'</tr>';
+  return '<tr><td><input type="text" placeholder="Service description"></td>'
+    +'<td><input type="text" placeholder="998231"></td>'
+    +'<td><input type="number" placeholder="0" class="ia" oninput="calcTots()"></td>'
+    +'<td><input type="number" placeholder="18" class="ig" oninput="calcTots()"></td>'
+    +'<td><button class="delbtn" onclick="delRow(this)"><i class="ti ti-x"></i></button></td></tr>';
 }
-
-function handleSvcSel(sel){
-  var tr=sel.closest('tr');
-  var desc=tr.querySelector('.idesc');
-  if(sel.value==='Other'){
-    sel.style.display='none';
-    desc.style.display='block';
-    desc.focus();
-  } else {
-    desc.style.display='none';
-    sel.style.display='block';
-  }
-}
-function addRow(){
-  document.getElementById('b-items').insertAdjacentHTML('beforeend',iRow());
-  var firm=document.getElementById('b-firm').value;
-  var fd=FIRM_DETAILS[firm]||{defaultGST:0,isGST:false};
-  var rows=document.querySelectorAll('#b-items tr');
-  var lastRow=rows[rows.length-1];
-  var gstEl=lastRow.querySelector('.ig');
-  if(fd.isGST){
-    gstEl.value=fd.defaultGST;
-    gstEl.disabled=false;
-    gstEl.style.background='';
-    gstEl.style.color='';
-  } else {
-    gstEl.value=0;
-    gstEl.disabled=true;
-    gstEl.style.background='#f1f5f9';
-    gstEl.style.color='#94a3b8';
-  }
-  calcTots();
-}
+function addRow(){document.getElementById('b-items').insertAdjacentHTML('beforeend',iRow());}
 function delRow(btn){if(document.querySelectorAll('#b-items tr').length>1){btn.closest('tr').remove();calcTots();}}
 function calcTots(){
   var tax=0,gst=0;
@@ -901,22 +679,6 @@ function calcTots(){
 function suggestBillNo(){
   var firm=document.getElementById('b-firm').value;
   if(!firm) return;
-  var fd=FIRM_DETAILS[firm]||{defaultGST:0,isGST:false};
-  // Auto-fill or block GST field based on firm
-  document.querySelectorAll('#b-items tr .ig').forEach(function(el){
-    if(fd.isGST){
-      if(!el.value||el.value==='0') el.value=fd.defaultGST;
-      el.disabled=false;
-      el.style.background='';
-      el.style.color='';
-    } else {
-      el.value=0;
-      el.disabled=true;
-      el.style.background='#f1f5f9';
-      el.style.color='#94a3b8';
-    }
-  });
-  calcTots();
   document.getElementById('b-no').value='Fetching…';
   api({action:'getNextNo',firm:firm,type:'bill'},function(d){
     document.getElementById('b-no').value=d.ok?d.number:'';
@@ -941,16 +703,12 @@ function saveBill(){
   if(!no||no==='Fetching…'||!dt||!firm){toast('Bill number, date and firm are required','err');return;}
   var tax=0,gst=0,items=[];
   document.querySelectorAll('#b-items tr').forEach(function(r){
-    var sel=r.querySelector('.isel');
-    var inp=r.querySelector('.idesc');
-    var desc='';
-    if(sel && sel.style.display!=='none') desc=sel.value||'';
-    else if(inp) desc=inp.value||'';
-    var hsn=r.querySelector('.ihsn')?r.querySelector('.ihsn').value:'998231';
+    var desc=r.cells[0].querySelector('input').value;
+    var hsn=r.cells[1].querySelector('input').value;
     var a=parseFloat(r.querySelector('.ia').value)||0;
     var g=parseFloat(r.querySelector('.ig').value)||0;
     tax+=a;gst+=a*g/100;
-    if(desc||a)items.push({desc:desc,hsn:hsn||'998231',amt:a,gstR:g});
+    if(desc||a)items.push({desc:desc,hsn:hsn,amt:a,gstR:g});
   });
   if(items.length===0){toast('Add at least one bill item','err');return;}
   var pd={billNo:no,date:fmtDate(dt),clientName:curName,firm:firm,
@@ -1244,14 +1002,12 @@ function printCSS(){
 function billHTML(b,fmt_unused){
   var fd=FIRM_DETAILS[b.firm]||{printName:b.firm,address:'Pandharpur, Maharashtra',gstin:'',defaultGST:0,isGST:false};
   var isTax=fd.isGST;
-  // Always use fd.defaultGST for GST firms — never trust saved gstR which may be 0
-  var gstPct=isTax?fd.defaultGST:0;
-  var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:gstPct}];
+  var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:fd.defaultGST}];
   var tax=0,gst=0;
-  items.forEach(function(it){ var a=it.amt||0,g=isTax?gstPct:0; tax+=a; gst+=a*g/100; });
+  items.forEach(function(it){ var a=it.amt||0,g=isTax?(it.gstR||fd.defaultGST):0; tax+=a; gst+=a*g/100; });
   var tot=tax+gst;
   var irows=items.map(function(it){
-    var a=it.amt||0,g=isTax?gstPct:0;
+    var a=it.amt||0,g=isTax?(it.gstR||fd.defaultGST):0;
     return '<tr><td>'+esc(it.desc||'')+'</td><td>'+esc(it.hsn||'998231')+'</td><td class="r">₹'+fmt(a)+'</td>'
       +(isTax?'<td class="r">'+g+'%</td><td class="r">₹'+fmt(a*g/100)+'</td>':'')
       +'<td class="r">₹'+fmt(isTax?a+a*g/100:a)+'</td></tr>';
