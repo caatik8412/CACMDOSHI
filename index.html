@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link rel="icon" href="data:,">
-<title>CA CM Doshi &amp; Company — Billing Tracker</title>
+<title>CA CM Doshi &amp; Company — Client Manager</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --navy:#1a3a5c;--accent:#2563a8;--border:#e2e8f0;
@@ -135,6 +136,8 @@ textarea{resize:vertical;min-height:56px;}
 .itbl th{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:5px 7px;background:#f8fafc;border:1px solid var(--border);}
 .itbl td{padding:4px 5px;border:1px solid var(--border);}
 .itbl input{border:none;padding:4px 6px;font-size:13px;outline:none;background:transparent;width:100%;}
+.itbl select.isel{border:none;padding:4px 6px;font-size:12px;outline:none;background:transparent;width:100%;cursor:pointer;}
+.itbl select.isel:focus{background:#f0f7ff;border-radius:3px;}
 .itbl input:focus{background:#f0f7ff;border-radius:3px;}
 .addbtn{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-size:12px;font-weight:500;cursor:pointer;background:none;border:none;padding:0;margin-top:6px;}
 .delbtn{color:var(--red);background:none;border:none;cursor:pointer;font-size:14px;padding:2px;}
@@ -159,6 +162,10 @@ textarea{resize:vertical;min-height:56px;}
 .toast.show{display:flex;}
 .toast.ok{background:var(--green);}
 .toast.err{background:var(--red);}
+.stabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:#fff;padding:0 20px;}
+.stab{padding:8px 16px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.stab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.cancel-info{font-size:10px;color:var(--red);margin-top:2px;}
 </style>
 </head>
 <body>
@@ -168,7 +175,7 @@ textarea{resize:vertical;min-height:56px;}
   <div class="login-box">
     <div class="login-logo">
       <div class="login-logo-title">CA CM Doshi &amp; Company</div>
-      <div class="login-logo-sub">Billing &amp; Outstanding Tracker</div>
+      <div class="login-logo-sub">Client Manager</div>
       <div class="login-logo-pow">Powered by Bhayani Business Sol<sup style="font-size:8px;">n</sup></div>
     </div>
     <hr class="login-divider">
@@ -191,28 +198,34 @@ textarea{resize:vertical;min-height:56px;}
 <div class="splash" id="splash">
   <div class="splash-sp"></div>
   <div class="splash-title">CA CM Doshi &amp; Company</div>
-  <div class="splash-sub">Billing Tracker — Loading your data…</div>
+  <div class="splash-sub">Client Manager — Loading your data…</div>
   <div class="splash-bar"><div class="splash-fill" id="splashFill"></div></div>
   <div class="splash-pow">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup></div>
 </div>
 
 <!-- HEADER -->
 <div class="hdr">
-  <div class="hdr-title">CA CM Doshi &amp; Company — Billing Tracker</div>
-  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup></div>
+  <div class="hdr-title">CA CM Doshi &amp; Company — Client Manager</div>
+  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v2.3 · 15Jun26</span></div>
 </div>
 
 <!-- TABS -->
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('clients')"><i class="ti ti-users"></i>Clients</div>
+  <div class="tab active" onclick="switchTab('clients')"><i class="ti ti-users"></i>Client Masterdata</div>
   <div class="tab" onclick="switchTab('bills')"><i class="ti ti-file-invoice"></i>Bills</div>
   <div class="tab" onclick="switchTab('receipts')"><i class="ti ti-receipt"></i>Receipts</div>
   <div class="tab" onclick="switchTab('settings')"><i class="ti ti-settings"></i>Settings</div>
+  <div class="tab" onclick="switchTab('gstr1')"><i class="ti ti-file-spreadsheet"></i>GSTR-1</div>
 </div>
 
 <!-- CLIENTS TAB -->
 <div id="p-clients" class="panel active">
+  <div class="stabs">
+    <div class="stab active" id="stab-cl-active" onclick="switchClientTab('active')">Active Clients</div>
+    <div class="stab" id="stab-cl-inactive" onclick="switchClientTab('inactive')">Inactive Clients</div>
+  </div>
   <div class="sumstrip" id="sumstrip"></div>
+  <div id="clients-active-section">
   <div class="bar">
     <div class="sbox"><i class="ti ti-search"></i><input id="csearch" placeholder="Search client / group…" oninput="renderClients()"></div>
     <label class="toggle-wrap">
@@ -220,20 +233,39 @@ textarea{resize:vertical;min-height:56px;}
       <span>Outstanding Only</span>
     </label>
     <button class="btn btn-o" onclick="loadAll()"><i class="ti ti-refresh"></i> Refresh</button>
-    <button class="btn btn-p" onclick="openM('mAddClient')"><i class="ti ti-user-plus"></i> Add Client</button>
+    <button class="btn btn-p" onclick="populateGroupList();openM('mAddClient')"><i class="ti ti-user-plus"></i> Add Client</button>
     <button class="btn btn-o btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> Export</button>
+    <button class="btn btn-o btn-sm" onclick="printGroupView()"><i class="ti ti-printer"></i> Print View</button>
   </div>
   <div class="twrap"><div class="tbox">
     <table><thead id="chead"></thead><tbody id="cbody">
       <tr class="ldg"><td colspan="8"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading…</div></td></tr>
     </tbody></table>
   </div></div>
+  </div><!-- end active clients section -->
+  <!-- Inactive Clients -->
+  <div id="clients-inactive-section" style="display:none;">
+    <div class="bar">
+      <button class="btn btn-o" onclick="loadInactiveClients()"><i class="ti ti-refresh"></i> Refresh</button>
+      <span style="font-size:12px;color:var(--muted);">Archived clients — zero outstanding at time of archive</span>
+    </div>
+    <div class="twrap"><div class="tbox">
+      <table>
+        <thead><tr><th>Name</th><th>Group</th><th>PAN</th><th>Mobile</th><th class="r">Actions</th></tr></thead>
+        <tbody id="incbody"><tr><td colspan="5"><div class="fetch-msg"><i class="ti ti-users-off"></i><p>Click Refresh to load inactive clients.</p></div></td></tr></tbody>
+      </table>
+    </div></div>
+  </div>
 </div>
 
 <!-- BILLS TAB -->
 <div id="p-bills" class="panel">
+  <div class="stabs">
+    <div class="stab active" id="stab-bills-active" onclick="switchBillsTab('active')">Active Bills</div>
+    <div class="stab" id="stab-bills-cancelled" onclick="switchBillsTab('cancelled')">Cancelled Bills</div>
+  </div>
   <div class="sumstrip" id="bsumstrip" style="display:none;"></div>
-  <div class="bar" style="gap:6px;">
+  <div id="bills-active-bar" class="bar" style="gap:6px;">
     <div class="sbox"><i class="ti ti-search"></i><input id="bsearch" placeholder="Search client / bill no…" oninput="renderBills()"></div>
     <select class="sel" id="bfirm" onchange="renderBills()"><option value="">All Firms</option></select>
     <div style="display:flex;align-items:center;gap:4px;">
@@ -252,12 +284,36 @@ textarea{resize:vertical;min-height:56px;}
       <tbody id="bbody"><tr><td colspan="8"><div class="fetch-msg"><i class="ti ti-file-invoice"></i><p>Click Fetch Bills to load records.</p></div></td></tr></tbody>
     </table>
   </div></div>
+  <!-- Cancelled Bills -->
+  <div id="bills-cancelled-section" style="display:none;">
+    <div class="bar" style="gap:6px;">
+      <div style="display:flex;align-items:center;gap:4px;">
+        <label style="font-size:11px;color:var(--muted);white-space:nowrap;">From</label>
+        <input type="date" class="dt" id="bcfrom">
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <label style="font-size:11px;color:var(--muted);white-space:nowrap;">To</label>
+        <input type="date" class="dt" id="bcto">
+      </div>
+      <button class="btn btn-p" onclick="fetchCancelledBills()"><i class="ti ti-database-import"></i> Fetch Cancelled</button>
+    </div>
+    <div class="twrap"><div class="tbox">
+      <table>
+        <thead><tr><th>Bill No.</th><th>Date</th><th>Client</th><th>Firm</th><th>Period</th><th class="r">Total</th><th>Cancelled Reason</th></tr></thead>
+        <tbody id="cbbody"><tr><td colspan="7"><div class="fetch-msg"><i class="ti ti-file-off"></i><p>Click Fetch Cancelled to load.</p></div></td></tr></tbody>
+      </table>
+    </div></div>
+  </div>
 </div>
 
 <!-- RECEIPTS TAB -->
 <div id="p-receipts" class="panel">
+  <div class="stabs">
+    <div class="stab active" id="stab-rec-active" onclick="switchRecTab('active')">Active Receipts</div>
+    <div class="stab" id="stab-rec-cancelled" onclick="switchRecTab('cancelled')">Cancelled Receipts</div>
+  </div>
   <div class="sumstrip" id="rsumstrip" style="display:none;"></div>
-  <div class="bar" style="gap:6px;">
+  <div id="rec-active-bar" class="bar" style="gap:6px;">
     <div style="display:flex;align-items:center;gap:4px;">
       <label style="font-size:11px;color:var(--muted);white-space:nowrap;">From</label>
       <input type="date" class="dt" id="rfrom">
@@ -276,9 +332,88 @@ textarea{resize:vertical;min-height:56px;}
       <tbody id="rbody"><tr><td colspan="8"><div class="fetch-msg"><i class="ti ti-receipt"></i><p>Select date range and click Fetch Receipts.</p></div></td></tr></tbody>
     </table>
   </div></div>
+  <!-- Cancelled Receipts -->
+  <div id="rec-cancelled-section" style="display:none;">
+    <div class="bar" style="gap:6px;">
+      <div style="display:flex;align-items:center;gap:4px;">
+        <label style="font-size:11px;color:var(--muted);white-space:nowrap;">From</label>
+        <input type="date" class="dt" id="rcfrom">
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <label style="font-size:11px;color:var(--muted);white-space:nowrap;">To</label>
+        <input type="date" class="dt" id="rcto">
+      </div>
+      <button class="btn btn-p" onclick="fetchCancelledReceipts()"><i class="ti ti-database-import"></i> Fetch Cancelled</button>
+    </div>
+    <div class="twrap"><div class="tbox">
+      <table>
+        <thead><tr><th>Receipt No.</th><th>Date</th><th>Client</th><th>Firm</th><th class="r">Amount</th><th>Cancelled Reason</th></tr></thead>
+        <tbody id="crbody"><tr><td colspan="6"><div class="fetch-msg"><i class="ti ti-receipt-off"></i><p>Click Fetch Cancelled to load.</p></div></td></tr></tbody>
+      </table>
+    </div></div>
+  </div>
 </div>
 
 <!-- SETTINGS TAB -->
+<div id="p-gstr1" class="panel">
+  <div class="twrap" style="max-width:780px;">
+    <div class="set-section">
+      <div class="set-title"><i class="ti ti-file-spreadsheet"></i> GSTR-1 Export — C M Doshi and Co</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Select period to export all CM Doshi Tax Invoices. Split into CGST 9% + SGST 9%.</p>
+      <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+        <div class="fg" style="margin-bottom:0;">
+          <label class="lbl">Month</label>
+          <select id="g1month" class="sel">
+            <option value="04">April</option><option value="05">May</option>
+            <option value="06">June</option><option value="07">July</option>
+            <option value="08">August</option><option value="09">September</option>
+            <option value="10">October</option><option value="11">November</option>
+            <option value="12">December</option><option value="01">January</option>
+            <option value="02">February</option><option value="03">March</option>
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:0;">
+          <label class="lbl">Year</label>
+          <select id="g1year" class="sel">
+            <option value="2026">2026</option><option value="2025">2025</option>
+            <option value="2027">2027</option>
+          </select>
+        </div>
+        <button class="btn btn-p" onclick="loadGSTR1()"><i class="ti ti-search"></i> Load</button>
+        <button class="btn btn-g" id="exportGSTR1Btn" style="display:none;" onclick="exportGSTR1Excel()"><i class="ti ti-download"></i> Export Excel</button>
+        <button class="btn btn-o" id="printGSTR1Btn" style="display:none;" onclick="printGSTR1()"><i class="ti ti-printer"></i> Print</button>
+      </div>
+    </div>
+    <div id="gstr1-summary" style="display:none;" class="set-section">
+      <div class="set-title"><i class="ti ti-chart-bar"></i> Summary</div>
+      <div class="stat-grid" id="gstr1-stats"></div>
+    </div>
+    <div id="gstr1-table-wrap" style="display:none;">
+      <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:8px;margin-top:4px;"><i class="ti ti-file-invoice"></i> B2B / B2C Invoice Details</div>
+      <div class="tbox" style="margin-bottom:16px;">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Invoice No</th><th>Date</th><th>Party Name</th>
+            <th>GSTIN</th><th class="r">Taxable</th>
+            <th class="r">CGST 9%</th><th class="r">SGST 9%</th><th class="r">Total</th>
+          </tr></thead>
+          <tbody id="gstr1body"></tbody>
+        </table>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:8px;"><i class="ti ti-barcode"></i> HSN / SAC Summary</div>
+      <div class="tbox">
+        <table>
+          <thead><tr>
+            <th>HSN/SAC</th><th>Description</th><th class="r">Taxable Value</th>
+            <th class="r">GST Rate</th><th class="r">CGST</th><th class="r">SGST</th><th class="r">Total Tax</th>
+          </tr></thead>
+          <tbody id="gstr1hsnbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="p-settings" class="panel">
   <div class="twrap" style="max-width:680px;">
     <div class="set-section">
@@ -332,7 +467,7 @@ textarea{resize:vertical;min-height:56px;}
     <div class="mbody">
       <div class="cpill"><i class="ti ti-user"></i><span id="b-cname">—</span></div>
       <div class="fg2">
-        <div class="fg"><label class="lbl">Bill Number *</label><input id="b-no" placeholder="Auto-generated on firm select"></div>
+        <div class="fg"><label class="lbl">Bill No <span style="font-size:9px;color:var(--muted);font-weight:400;">(assigned on save)</span></label><input id="b-no" placeholder="Will be assigned on save" disabled style="background:#f8fafc;color:var(--muted);cursor:not-allowed;"></div>
         <div class="fg"><label class="lbl">Bill Date *</label><input type="date" id="b-date"></div>
         <div class="fg"><label class="lbl">Firm *</label><select id="b-firm" onchange="suggestBillNo()"></select></div>
         <div class="fg"><label class="lbl">Service Period</label><input id="b-period" placeholder="FY 2025-26"></div>
@@ -368,7 +503,7 @@ textarea{resize:vertical;min-height:56px;}
     <div class="mbody">
       <div class="cpill"><i class="ti ti-user"></i><span id="r-cname">—</span></div>
       <div class="fg2">
-        <div class="fg"><label class="lbl">Receipt Number *</label><input id="r-no" placeholder="Auto-generated on firm select"></div>
+        <div class="fg"><label class="lbl">Receipt No <span style="font-size:9px;color:var(--muted);font-weight:400;">(assigned on save)</span></label><input id="r-no" placeholder="Will be assigned on save" disabled style="background:#f8fafc;color:var(--muted);cursor:not-allowed;"></div>
         <div class="fg"><label class="lbl">Receipt Date *</label><input type="date" id="r-date"></div>
         <div class="fg"><label class="lbl">Firm *</label><select id="r-firm" onchange="suggestRecNo()"></select></div>
         <div class="fg"><label class="lbl">Amount (₹) *</label><input type="number" id="r-amt" placeholder="0" oninput="updBal()"></div>
@@ -411,17 +546,96 @@ textarea{resize:vertical;min-height:56px;}
     <div class="mbody">
       <div class="fg2">
         <div class="fg sp2"><label class="lbl">Name *</label><input id="nc-name" placeholder="Full name / firm name"></div>
-        <div class="fg sp2"><label class="lbl">Group (optional)</label><input id="nc-group" placeholder="e.g. FRGandhi"></div>
-        <div class="fg"><label class="lbl">PAN</label><input id="nc-pan" placeholder="ABCDE1234F" style="text-transform:uppercase"></div>
+        <div class="fg sp2"><label class="lbl">Group (optional)</label>
+          <input id="nc-group" placeholder="e.g. FRGandhi" list="groupList" autocomplete="off">
+          <datalist id="groupList"></datalist>
+        </div>
+        <div class="fg"><label class="lbl">PAN <span style="color:var(--red);">*</span></label><input id="nc-pan" placeholder="ABCDE1234F" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" maxlength="10"></div>
         <div class="fg"><label class="lbl">Status</label>
           <select id="nc-status"><option>44AB</option><option>44AD</option><option>8% BUSINESS</option><option>PARTNER</option><option>DIRECTOR</option><option>OTHER</option><option>HUF</option><option>FIRM</option></select>
         </div>
         <div class="fg sp2"><label class="lbl">Mobile</label><input id="nc-mobile" placeholder="10-digit number"></div>
+        <div class="fg sp2"><label class="lbl">GSTIN <span style="font-weight:400;color:var(--muted);">(if GST registered)</span></label><input id="nc-gstin" placeholder="27XXXXX0000X0XX" style="text-transform:uppercase"></div>
       </div>
     </div>
     <div class="mfoot">
       <button class="btn btn-o" onclick="closeM('mAddClient')">Cancel</button>
       <button class="btn btn-p" onclick="saveClient()"><i class="ti ti-plus"></i> Add Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ARCHIVE CLIENT -->
+<div class="moverlay" id="mArchive">
+  <div class="modal" style="width:400px;">
+    <div class="mhdr">
+      <div class="mtitle" style="color:#94a3b8"><i class="ti ti-archive"></i> Archive Client</div>
+      <button class="mclose" onclick="closeM('mArchive')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mbody">
+      <div style="background:var(--bg);border-radius:var(--rs);padding:12px;margin-bottom:14px;">
+        <div style="font-weight:600;font-size:14px;color:var(--navy);" id="arch-name">—</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">This client will be moved to Inactive list.</div>
+      </div>
+      <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:var(--rs);padding:10px;font-size:12px;color:var(--red);">
+        <i class="ti ti-alert-triangle"></i> Only allowed if outstanding balance is <strong>zero</strong>. Balance is checked on server.
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-o" onclick="closeM('mArchive')">Cancel</button>
+      <button class="btn btn-o" id="archiveBtn" style="color:#94a3b8;border-color:#cbd5e1;" onclick="confirmArchive()"><i class="ti ti-archive"></i> Archive</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CANCEL BILL/RECEIPT -->
+<div class="moverlay" id="mCancel">
+  <div class="modal" style="width:440px;">
+    <div class="mhdr">
+      <div class="mtitle" style="color:var(--red)"><i class="ti ti-ban"></i> <span id="cancel-title">Cancel Bill</span></div>
+      <button class="mclose" onclick="closeM('mCancel')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mbody">
+      <div style="background:var(--bg);border-radius:var(--rs);padding:12px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+          <span style="font-size:11px;color:var(--muted);">Number</span>
+          <span style="font-weight:600;font-size:13px;" id="cancel-no">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+          <span style="font-size:11px;color:var(--muted);">Client</span>
+          <span style="font-weight:500;font-size:13px;" id="cancel-client">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+          <span style="font-size:11px;color:var(--muted);">Amount</span>
+          <span style="font-weight:700;font-size:14px;color:var(--navy);" id="cancel-amt">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:11px;color:var(--muted);">Date</span>
+          <span style="font-size:12px;" id="cancel-date">—</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="lbl">Reason *</label>
+        <select id="cancel-reason" onchange="handleCancelReason()">
+          <option value="">— Select Reason —</option>
+          <option value="Data Entry Error">Data Entry Error</option>
+          <option value="Duplicate Bill">Duplicate Bill</option>
+          <option value="Wrong Client">Wrong Client</option>
+          <option value="Wrong Amount">Wrong Amount</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="fg" id="cancel-other-wrap" style="display:none;">
+        <label class="lbl">Specify Reason *</label>
+        <input type="text" id="cancel-other" placeholder="Enter reason…">
+      </div>
+      <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:var(--rs);padding:10px;font-size:12px;color:var(--red);">
+        <i class="ti ti-alert-triangle"></i> <strong>This cannot be undone.</strong> Balance will update immediately.
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-o" onclick="closeM('mCancel')">Cancel</button>
+      <button class="btn btn-r" id="confirmCancelBtn" onclick="confirmCancel()"><i class="ti ti-ban"></i> Confirm Cancel</button>
     </div>
   </div>
 </div>
@@ -454,8 +668,33 @@ textarea{resize:vertical;min-height:56px;}
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyYjO04N90u8CREVaAYSOQqLXcomWWytAqDPJ_UZ37X2PedCrhsVDmiJAzDioJWbR9mdw/exec';
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwX4Qahu-Dx6JODhlzd2cP0zO6wkNNVMIXXmecTmdxD1dKQT9UaBCoe_uSeKaJ79PtVMg/exec';
 var USERS = { 'CACMD': 'Cmdoshi@123' };
+
+// ── SERVICES LIST ─────────────────────────────────────────────
+var SERVICES = [
+  'Tax Audit - 44AB',
+  'Tax Audit - 44ADA',
+  'Income Tax Return Filing',
+  'Income Tax TDS Filing',
+  'Income Tax Assessment',
+  'VAT Return Filing',
+  'VAT Audit Return Filing',
+  'VAT Registration',
+  'GST Return Filing (M)',
+  'GST Return Filing (Q)',
+  'GSTR 9',
+  'GSTR 9C',
+  'DRC-03',
+  'GST Department Audit',
+  'GST Office Visiting Fees',
+  'GST Registration',
+  'GST Cancellation',
+  'GST Refund Application Filling Fees',
+  'GST Notice Handling Fees',
+  'Certification Charges',
+  'Other'
+];
 var FIRM_DETAILS = {
   'CM Doshi':        { printName:'C M Doshi and Co',    address:'Pandharpur, Maharashtra', gstin:'27AEWPD6934J1ZW', defaultGST:18, isGST:true  },
   'PR Phade':        { printName:'Piyush R Phade & Co', address:'Pandharpur, Maharashtra', gstin:'',               defaultGST:0,  isGST:false },
@@ -513,8 +752,14 @@ function api(params,cb){
   }).join('&');
   fetch(SCRIPT_URL+'?'+qs)
     .then(function(r){return r.json();})
-    .then(function(d){if(d.error)toast(d.error,'err'); if(cb)cb(d);})
-    .catch(function(e){toast('Network error: '+e.message,'err');});
+    .then(function(d){
+      if(d.error) toast(d.error,'err');
+      if(cb) cb(d);
+    })
+    .catch(function(e){
+      toast('Network error: '+e.message,'err');
+      if(cb) cb({error:e.message});
+    });
 }
 
 // ── CONFIG / FIRMS ────────────────────────────────────────────
@@ -567,7 +812,17 @@ function loadAll(){
   document.getElementById('cbody').innerHTML=
     '<tr class="ldg"><td colspan="'+cols+'"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading clients…</div></td></tr>';
   api({action:'getAll'},function(d){
+    if(!d || d.error){
+      toast('getAll error: '+(d?d.error:'no response'),'err');
+      document.getElementById('cbody').innerHTML='<tr><td colspan="'+cols+'"><div class="empty"><i class="ti ti-alert-circle"></i>Error loading clients: '+(d?esc(d.error):'no response')+'</div></td></tr>';
+      hideSplash();
+      return;
+    }
     allClients=d.clients||[];
+    if(allClients.length===0){
+      // Try live fallback message
+      toast('No clients in Balances sheet — run rebuildAllBalances()','err');
+    }
     var sel=document.getElementById('rclient');
     sel.innerHTML='<option value="">All Clients</option>'+
       allClients.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('');
@@ -593,14 +848,27 @@ function renderClients(){
 
   // Group (case-insensitive)
   var groups={},glabel={},nogrp=[];
+  window._grpData=window._grpData||{}; window._grpLabel=window._grpLabel||{};
   filtered.forEach(function(c){
-    if(c.group){var k=c.group.trim().toLowerCase();if(!groups[k]){groups[k]=[];glabel[k]=c.group.trim();}groups[k].push(c);}
+    if(c.group){var k=c.group.trim().toLowerCase();if(!groups[k]){groups[k]=[];glabel[k]=c.group.trim();}groups[k].push(c);window._grpData[k]=groups[k];window._grpLabel[k]=glabel[k];}
     else nogrp.push(c);
   });
 
   var rows='';
   Object.keys(groups).sort().forEach(function(g){
-    rows+='<tr class="grp"><td colspan="'+cols+'"><i class="ti ti-folder"></i>'+esc(glabel[g])+'</td></tr>';
+    // Calculate group totals
+    var gTot=0, gFirmTots={};
+    FIRMS.forEach(function(f){gFirmTots[f.label]=0;});
+    groups[g].forEach(function(c){
+      FIRMS.forEach(function(f){ var v=c.byFirm[f.label]||0; gFirmTots[f.label]+=v; gTot+=v; });
+    });
+    var gFirmStr=FIRMS.map(function(f){
+      var v=gFirmTots[f.label];
+      return v>0?'<span style="background:rgba(255,255,255,.15);color:#fff;padding:1px 8px;border-radius:8px;font-size:10px;font-weight:600;margin-left:6px;">'+esc(f.label)+' ₹'+fmt(v)+'</span>':'';
+    }).join('');
+    var gTotStr=gTot>0?'<span style="float:right;font-weight:700;font-size:12px;margin-right:8px;">₹'+fmt(gTot)+'</span>':'';
+    var gPrintBtn='<button data-gkey="'+g+'" onclick="window._printGrp(this)" style="float:right;background:rgba(255,255,255,.2);border:none;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;margin-right:6px;" title="Print Group"><i class="ti ti-printer" style="font-size:12px;"></i></button>';
+    rows+='<tr class="grp"><td colspan="'+cols+'"><i class="ti ti-folder" style="margin-right:5px;opacity:.75;vertical-align:-2px;"></i><strong>'+esc(glabel[g])+'</strong>'+gFirmStr+gTotStr+gPrintBtn+'</td></tr>';
     groups[g].forEach(function(c){rows+=cRow(c);});
   });
   if(nogrp.length){
@@ -631,8 +899,134 @@ function cRow(c){
       +'<button class="icn ib" title="Add Bill" onclick="openBill(\''+c.id+'\',\''+esc(c.name)+'\')"><i class="ti ti-file-invoice"></i></button>'
       +'<button class="icn ir" title="Add Receipt" onclick="openRec(\''+c.id+'\',\''+esc(c.name)+'\','+tot+')"><i class="ti ti-receipt"></i></button>'
       +'<button class="icn il" title="Ledger" onclick="openLedger(\''+c.id+'\',\''+esc(c.name)+'\')"><i class="ti ti-book"></i></button>'
+      +'<button class="icn" title="Archive Client" style="color:#94a3b8;" onclick="doArchive(\''+c.id+'\',\''+esc(c.name)+'\')" ><i class="ti ti-archive"></i></button>'
     +'</div></td>'
   +'</tr>';
+}
+
+function printGroup(gkey){
+  var clients=window._grpData[gkey]||[];
+  var label=window._grpLabel[gkey]||gkey;
+  if(!clients.length){toast('No clients in group','err');return;}
+  var today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+
+  // Build table rows
+  var trows='';
+  clients.forEach(function(c){
+    var tot=0;
+    var fCols=FIRMS.map(function(f){
+      var v=c.byFirm[f.label]||0; tot+=v;
+      return '<td style="text-align:right;padding:6px 8px;font-size:11px;">'+(v>0?'₹'+fmt(v):'—')+'</td>';
+    }).join('');
+    trows+='<tr style="border-bottom:1px solid #e2e8f0;">'
+      +'<td style="padding:6px 8px;font-size:11px;font-weight:500;">'+esc(c.name)+'</td>'
+      +'<td style="padding:6px 8px;font-size:10px;color:#64748b;">'+esc(c.status||'')+'</td>'
+      +fCols
+      +'<td style="text-align:right;padding:6px 8px;font-size:11px;font-weight:700;color:#1a3a5c;">'+(tot>0?'₹'+fmt(tot):'—')+'</td>'
+    +'</tr>';
+  });
+
+  // Build totals row
+  var gTot=0;
+  var fTotCols=FIRMS.map(function(f){
+    var v=clients.reduce(function(s,c){return s+(c.byFirm[f.label]||0);},0); gTot+=v;
+    return '<td style="text-align:right;padding:7px 8px;font-size:11px;font-weight:700;border-top:1.5px solid #1a3a5c;">'+(v>0?'₹'+fmt(v):'—')+'</td>';
+  }).join('');
+  trows+='<tr style="background:#f8fafc;">'
+    +'<td colspan="2" style="padding:7px 8px;font-size:11px;font-weight:700;border-top:1.5px solid #1a3a5c;">Total</td>'
+    +fTotCols
+    +'<td style="text-align:right;padding:7px 8px;font-size:12px;font-weight:700;color:#1a3a5c;border-top:1.5px solid #1a3a5c;">₹'+fmt(gTot)+'</td>'
+  +'</tr>';
+
+  // Firm header cols
+  var fHdrs=FIRMS.map(function(f){
+    return '<th style="text-align:right;padding:6px 8px;font-size:10px;font-weight:700;text-transform:uppercase;background:#1a3a5c;color:'+f.color+';">'+esc(f.label)+'</th>';
+  }).join('');
+
+  var w=window.open('','_blank');
+  if(!w){ toast('Please allow popups for this site to print','err'); return; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+label+' — Outstanding</title>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:12px;color:#000;}'
+    +'.doc{padding:10mm 12mm;max-width:210mm;margin:0 auto;}'
+    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5mm;padding-bottom:3mm;border-bottom:2px solid #1a3a5c;}'
+    +'.pfirm{font-size:15px;font-weight:bold;color:#1a3a5c;}.psub{font-size:11px;color:#64748b;margin-top:3px;}'
+    +'.grp-title{font-size:13px;font-weight:700;color:#1a3a5c;margin-bottom:4mm;text-transform:uppercase;letter-spacing:.5px;}'
+    +'table{width:100%;border-collapse:collapse;}'
+    +'th{padding:6px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;background:#1a3a5c;color:#fff;}'
+    +'.pfooter{display:flex;justify-content:space-between;margin-top:8mm;padding-top:3mm;border-top:1px solid #ccc;}'
+    +'.ppow{font-size:9px;color:#444;font-weight:600;}'
+    +'@media print{.no-print{display:none!important;}}</style></head><body>');
+  w.document.write('<div class="no-print" style="background:#1a3a5c;padding:10px 16px;display:flex;gap:10px;align-items:center;">');
+  w.document.write('<span style="color:#fff;font-weight:600;font-size:13px;">'+esc(label)+' — Outstanding Statement</span>');
+  w.document.write('<button onclick="window.print()" style="margin-left:auto;padding:6px 18px;background:#fff;color:#1a3a5c;border:none;border-radius:5px;font-weight:600;cursor:pointer;">&#128424; Print</button>');
+  w.document.write('<button onclick="window.close()" style="padding:6px 14px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;cursor:pointer;">Close</button>');
+  w.document.write('</div>');
+  w.document.write('<div class="doc">');
+  w.document.write('<div class="phdr"><div><div class="pfirm">CA CM Doshi &amp; Company</div><div class="psub">Outstanding Statement</div></div>'
+    +'<div style="text-align:right;"><div style="font-size:11px;color:#64748b;">As on '+today+'</div></div></div>');
+  w.document.write('<div class="grp-title">&#128193; '+esc(label)+'</div>');
+  w.document.write('<table><thead><tr>'
+    +'<th style="width:38%;">Name</th>'
+    +'<th style="width:10%;">Status</th>'
+    +fHdrs
+    +'<th style="text-align:right;padding:6px 8px;font-size:10px;font-weight:700;text-transform:uppercase;background:#1a3a5c;color:#fff;">Total</th>'
+    +'</tr></thead><tbody>'+trows+'</tbody></table>');
+  w.document.write('<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div>'
+    +'<div style="font-size:9px;color:#aaa;">CA CM Doshi &amp; Company</div></div>');
+  w.document.write('</div></body></html>');
+  w.document.close();
+}
+
+window._printGrp = function(btn){
+  var key = btn.getAttribute('data-gkey');
+  printGroup(key);
+};
+
+function printGroupView(){
+  // Print what is currently visible in the client table
+  var fi={};FIRMS.forEach(function(f){fi[f.label]=f;});
+  var firmHdrs=FIRMS.map(function(f){return '<th style="text-align:right;padding:5px 8px;font-size:11px;background:#1a3a5c;color:'+f.color+'">'+esc(f.label)+'</th>';}).join('');
+  var rows=document.querySelectorAll('#cbody tr');
+  var tableRows='';
+  rows.forEach(function(tr){
+    if(tr.classList.contains('grp')){
+      var cols=2+FIRMS.length+2;
+      tableRows+='<tr><td colspan="'+cols+'" style="background:#1a3a5c;color:#fff;padding:6px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">'+tr.innerText.trim()+'</td></tr>';
+    } else if(tr.classList.contains('row')){
+      var tds=tr.querySelectorAll('td');
+      var rowHtml='<tr style="border-bottom:1px solid #e2e8f0;">';
+      for(var i=0;i<tds.length-1;i++){ // skip Actions column
+        var align=i>1?'text-align:right;':'';
+        rowHtml+='<td style="padding:6px 8px;font-size:11px;'+align+'">'+tds[i].innerText.trim()+'</td>';
+      }
+      rowHtml+='</tr>';
+      tableRows+=rowHtml;
+    }
+  });
+  var firmHdrsFull='<th style="padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:#64748b;">Client</th>'
+    +'<th style="padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:#64748b;">Status</th>'
+    +FIRMS.map(function(f){return '<th style="text-align:right;padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:'+f.color+'">'+esc(f.label)+'</th>';}).join('')
+    +'<th style="text-align:right;padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:#1a3a5c;">Total</th>';
+  var today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  var w=window.open('','_blank');
+  if(!w){ toast('Please allow popups for this site to print','err'); return; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Outstanding Report</title>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:12px;}'
+    +'.doc{padding:10mm 12mm;}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;padding-bottom:3mm;border-bottom:2px solid #1a3a5c;}'
+    +'.title{font-size:16px;font-weight:bold;color:#1a3a5c;}.sub{font-size:11px;color:#64748b;margin-top:3px;}'
+    +'table{width:100%;border-collapse:collapse;}th{border-bottom:1px solid #e2e8f0;}'
+    +'@media print{.no-print{display:none!important;}}</style></head><body>');
+  w.document.write('<div class="no-print" style="background:#1a3a5c;padding:10px 16px;display:flex;gap:10px;align-items:center;">');
+  w.document.write('<span style="color:#fff;font-weight:600;font-size:13px;">Outstanding Report</span>');
+  w.document.write('<button onclick="window.print()" style="margin-left:auto;padding:6px 18px;background:#fff;color:#1a3a5c;border:none;border-radius:5px;font-weight:600;cursor:pointer;">&#128424; Print</button>');
+  w.document.write('<button onclick="window.close()" style="padding:6px 14px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;cursor:pointer;">Close</button>');
+  w.document.write('</div><div class="doc">');
+  w.document.write('<div class="hdr"><div><div class="title">CA CM Doshi &amp; Company</div><div class="sub">Outstanding Report</div></div>'
+    +'<div style="text-align:right;"><div style="font-size:11px;color:#64748b;">As on '+today+'</div>'
+    +'<div style="font-size:10px;color:#aaa;margin-top:3px;">Bhayani Business Sol<sup>n</sup></div></div></div>');
+  w.document.write('<table><thead><tr>'+firmHdrsFull+'</tr></thead><tbody>'+tableRows+'</tbody></table>');
+  w.document.write('</div></body></html>');
+  w.document.close();
 }
 
 function updSum(clients){
@@ -655,13 +1049,55 @@ function openBill(id,name){
   calcTots();suggestBillNo();openM('mAddBill');
 }
 function iRow(){
-  return '<tr><td><input type="text" placeholder="Service description"></td>'
-    +'<td><input type="text" placeholder="998231"></td>'
-    +'<td><input type="number" placeholder="0" class="ia" oninput="calcTots()"></td>'
-    +'<td><input type="number" placeholder="18" class="ig" oninput="calcTots()"></td>'
-    +'<td><button class="delbtn" onclick="delRow(this)"><i class="ti ti-x"></i></button></td></tr>';
+  var opts=SERVICES.map(function(s){
+    return '<option value="'+esc(s)+'">'+esc(s)+'</option>';
+  }).join('');
+  return '<tr>'
+    +'<td style="padding:0;">'
+      +'<select class="isel" onchange="handleSvcSel(this)" style="width:100%;border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;">'
+        +'<option value="">— Select Service —</option>'+opts
+      +'</select>'
+      +'<input type="text" class="idesc" placeholder="Describe service…" style="display:none;width:100%;border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;">'
+    +'</td>'
+    +'<td><input type="text" class="ihsn" placeholder="998231" style="border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;width:100%;"></td>'
+    +'<td><input type="number" placeholder="0" class="ia" oninput="calcTots()" style="border:none;padding:4px 6px;font-size:13px;background:transparent;outline:none;width:100%;"></td>'
+    +'<td><input type="number" placeholder="18" class="ig" oninput="calcTots()" style="border:none;padding:4px 6px;font-size:13px;background:transparent;outline:none;width:100%;"></td>'
+    +'<td><button class="delbtn" onclick="delRow(this)"><i class="ti ti-x"></i></button></td>'
+    +'</tr>';
 }
-function addRow(){document.getElementById('b-items').insertAdjacentHTML('beforeend',iRow());}
+
+function handleSvcSel(sel){
+  var tr=sel.closest('tr');
+  var desc=tr.querySelector('.idesc');
+  if(sel.value==='Other'){
+    sel.style.display='none';
+    desc.style.display='block';
+    desc.focus();
+  } else {
+    desc.style.display='none';
+    sel.style.display='block';
+  }
+}
+function addRow(){
+  document.getElementById('b-items').insertAdjacentHTML('beforeend',iRow());
+  var firm=document.getElementById('b-firm').value;
+  var fd=FIRM_DETAILS[firm]||{defaultGST:0,isGST:false};
+  var rows=document.querySelectorAll('#b-items tr');
+  var lastRow=rows[rows.length-1];
+  var gstEl=lastRow.querySelector('.ig');
+  if(fd.isGST){
+    gstEl.value=fd.defaultGST;
+    gstEl.disabled=false;
+    gstEl.style.background='';
+    gstEl.style.color='';
+  } else {
+    gstEl.value=0;
+    gstEl.disabled=true;
+    gstEl.style.background='#f1f5f9';
+    gstEl.style.color='#94a3b8';
+  }
+  calcTots();
+}
 function delRow(btn){if(document.querySelectorAll('#b-items tr').length>1){btn.closest('tr').remove();calcTots();}}
 function calcTots(){
   var tax=0,gst=0;
@@ -679,58 +1115,72 @@ function calcTots(){
 function suggestBillNo(){
   var firm=document.getElementById('b-firm').value;
   if(!firm) return;
-  document.getElementById('b-no').value='Fetching…';
-  api({action:'getNextNo',firm:firm,type:'bill'},function(d){
-    document.getElementById('b-no').value=d.ok?d.number:'';
-    if(!d.ok) toast('Could not get bill number','err');
+  var fd=FIRM_DETAILS[firm]||{defaultGST:0,isGST:false};
+  // Auto-fill or block GST field based on firm
+  document.querySelectorAll('#b-items tr .ig').forEach(function(el){
+    if(fd.isGST){
+      if(!el.value||el.value==='0') el.value=fd.defaultGST;
+      el.disabled=false;
+      el.style.background='';
+      el.style.color='';
+    } else {
+      el.value=0;
+      el.disabled=true;
+      el.style.background='#f1f5f9';
+      el.style.color='#94a3b8';
+    }
   });
+  calcTots();
+  // Number assigned on save — no preview
 }
 function suggestRecNo(){
   var firm=document.getElementById('r-firm').value;
   if(!firm) return;
-  document.getElementById('r-no').value='Fetching…';
-  api({action:'getNextNo',firm:firm,type:'receipt'},function(d){
-    document.getElementById('r-no').value=d.ok?d.number:'';
-    if(!d.ok) toast('Could not get receipt number','err');
-  });
+  // Number assigned on save — no preview
 }
 
 function saveBill(){
   if(busy) return;
-  var no=document.getElementById('b-no').value.trim();
   var dt=document.getElementById('b-date').value;
   var firm=document.getElementById('b-firm').value;
-  if(!no||no==='Fetching…'||!dt||!firm){toast('Bill number, date and firm are required','err');return;}
+  if(!dt||!firm){toast('Date and firm are required','err');return;}
   var tax=0,gst=0,items=[];
   document.querySelectorAll('#b-items tr').forEach(function(r){
-    var desc=r.cells[0].querySelector('input').value;
-    var hsn=r.cells[1].querySelector('input').value;
+    var sel=r.querySelector('.isel');
+    var inp=r.querySelector('.idesc');
+    var desc='';
+    if(sel && sel.style.display!=='none') desc=sel.value||'';
+    else if(inp) desc=inp.value||'';
+    var hsn=r.querySelector('.ihsn')?r.querySelector('.ihsn').value:'998231';
     var a=parseFloat(r.querySelector('.ia').value)||0;
     var g=parseFloat(r.querySelector('.ig').value)||0;
     tax+=a;gst+=a*g/100;
-    if(desc||a)items.push({desc:desc,hsn:hsn,amt:a,gstR:g});
+    if(desc||a)items.push({desc:desc,hsn:hsn||'998231',amt:a,gstR:g});
   });
   if(items.length===0){toast('Add at least one bill item','err');return;}
-  var pd={billNo:no,date:fmtDate(dt),clientName:curName,firm:firm,
-    period:document.getElementById('b-period').value,
-    taxable:tax,gst:gst,total:tax+gst,
-    narration:document.getElementById('b-nar').value,items:items};
+  var period=document.getElementById('b-period').value;
+  var narration=document.getElementById('b-nar').value;
+  // pd.billNo will be filled after server responds
+  var pd={billNo:'',date:fmtDate(dt),clientName:curName,firm:firm,
+    period:period,taxable:tax,gst:gst,total:tax+gst,narration:narration,items:items};
   busy=true;
   document.getElementById('saveBillBtn').disabled=true;
   document.getElementById('saveBillBtn').textContent='Saving…';
-  api({action:'addBill',billNo:no,billDate:dt,clientId:curId,clientName:curName,firm:firm,
+  api({action:'addBill',billDate:dt,clientId:curId,clientName:curName,firm:firm,
     description:items.map(function(i){return i.desc;}).filter(Boolean).join('; '),
-    period:document.getElementById('b-period').value,taxable:tax,
-    gstRate:items.length?items[0].gstR:0,narration:document.getElementById('b-nar').value
+    period:period,taxable:tax,
+    gstRate:items.length?items[0].gstR:0,narration:narration
   },function(d){
     busy=false;
     document.getElementById('saveBillBtn').disabled=false;
     document.getElementById('saveBillBtn').innerHTML='<i class="ti ti-device-floppy"></i> Save Bill';
     if(d.ok){
-      closeM('mAddBill');toast('Bill saved ✓','ok');loadAll();
+      pd.billNo=d.billNo; // use server-assigned number
+      document.getElementById('b-no').value=d.billNo;
+      closeM('mAddBill');toast('Bill saved — '+d.billNo+' ✓','ok');loadAll();
       printData={type:'bill',data:pd};
       var pfd=FIRM_DETAILS[pd.firm]||{isGST:false};
-      if(pfd.isGST) openM('mPrint'); else doPrint('bos');
+      if(pfd.isGST) doPrint('tax'); else doPrint('bos');
     }
     else toast(d.error||'Save failed','err');
   });
@@ -773,7 +1223,8 @@ function renderBills(){
   var bss=document.getElementById('bsumstrip');bss.innerHTML=bs;bss.style.display='flex';
 
   var fi={};FIRMS.forEach(function(f){fi[f.label]=f;});
-  document.getElementById('bbody').innerHTML=list.map(function(b){
+  document.getElementById('bbody').innerHTML=list.map(function(b,idx){
+    window._bills=window._bills||{}; window._bills[idx]=b;
     var f=fi[b.firm]||{color:'#64748b',bg:'#f1f5f9'};
     return '<tr class="row">'
       +'<td style="font-weight:600;">'+esc(b.billNo)+'</td>'
@@ -783,15 +1234,21 @@ function renderBills(){
       +'<td style="font-size:12px;color:var(--muted);">'+esc(b.period||'—')+'</td>'
       +'<td class="amt">₹'+fmt(b.taxable)+'</td>'
       +'<td class="amt amtt">₹'+fmt(b.total)+'</td>'
-      +'<td><div class="acts"><button class="icn ip" onclick="printBillRow(this)" data-b=\''+JSON.stringify(b).replace(/'/g,"&#39;")+'\' ><i class="ti ti-printer"></i></button></div></td>'
+      +'<td><div class="acts">'
+        +'<button class="icn ip" data-idx="'+idx+'" onclick="printBillIdx(this)" title="Print"><i class="ti ti-printer"></i></button>'
+        +'<button class="icn" style="color:var(--red);" data-idx="'+idx+'" onclick="cancelBillIdx(this)" title="Cancel"><i class="ti ti-ban"></i></button>'
+      +'</div></td>'
     +'</tr>';
   }).join('');
 }
-function printBillRow(btn){
-  printData={type:'bill',data:JSON.parse(btn.getAttribute('data-b').replace(/&#39;/g,"'"))};
-  var pfd=FIRM_DETAILS[printData.data.firm]||{isGST:false};
-  if(pfd.isGST) openM('mPrint'); else doPrint('bos');
+function printBillIdx(btn){
+  var b=(window._bills||{})[parseInt(btn.getAttribute('data-idx'))];
+  if(!b) return;
+  printData={type:'bill',data:b};
+  var pfd=FIRM_DETAILS[b.firm]||{isGST:false};
+  if(pfd.isGST) doPrint('tax'); else doPrint('bos');
 }
+function printBillRow(btn){ printBillIdx(btn); }
 
 // ── RECEIPT MODAL ─────────────────────────────────────────────
 function openRec(id,name,out){
@@ -812,25 +1269,29 @@ function updBal(){
 }
 function saveReceipt(){
   if(busy) return;
-  var no=document.getElementById('r-no').value.trim();
   var dt=document.getElementById('r-date').value;
   var amt=parseFloat(document.getElementById('r-amt').value)||0;
   var firm=document.getElementById('r-firm').value;
-  if(!no||no==='Fetching…'||!dt||!amt||!firm){toast('All fields required','err');return;}
-  var pd={receiptNo:no,date:fmtDate(dt),clientName:curName,firm:firm,amount:amt,
-    mode:document.getElementById('r-mode').value,
-    ref:document.getElementById('r-ref').value,
-    narration:document.getElementById('r-nar').value};
+  if(!dt||!amt||!firm){toast('Date, amount and firm are required','err');return;}
+  var mode=document.getElementById('r-mode').value;
+  var ref=document.getElementById('r-ref').value;
+  var recNar=document.getElementById('r-nar').value;
+  var pd={receiptNo:'',date:fmtDate(dt),clientName:curName,firm:firm,amount:amt,
+    mode:mode,ref:ref,narration:recNar};
   busy=true;
   document.getElementById('saveRecBtn').disabled=true;
   document.getElementById('saveRecBtn').textContent='Saving…';
-  api({action:'addReceipt',receiptNo:no,receiptDate:dt,clientId:curId,clientName:curName,
-    firm:firm,amount:amt,mode:pd.mode,ref:pd.ref,narration:pd.narration
+  api({action:'addReceipt',receiptDate:dt,clientId:curId,clientName:curName,
+    firm:firm,amount:amt,mode:mode,ref:ref,narration:recNar
   },function(d){
     busy=false;
     document.getElementById('saveRecBtn').disabled=false;
     document.getElementById('saveRecBtn').innerHTML='<i class="ti ti-device-floppy"></i> Save Receipt';
-    if(d.ok){closeM('mAddReceipt');toast('Receipt saved ✓','ok');loadAll();printData={type:'receipt',data:pd};doPrint('receipt');}
+    if(d.ok){
+      pd.receiptNo=d.receiptNo;
+      closeM('mAddReceipt');toast('Receipt saved — '+d.receiptNo+' ✓','ok');loadAll();
+      printData={type:'receipt',data:pd};doPrint('receipt');
+    }
     else toast(d.error||'Save failed','err');
   });
 }
@@ -857,7 +1318,8 @@ function renderReceipts(){
   if(!display.length){document.getElementById('rbody').innerHTML='<tr><td colspan="8"><div class="empty"><i class="ti ti-receipt-off"></i>No receipts found.</div></td></tr>';return;}
   var fi={};FIRMS.forEach(function(f){fi[f.label]=f;});
   var total=0,rTot={};
-  var rows=display.map(function(r){
+  var rows=display.map(function(r,idx){
+    window._recs=window._recs||{}; window._recs[idx]=r;
     total+=r.amount;rTot[r.firm]=(rTot[r.firm]||0)+r.amount;
     var f=fi[r.firm]||{color:'#64748b',bg:'#f1f5f9'};
     return '<tr class="row">'
@@ -868,7 +1330,10 @@ function renderReceipts(){
       +'<td style="font-size:12px;">'+esc(r.mode)+'</td>'
       +'<td style="font-size:12px;color:var(--muted);font-family:monospace;">'+esc(r.ref||'—')+'</td>'
       +'<td class="amt" style="color:var(--green);font-weight:700;">₹'+fmt(r.amount)+'</td>'
-      +'<td><div class="acts"><button class="icn ip" onclick="printRecRow(this)" data-r=\''+JSON.stringify(r).replace(/'/g,"&#39;")+'\' ><i class="ti ti-printer"></i></button></div></td>'
+      +'<td><div class="acts">'
+        +'<button class="icn ip" data-idx="'+idx+'" onclick="printRecIdx(this)" title="Print"><i class="ti ti-printer"></i></button>'
+        +'<button class="icn" style="color:var(--red);" data-idx="'+idx+'" onclick="cancelRecIdx(this)" title="Cancel"><i class="ti ti-ban"></i></button>'
+      +'</div></td>'
     +'</tr>';
   }).join('');
   rows+='<tr style="background:#f0fdf4;"><td colspan="6" style="text-align:right;font-weight:600;padding:10px 12px;color:var(--green);">Total Received</td><td class="amt" style="color:var(--green);font-weight:700;padding:10px 12px;">₹'+fmt(total)+'</td><td></td></tr>';
@@ -879,10 +1344,13 @@ function renderReceipts(){
   rs+='<div class="sumcard" style="background:#f0fdf4;min-width:110px;"><div class="sumlbl" style="color:var(--green);">Total Received</div><div class="sumval" style="color:var(--green);">₹'+fmt(total)+'</div></div>';
   var rss=document.getElementById('rsumstrip');rss.innerHTML=rs;rss.style.display='flex';
 }
-function printRecRow(btn){
-  printData={type:'receipt',data:JSON.parse(btn.getAttribute('data-r').replace(/&#39;/g,"'"))};
+function printRecIdx(btn){
+  var r=(window._recs||{})[parseInt(btn.getAttribute('data-idx'))];
+  if(!r) return;
+  printData={type:'receipt',data:r};
   doPrint('receipt');
 }
+function printRecRow(btn){ printRecIdx(btn); }
 
 // ── LEDGER ────────────────────────────────────────────────────
 function openLedger(id,name){
@@ -909,18 +1377,40 @@ function openLedger(id,name){
 }
 
 // ── ADD CLIENT ────────────────────────────────────────────────
+function populateGroupList(){
+  var groups={};
+  allClients.forEach(function(c){ if(c.group) groups[c.group.trim().toLowerCase()]=c.group.trim(); });
+  var dl=document.getElementById('groupList');
+  dl.innerHTML=Object.values(groups).sort().map(function(g){
+    return '<option value="'+esc(g)+'">';
+  }).join('');
+}
+
 function saveClient(){
   var name=document.getElementById('nc-name').value.trim();
+  var pan=document.getElementById('nc-pan').value.trim().toUpperCase();
   if(!name){toast('Name is required','err');return;}
+  if(!pan){toast('PAN is mandatory','err');document.getElementById('nc-pan').focus();return;}
+  // PAN format validation — 10 chars alphanumeric
+  if(!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)){toast('Invalid PAN format — must be like ABCDE1234F','err');document.getElementById('nc-pan').focus();return;}
+  // Duplicate PAN check
+  var existing=allClients.find(function(c){return (c.pan||'').toUpperCase()===pan;});
+  if(existing){toast('PAN already exists for '+existing.name,'err');document.getElementById('nc-pan').focus();return;}
+  var btn=document.querySelector('#mAddClient .btn-p');
+  if(btn.disabled) return;
+  btn.disabled=true;
+  btn.textContent='Saving…';
   api({action:'addClient',name:name,group:document.getElementById('nc-group').value.trim(),
-    pan:document.getElementById('nc-pan').value.trim().toUpperCase(),
+    pan:pan,
     status:document.getElementById('nc-status').value,
-    mobile:document.getElementById('nc-mobile').value.trim()
+    mobile:document.getElementById('nc-mobile').value.trim(),
+    gstin:document.getElementById('nc-gstin').value.trim().toUpperCase()
   },function(d){
+    btn.disabled=false;
+    btn.innerHTML='<i class="ti ti-plus"></i> Add Client';
     if(d.ok){
       closeM('mAddClient');
       toast('Client added ✓','ok');
-      // Turn off outstanding filter so new client (zero balance) is visible
       document.getElementById('outOnly').checked=false;
       loadAll();
     }
@@ -937,14 +1427,15 @@ function saveOB(){
   var amt=parseFloat(document.getElementById('ob-amount').value)||0;
   var nar=document.getElementById('ob-nar').value.trim()||'Opening Balance';
   if(!cid||!firm||!date||!amt){toast('All fields required','err');return;}
-  api({action:'getNextNo',firm:firm,type:'bill'},function(nb){
-    var billNo=nb.ok?nb.number.replace('/'+nb.number.split('/')[1]+'/','OB/'):('OB/'+Date.now());
-    api({action:'addBill',billNo:billNo,billDate:date,clientId:cid,clientName:cname,
-      firm:firm,description:nar,period:'Opening Balance',taxable:amt,gstRate:0,narration:nar
-    },function(d){
-      if(d.ok){toast('Opening balance added ✓','ok');document.getElementById('ob-amount').value='';loadAll();}
-      else toast(d.error||'Failed','err');
-    });
+  // Opening balance — server assigns OB number via addBill
+  var obBtn=document.querySelector('#p-settings .btn-p.btn-sm');
+  if(obBtn) { obBtn.disabled=true; obBtn.textContent='Saving…'; }
+  api({action:'addBill',billDate:date,clientId:cid,clientName:cname,
+    firm:firm,description:nar,period:'Opening Balance',taxable:amt,gstRate:0,narration:nar
+  },function(d){
+    if(obBtn){ obBtn.disabled=false; obBtn.innerHTML='<i class="ti ti-plus"></i> Add Opening Balance'; }
+    if(d.ok){toast('Opening balance added ✓','ok');document.getElementById('ob-amount').value='';loadAll();}
+    else toast(d.error||'Failed','err');
   });
 }
 
@@ -954,6 +1445,7 @@ function doPrint(format){
   var d=printData.data;
   var html=printData.type==='bill'?billHTML(d,format):recHTML(d);
   var w=window.open('','_blank');
+  if(!w){ toast('Please allow popups for this site to print','err'); return; }
   w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print</title>'+printCSS()+'</head><body>');
   w.document.write('<div class="no-print" style="background:#1a3a5c;padding:10px 16px;display:flex;gap:10px;align-items:center;">');
   w.document.write('<span style="color:#fff;font-weight:600;font-size:13px;">CA CM Doshi &amp; Company</span>');
@@ -1002,12 +1494,14 @@ function printCSS(){
 function billHTML(b,fmt_unused){
   var fd=FIRM_DETAILS[b.firm]||{printName:b.firm,address:'Pandharpur, Maharashtra',gstin:'',defaultGST:0,isGST:false};
   var isTax=fd.isGST;
-  var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:fd.defaultGST}];
+  // Always use fd.defaultGST for GST firms — never trust saved gstR which may be 0
+  var gstPct=isTax?fd.defaultGST:0;
+  var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:gstPct}];
   var tax=0,gst=0;
-  items.forEach(function(it){ var a=it.amt||0,g=isTax?(it.gstR||fd.defaultGST):0; tax+=a; gst+=a*g/100; });
+  items.forEach(function(it){ var a=it.amt||0,g=isTax?gstPct:0; tax+=a; gst+=a*g/100; });
   var tot=tax+gst;
   var irows=items.map(function(it){
-    var a=it.amt||0,g=isTax?(it.gstR||fd.defaultGST):0;
+    var a=it.amt||0,g=isTax?gstPct:0;
     return '<tr><td>'+esc(it.desc||'')+'</td><td>'+esc(it.hsn||'998231')+'</td><td class="r">₹'+fmt(a)+'</td>'
       +(isTax?'<td class="r">'+g+'%</td><td class="r">₹'+fmt(a*g/100)+'</td>':'')
       +'<td class="r">₹'+fmt(isTax?a+a*g/100:a)+'</td></tr>';
@@ -1067,7 +1561,7 @@ function exportCSV(){
     var tot=vals.reduce(function(a,b){return a+b;},0);
     return ['"'+c.name+'"','"'+(c.group||'')+'"','"'+(c.status||'')+'"','"'+(c.pan||'')+'"'].concat(vals).concat([tot]).join(',');
   });
-  var csv=[hdr.join(',')].concat(rows).join('\n');
+  var nl='\n'; var csv=[hdr.join(',')].concat(rows).join(nl);
   var a=document.createElement('a');
   a.href=window.URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='outstanding_'+new Date().toISOString().split('T')[0]+'.csv';
@@ -1076,9 +1570,16 @@ function exportCSV(){
 
 // ── TAB / MODAL UTILS ─────────────────────────────────────────
 function switchTab(t){
-  var tabs=['clients','bills','receipts','settings'];
+  var tabs=['clients','bills','receipts','settings','gstr1'];
   document.querySelectorAll('.tab').forEach(function(el,i){el.classList.toggle('active',tabs[i]===t);});
   tabs.forEach(function(id){document.getElementById('p-'+id).classList.toggle('active',id===t);});
+  if(t==='gstr1'){
+    // Set default month/year to current
+    var now=new Date();
+    var mo=String(now.getMonth()+1).padStart(2,'0');
+    document.getElementById('g1month').value=mo;
+    document.getElementById('g1year').value=String(now.getFullYear());
+  }
   if(t==='settings'){
     document.getElementById('st-clients').textContent=allClients.length;
     document.getElementById('ob-client').innerHTML=allClients.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('');
@@ -1090,6 +1591,395 @@ function openM(id){document.getElementById(id).classList.add('open');}
 function closeM(id){document.getElementById(id).classList.remove('open');}
 document.addEventListener('click',function(e){if(e.target.classList.contains('moverlay'))document.querySelectorAll('.moverlay.open').forEach(function(m){m.classList.remove('open');});});
 
+// ── SUB-TAB SWITCHES ─────────────────────────────────────────
+function switchBillsTab(tab){
+  document.getElementById('stab-bills-active').classList.toggle('active', tab==='active');
+  document.getElementById('stab-bills-cancelled').classList.toggle('active', tab==='cancelled');
+  document.getElementById('bills-active-bar').style.display = tab==='active'?'':'none';
+  document.getElementById('bsumstrip').style.display = tab==='active'?'':'none';
+  document.querySelector('#p-bills .twrap').style.display = tab==='active'?'':'none';
+  document.getElementById('bills-cancelled-section').style.display = tab==='cancelled'?'':'none';
+  if(tab==='cancelled'){
+    var d=new Date(),m=d.getMonth();
+    var fyS=m>=3?new Date(d.getFullYear(),3,1):new Date(d.getFullYear()-1,3,1);
+    if(!document.getElementById('bcfrom').value) document.getElementById('bcfrom').value=fyS.toISOString().split('T')[0];
+    if(!document.getElementById('bcto').value)   document.getElementById('bcto').value=new Date().toISOString().split('T')[0];
+  }
+}
+
+function switchRecTab(tab){
+  document.getElementById('stab-rec-active').classList.toggle('active', tab==='active');
+  document.getElementById('stab-rec-cancelled').classList.toggle('active', tab==='cancelled');
+  document.getElementById('rec-active-bar').style.display = tab==='active'?'':'none';
+  document.getElementById('rsumstrip').style.display = tab==='active'?'':'none';
+  document.querySelector('#p-receipts .twrap').style.display = tab==='active'?'':'none';
+  document.getElementById('rec-cancelled-section').style.display = tab==='cancelled'?'':'none';
+  if(tab==='cancelled'){
+    var d=new Date(),m=d.getMonth();
+    var fyS=m>=3?new Date(d.getFullYear(),3,1):new Date(d.getFullYear()-1,3,1);
+    if(!document.getElementById('rcfrom').value) document.getElementById('rcfrom').value=fyS.toISOString().split('T')[0];
+    if(!document.getElementById('rcto').value)   document.getElementById('rcto').value=new Date().toISOString().split('T')[0];
+  }
+}
+
+function switchClientTab(tab){
+  document.getElementById('stab-cl-active').classList.toggle('active', tab==='active');
+  document.getElementById('stab-cl-inactive').classList.toggle('active', tab==='inactive');
+  document.getElementById('clients-active-section').style.display = tab==='active'?'':'none';
+  document.getElementById('sumstrip').style.display = tab==='active'?'':'none';
+  document.getElementById('clients-inactive-section').style.display = tab==='inactive'?'':'none';
+  if(tab==='inactive') loadInactiveClients();
+}
+
+// ── CANCEL BILL ───────────────────────────────────────────────
+var cancelTarget = null;
+
+function cancelBillIdx(btn){
+  var b=(window._bills||{})[parseInt(btn.getAttribute('data-idx'))];
+  if(!b) return;
+  openCancelBillData(b);
+}
+function openCancelBill(btn){ cancelBillIdx(btn); }
+function openCancelBillData(b){
+  cancelTarget = { type:'bill', id:b.id, clientId:b.clientId, clientName:b.clientName };
+  document.getElementById('cancel-title').textContent = 'Cancel Bill';
+  document.getElementById('cancel-no').textContent    = b.billNo;
+  document.getElementById('cancel-client').textContent= b.clientName;
+  document.getElementById('cancel-amt').textContent   = '₹'+fmt(b.total);
+  document.getElementById('cancel-date').textContent  = b.date;
+  document.getElementById('cancel-reason').value      = '';
+  document.getElementById('cancel-other').value       = '';
+  document.getElementById('cancel-other-wrap').style.display='none';
+  openM('mCancel');
+}
+
+function cancelRecIdx(btn){
+  var r=(window._recs||{})[parseInt(btn.getAttribute('data-idx'))];
+  if(!r) return;
+  openCancelRecData(r);
+}
+function openCancelRec(btn){ cancelRecIdx(btn); }
+function openCancelRecData(r){
+  cancelTarget = { type:'receipt', id:r.id, clientId:r.clientId, clientName:r.clientName };
+  document.getElementById('cancel-title').textContent = 'Cancel Receipt';
+  document.getElementById('cancel-no').textContent    = r.receiptNo;
+  document.getElementById('cancel-client').textContent= r.clientName;
+  document.getElementById('cancel-amt').textContent   = '₹'+fmt(r.amount);
+  document.getElementById('cancel-date').textContent  = r.date;
+  document.getElementById('cancel-reason').value      = '';
+  document.getElementById('cancel-other').value       = '';
+  document.getElementById('cancel-other-wrap').style.display='none';
+  openM('mCancel');
+}
+
+function handleCancelReason(){
+  var v = document.getElementById('cancel-reason').value;
+  document.getElementById('cancel-other-wrap').style.display = v==='Other'?'block':'none';
+}
+
+function confirmCancel(){
+  if(!cancelTarget) return;
+  var reason = document.getElementById('cancel-reason').value;
+  if(!reason){ toast('Select a reason','err'); return; }
+  if(reason==='Other'){
+    reason = document.getElementById('cancel-other').value.trim();
+    if(!reason){ toast('Enter the reason','err'); return; }
+  }
+  if(busy) return;
+  busy=true;
+  document.getElementById('confirmCancelBtn').disabled=true;
+  document.getElementById('confirmCancelBtn').textContent='Cancelling…';
+  if(cancelTarget.type==='bill'){
+    api({action:'cancelBill', billId:cancelTarget.id, reason:reason, clientId:cancelTarget.clientId}, function(d){
+      busy=false;
+      document.getElementById('confirmCancelBtn').disabled=false;
+      document.getElementById('confirmCancelBtn').innerHTML='<i class="ti ti-ban"></i> Confirm Cancel';
+      if(d.ok){ closeM('mCancel'); toast('Bill cancelled ✓','ok'); fetchBills(); loadAll(); }
+      else toast(d.error||'Failed','err');
+    });
+  } else {
+    api({action:'cancelReceipt', receiptId:cancelTarget.id, reason:reason, clientId:cancelTarget.clientId}, function(d){
+      busy=false;
+      document.getElementById('confirmCancelBtn').disabled=false;
+      document.getElementById('confirmCancelBtn').innerHTML='<i class="ti ti-ban"></i> Confirm Cancel';
+      if(d.ok){ closeM('mCancel'); toast('Receipt cancelled ✓','ok'); fetchReceipts(); loadAll(); }
+      else toast(d.error||'Failed','err');
+    });
+  }
+}
+
+// ── CANCELLED BILLS/RECEIPTS ──────────────────────────────────
+function fetchCancelledBills(){
+  var from=document.getElementById('bcfrom').value;
+  var to=document.getElementById('bcto').value;
+  if(!from||!to){ toast('Select date range','err'); return; }
+  document.getElementById('cbbody').innerHTML='<tr class="ldg"><td colspan="7"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Fetching…</div></td></tr>';
+  api({action:'getCancelledBills',from:from,to:to},function(d){
+    var list=d.bills||[];
+    if(!list.length){ document.getElementById('cbbody').innerHTML='<tr><td colspan="7"><div class="empty"><i class="ti ti-file-off"></i>No cancelled bills found.</div></td></tr>'; return; }
+    var fi={};FIRMS.forEach(function(f){fi[f.label]=f;});
+    list.sort(function(a,b){return parseDate(b.rawDate||b.date)-parseDate(a.rawDate||a.date);});
+    document.getElementById('cbbody').innerHTML=list.map(function(b){
+      var f=fi[b.firm]||{color:'#64748b',bg:'#f1f5f9'};
+      var parts=b.cancelInfo?b.cancelInfo.split(' | '):[];
+      var reason=parts[1]||'—', ts=parts[2]||'';
+      return '<tr class="row" style="opacity:.7;">'
+        +'<td style="font-weight:600;text-decoration:line-through;color:var(--muted);">'+esc(b.billNo)+'</td>'
+        +'<td style="font-size:12px;color:var(--muted);">'+esc(b.date)+'</td>'
+        +'<td style="font-weight:500;">'+esc(b.clientName)+'</td>'
+        +'<td><span class="cbadge" style="background:'+f.bg+';color:'+f.color+'">'+esc(b.firm)+'</span></td>'
+        +'<td style="font-size:12px;color:var(--muted);">'+esc(b.period||'—')+'</td>'
+        +'<td class="amt" style="text-decoration:line-through;color:var(--muted);">₹'+fmt(b.total)+'</td>'
+        +'<td><div style="font-size:12px;color:var(--red);">'+esc(reason)+'</div><div style="font-size:10px;color:var(--muted);">'+esc(ts)+'</div></td>'
+      +'</tr>';
+    }).join('');
+  });
+}
+
+function fetchCancelledReceipts(){
+  var from=document.getElementById('rcfrom').value;
+  var to=document.getElementById('rcto').value;
+  if(!from||!to){ toast('Select date range','err'); return; }
+  document.getElementById('crbody').innerHTML='<tr class="ldg"><td colspan="6"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Fetching…</div></td></tr>';
+  api({action:'getCancelledReceipts',from:from,to:to},function(d){
+    var list=d.receipts||[];
+    if(!list.length){ document.getElementById('crbody').innerHTML='<tr><td colspan="6"><div class="empty"><i class="ti ti-receipt-off"></i>No cancelled receipts found.</div></td></tr>'; return; }
+    var fi={};FIRMS.forEach(function(f){fi[f.label]=f;});
+    list.sort(function(a,b){return parseDate(b.rawDate||b.date)-parseDate(a.rawDate||a.date);});
+    document.getElementById('crbody').innerHTML=list.map(function(r){
+      var f=fi[r.firm]||{color:'#64748b',bg:'#f1f5f9'};
+      var parts=r.cancelInfo?r.cancelInfo.split(' | '):[];
+      var reason=parts[1]||'—', ts=parts[2]||'';
+      return '<tr class="row" style="opacity:.7;">'
+        +'<td style="font-weight:600;text-decoration:line-through;color:var(--muted);">'+esc(r.receiptNo)+'</td>'
+        +'<td style="font-size:12px;color:var(--muted);">'+esc(r.date)+'</td>'
+        +'<td style="font-weight:500;">'+esc(r.clientName)+'</td>'
+        +'<td><span class="cbadge" style="background:'+f.bg+';color:'+f.color+'">'+esc(r.firm)+'</span></td>'
+        +'<td class="amt" style="text-decoration:line-through;color:var(--muted);">₹'+fmt(r.amount)+'</td>'
+        +'<td><div style="font-size:12px;color:var(--red);">'+esc(reason)+'</div><div style="font-size:10px;color:var(--muted);">'+esc(ts)+'</div></td>'
+      +'</tr>';
+    }).join('');
+  });
+}
+
+// ── ARCHIVE CLIENT ────────────────────────────────────────────
+var archiveTarget = null;
+function doArchive(id, name){
+  archiveTarget = {id:id, name:name};
+  document.getElementById('arch-name').textContent = name;
+  document.getElementById('archiveBtn').disabled = false;
+  document.getElementById('archiveBtn').innerHTML = '<i class="ti ti-archive"></i> Archive';
+  openM('mArchive');
+}
+function confirmArchive(){
+  if(!archiveTarget) return;
+  var btn = document.getElementById('archiveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Archiving…';
+  api({action:'archiveClient',clientId:archiveTarget.id},function(d){
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-archive"></i> Archive';
+    if(d.ok){
+      closeM('mArchive');
+      toast(archiveTarget.name+' archived ✓','ok');
+      archiveTarget = null;
+      loadAll();
+    } else {
+      toast(d.error||'Failed','err');
+      closeM('mArchive');
+    }
+  });
+}
+
+function loadInactiveClients(){
+  document.getElementById('incbody').innerHTML='<tr class="ldg"><td colspan="5"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading…</div></td></tr>';
+  api({action:'getInactiveClients'},function(d){
+    var list=d.clients||[];
+    if(!list.length){ document.getElementById('incbody').innerHTML='<tr><td colspan="5"><div class="empty"><i class="ti ti-users-off"></i>No inactive clients.</div></td></tr>'; return; }
+    window._inactive = list;
+    document.getElementById('incbody').innerHTML=list.map(function(c,idx){
+      return '<tr class="row">'
+        +'<td><div class="cname" style="color:var(--muted);">'+esc(c.name)+'</div></td>'
+        +'<td style="font-size:12px;color:var(--muted);">'+esc(c.group||'—')+'</td>'
+        +'<td style="font-size:12px;font-family:monospace;color:var(--muted);">'+esc(c.pan||'—')+'</td>'
+        +'<td style="font-size:12px;color:var(--muted);">'+esc(c.mobile||'—')+'</td>'
+        +'<td><div class="acts"><button class="btn btn-o btn-sm" data-idx="'+idx+'" onclick="reactivateIdx(this)"><i class="ti ti-refresh"></i> Reactivate</button></div></td>'
+      +'</tr>';
+    }).join('');
+  });
+}
+
+function reactivateIdx(btn){
+  var idx=parseInt(btn.getAttribute('data-idx'));
+  var c=(window._inactive||[])[idx];
+  if(!c) return;
+  doReactivate(c.id, c.name);
+}
+function doReactivate(id, name){
+  if(busy) return;
+  busy=true;
+  api({action:'reactivateClient',clientId:id},function(d){
+    busy=false;
+    if(d.ok){ toast(name+' reactivated ✓','ok'); loadInactiveClients(); loadAll(); }
+    else toast(d.error||'Failed','err');
+  });
+}
+
+// ── GSTR-1 ───────────────────────────────────────────────────
+var gstr1Data = [];
+
+function getGSTR1Dates(){
+  var month=document.getElementById('g1month').value;
+  var year=parseInt(document.getElementById('g1year').value);
+  var from=year+'-'+month+'-01';
+  var lastDay=new Date(year, parseInt(month), 0).getDate();
+  var to=year+'-'+month+'-'+String(lastDay).padStart(2,'0');
+  return {from:from, to:to, label:document.getElementById('g1month').options[document.getElementById('g1month').selectedIndex].text+' '+year};
+}
+
+function buildHSNSummary(bills){
+  // Group by HSN/SAC code
+  var hsn={};
+  bills.forEach(function(b){
+    var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:18}];
+    items.forEach(function(it){
+      var code=it.hsn||'998231';
+      var desc='Auditing & Consultancy Services';
+      var tax=it.amt||b.taxable||0;
+      var gstR=it.gstR||18;
+      if(!hsn[code]) hsn[code]={code:code,desc:desc,taxable:0,cgst:0,sgst:0};
+      hsn[code].taxable+=tax;
+      hsn[code].cgst+=Math.round(tax*gstR/2/100*100)/100;
+      hsn[code].sgst+=Math.round(tax*gstR/2/100*100)/100;
+    });
+  });
+  return Object.values(hsn);
+}
+
+function loadGSTR1(){
+  var dates=getGSTR1Dates();
+  document.getElementById('gstr1body').innerHTML='<tr class="ldg"><td colspan="9"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading…</div></td></tr>';
+  document.getElementById('gstr1-table-wrap').style.display='block';
+  api({action:'getBills',from:dates.from,to:dates.to},function(d){
+    var bills=(d.bills||[]).filter(function(b){ return b.firm==='CM Doshi'; });
+    bills.sort(function(a,b){return parseDate(a.rawDate||a.date)-parseDate(b.rawDate||b.date);});
+    gstr1Data=bills;
+    if(!bills.length){
+      document.getElementById('gstr1body').innerHTML='<tr><td colspan="9"><div class="empty"><i class="ti ti-file-off"></i>No CM Doshi bills for '+dates.label+'</div></td></tr>';
+      document.getElementById('gstr1hsnbody').innerHTML='';
+      document.getElementById('gstr1-summary').style.display='none';
+      document.getElementById('exportGSTR1Btn').style.display='none';
+      document.getElementById('printGSTR1Btn').style.display='none';
+      return;
+    }
+    var gstinMap={};
+    allClients.forEach(function(c){ if(c.gstin) gstinMap[c.id]=c.gstin; });
+    var totalTax=0,totalGST=0,totalAmt=0;
+
+    // Invoice rows
+    document.getElementById('gstr1body').innerHTML=bills.map(function(b,i){
+      var cgst=Math.round(b.taxable*9/100*100)/100;
+      var tot=b.taxable+cgst*2;
+      totalTax+=b.taxable; totalGST+=cgst*2; totalAmt+=tot;
+      var gstin=gstinMap[b.clientId]||'—';
+      return '<tr class="row">'
+        +'<td style="color:var(--muted);font-size:12px;">'+(i+1)+'</td>'
+        +'<td style="font-weight:600;">'+esc(b.billNo)+'</td>'
+        +'<td style="font-size:12px;">'+esc(b.date)+'</td>'
+        +'<td style="font-weight:500;">'+esc(b.clientName)+'</td>'
+        +'<td style="font-size:11px;font-family:monospace;color:var(--muted);">'+esc(gstin)+'</td>'
+        +'<td class="amt">₹'+fmt(b.taxable)+'</td>'
+        +'<td class="amt" style="color:#0f766e;">₹'+fmt(cgst)+'</td>'
+        +'<td class="amt" style="color:#0f766e;">₹'+fmt(cgst)+'</td>'
+        +'<td class="amt amtt">₹'+fmt(tot)+'</td>'
+      +'</tr>';
+    }).join('')
+    +'<tr style="background:#f0fdf4;font-weight:700;">'
+      +'<td colspan="5" style="padding:10px 12px;text-align:right;color:var(--green);">Total ('+bills.length+' invoices)</td>'
+      +'<td class="amt" style="color:var(--green);">₹'+fmt(totalTax)+'</td>'
+      +'<td class="amt" style="color:var(--green);">₹'+fmt(totalGST/2)+'</td>'
+      +'<td class="amt" style="color:var(--green);">₹'+fmt(totalGST/2)+'</td>'
+      +'<td class="amt" style="color:var(--green);">₹'+fmt(totalAmt)+'</td>'
+    +'</tr>';
+
+    // HSN Summary
+    var hsnData=buildHSNSummary(bills);
+    var hsnTotTax=0,hsnTotCGST=0;
+    document.getElementById('gstr1hsnbody').innerHTML=hsnData.map(function(h){
+      hsnTotTax+=h.taxable; hsnTotCGST+=h.cgst;
+      return '<tr class="row">'
+        +'<td style="font-weight:600;font-family:monospace;">'+esc(h.code)+'</td>'
+        +'<td style="font-size:12px;">'+esc(h.desc)+'</td>'
+        +'<td class="amt">₹'+fmt(h.taxable)+'</td>'
+        +'<td class="amt">18%</td>'
+        +'<td class="amt" style="color:#0f766e;">₹'+fmt(h.cgst)+'</td>'
+        +'<td class="amt" style="color:#0f766e;">₹'+fmt(h.sgst)+'</td>'
+        +'<td class="amt amtt">₹'+fmt(h.cgst+h.sgst)+'</td>'
+      +'</tr>';
+    }).join('')
+    +'<tr style="background:#f0fdf4;font-weight:700;">'
+      +'<td colspan="2" style="padding:10px 12px;text-align:right;color:var(--green);">Total</td>'
+      +'<td class="amt" style="color:var(--green);">₹'+fmt(hsnTotTax)+'</td>'
+      +'<td></td>'
+      +'<td class="amt" style="color:var(--green);">₹'+fmt(hsnTotCGST)+'</td>'
+      +'<td class="amt" style="color:var(--green);">₹'+fmt(hsnTotCGST)+'</td>'
+      +'<td class="amt" style="color:var(--green);">₹'+fmt(hsnTotCGST*2)+'</td>'
+    +'</tr>';
+
+    // Summary cards
+    document.getElementById('gstr1-stats').innerHTML=
+      '<div class="stat-box"><div class="stat-n">'+bills.length+'</div><div class="stat-l">Invoices</div></div>'
+      +'<div class="stat-box"><div class="stat-n" style="font-size:16px;">₹'+fmt(totalTax)+'</div><div class="stat-l">Taxable Value</div></div>'
+      +'<div class="stat-box"><div class="stat-n" style="font-size:16px;">₹'+fmt(totalGST)+'</div><div class="stat-l">Total GST</div></div>'
+      +'<div class="stat-box"><div class="stat-n" style="font-size:16px;">₹'+fmt(totalGST/2)+'</div><div class="stat-l">CGST (9%)</div></div>'
+      +'<div class="stat-box"><div class="stat-n" style="font-size:16px;">₹'+fmt(totalGST/2)+'</div><div class="stat-l">SGST (9%)</div></div>'
+      +'<div class="stat-box"><div class="stat-n" style="font-size:16px;">₹'+fmt(totalAmt)+'</div><div class="stat-l">Grand Total</div></div>';
+    document.getElementById('gstr1-summary').style.display='block';
+    document.getElementById('exportGSTR1Btn').style.display='inline-flex';
+    document.getElementById('printGSTR1Btn').style.display='inline-flex';
+  });
+}
+
+
+
+// ── GSTR-1 EXCEL EXPORT ──────────────────────────────────────
+function exportGSTR1Excel(){
+  if(!gstr1Data.length){toast('Load bills first','err');return;}
+  if(typeof XLSX==='undefined'){toast('Excel library not loaded — refresh and try again','err');return;}
+  var gstinMap={};
+  allClients.forEach(function(c){ if(c.gstin) gstinMap[c.id]=c.gstin; });
+  var dates=getGSTR1Dates();
+  var invoiceRows=gstr1Data.map(function(b,i){
+    var cgst=Math.round(b.taxable*9/100*100)/100;
+    return [i+1,b.billNo,b.date,b.clientName,gstinMap[b.clientId]||'',b.taxable,cgst,cgst,b.taxable+cgst*2];
+  });
+  var invTotals=['','','','Total','',
+    invoiceRows.reduce(function(s,r){return s+r[5];},0),
+    invoiceRows.reduce(function(s,r){return s+r[6];},0),
+    invoiceRows.reduce(function(s,r){return s+r[7];},0),
+    invoiceRows.reduce(function(s,r){return s+r[8];},0)
+  ];
+  var hsnData=buildHSNSummary(gstr1Data);
+  var hsnRows=hsnData.map(function(h){return [h.code,h.desc,h.taxable,'18%',h.cgst,h.sgst,h.cgst+h.sgst];});
+  var hsnTotals=['','Total',
+    hsnRows.reduce(function(s,r){return s+r[2];},0),'',
+    hsnRows.reduce(function(s,r){return s+r[4];},0),
+    hsnRows.reduce(function(s,r){return s+r[5];},0),
+    hsnRows.reduce(function(s,r){return s+r[6];},0)
+  ];
+  var wb=XLSX.utils.book_new();
+  var invHeader=['Sr No','Invoice No','Invoice Date','Party Name','GSTIN','Taxable Value','CGST 9%','SGST 9%','Total'];
+  var ws1=XLSX.utils.aoa_to_sheet([invHeader].concat(invoiceRows).concat([invTotals]));
+  ws1['!cols']=[{wch:6},{wch:20},{wch:14},{wch:32},{wch:18},{wch:14},{wch:12},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws1,'B2B-B2C Invoices');
+  var hsnHeader=['HSN/SAC','Description','Taxable Value','GST Rate','CGST','SGST','Total Tax'];
+  var ws2=XLSX.utils.aoa_to_sheet([hsnHeader].concat(hsnRows).concat([hsnTotals]));
+  ws2['!cols']=[{wch:12},{wch:32},{wch:16},{wch:10},{wch:14},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws2,'HSN Summary');
+  XLSX.writeFile(wb,'GSTR1_CMD_'+dates.label.replace(/ /g,'_')+'.xlsx');
+  toast('GSTR-1 Excel exported ✓','ok');
+}
+
 // ── HELPERS ───────────────────────────────────────────────────
 function toast(msg,type){
   var t=document.getElementById('toast');
@@ -1097,19 +1987,17 @@ function toast(msg,type){
   t.className='toast show'+(type?' '+type:'');
   clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},3500);
 }
+function fmtDate(s){
+  var p=s.split('-'),m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return p[2]+' '+m[+p[1]-1]+' '+p[0];
+}
 function parseDate(s){
   if(!s||s==='—') return 0;
-  // Handle yyyy-MM-dd
   if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s).getTime();
-  // Handle "14 Jun 2026"
   var m={'Jan':0,'Feb':1,'Mar':2,'Apr':3,'May':4,'Jun':5,'Jul':6,'Aug':7,'Sep':8,'Oct':9,'Nov':10,'Dec':11};
   var p=s.split(' ');
   if(p.length===3) return new Date(parseInt(p[2]),m[p[1]]||0,parseInt(p[0])).getTime();
   return new Date(s).getTime();
-}
-function fmtDate(s){
-  var p=s.split('-'),m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return p[2]+' '+m[+p[1]-1]+' '+p[0];
 }
 function fmt(n){return Math.round(n).toLocaleString('en-IN');}
 function slug(s){return s.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'').toLowerCase();}
