@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:56px;}
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-title">CA CM Doshi &amp; Company — Client Manager</div>
-  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v2.3 · 15Jun26</span></div>
+  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v2.4</span></div>
 </div>
 
 <!-- TABS -->
@@ -442,7 +442,7 @@ textarea{resize:vertical;min-height:56px;}
         <div class="fg"><label class="lbl">Amount (₹)</label><input type="number" id="ob-amount" placeholder="0"></div>
         <div class="fg sp2"><label class="lbl">Narration</label><input type="text" id="ob-nar" placeholder="Opening Balance as on 01/06/2026"></div>
       </div>
-      <button class="btn btn-p btn-sm" style="margin-top:8px;" onclick="saveOB()"><i class="ti ti-plus"></i> Add Opening Balance</button>
+      <button class="btn btn-p btn-sm" id="saveOBBtn" style="margin-top:8px;" onclick="saveOB()"><i class="ti ti-plus"></i> Add Opening Balance</button>
     </div>
     <div class="set-section">
       <div class="set-title"><i class="ti ti-database"></i> Data</div>
@@ -1420,6 +1420,8 @@ function saveClient(){
 
 // ── OPENING BALANCE ───────────────────────────────────────────
 function saveOB(){
+  var obBtn=document.getElementById('saveOBBtn');
+  if(obBtn.disabled) return; // already saving — block duplicate clicks
   var cid=document.getElementById('ob-client').value;
   var cname=document.getElementById('ob-client').options[document.getElementById('ob-client').selectedIndex].text;
   var firm=document.getElementById('ob-firm').value;
@@ -1427,13 +1429,11 @@ function saveOB(){
   var amt=parseFloat(document.getElementById('ob-amount').value)||0;
   var nar=document.getElementById('ob-nar').value.trim()||'Opening Balance';
   if(!cid||!firm||!date||!amt){toast('All fields required','err');return;}
-  // Opening balance — server assigns OB number via addBill
-  var obBtn=document.querySelector('#p-settings .btn-p.btn-sm');
-  if(obBtn) { obBtn.disabled=true; obBtn.textContent='Saving…'; }
+  obBtn.disabled=true; obBtn.textContent='Saving…';
   api({action:'addBill',billDate:date,clientId:cid,clientName:cname,
     firm:firm,description:nar,period:'Opening Balance',taxable:amt,gstRate:0,narration:nar
   },function(d){
-    if(obBtn){ obBtn.disabled=false; obBtn.innerHTML='<i class="ti ti-plus"></i> Add Opening Balance'; }
+    obBtn.disabled=false; obBtn.innerHTML='<i class="ti ti-plus"></i> Add Opening Balance';
     if(d.ok){toast('Opening balance added ✓','ok');document.getElementById('ob-amount').value='';loadAll();}
     else toast(d.error||'Failed','err');
   });
