@@ -450,6 +450,11 @@ textarea{resize:vertical;min-height:56px;}
       <button class="btn btn-r" onclick="clearCache()"><i class="ti ti-trash"></i> Clear Cache &amp; Reload</button>
     </div>
     <div class="set-section">
+      <div class="set-title"><i class="ti ti-building-bank"></i> Bank Details <span style="font-size:10px;font-weight:400;color:var(--muted);">(read-only)</span></div>
+      <div id="bankDetailsView"></div>
+    </div>
+
+    <div class="set-section">
       <div class="set-title"><i class="ti ti-link"></i> Connection</div>
       <div id="connStatus" style="font-size:13px;margin-bottom:10px;"></div>
       <button class="btn btn-o btn-sm" onclick="testConn()"><i class="ti ti-plug"></i> Test Connection</button>
@@ -469,13 +474,12 @@ textarea{resize:vertical;min-height:56px;}
       <div class="fg2">
         <div class="fg"><label class="lbl">Bill No <span style="font-size:9px;color:var(--muted);font-weight:400;">(assigned on save)</span></label><input id="b-no" placeholder="Will be assigned on save" disabled style="background:#f8fafc;color:var(--muted);cursor:not-allowed;"></div>
         <div class="fg"><label class="lbl">Bill Date *</label><input type="date" id="b-date"></div>
-        <div class="fg"><label class="lbl">Firm *</label><select id="b-firm" onchange="suggestBillNo()"></select></div>
-        <div class="fg"><label class="lbl">Service Period</label><input id="b-period" placeholder="FY 2025-26"></div>
+        <div class="fg sp2"><label class="lbl">Firm *</label><select id="b-firm" onchange="suggestBillNo()"></select></div>
       </div>
       <hr class="hdivider">
-      <label class="lbl" style="display:block;margin-bottom:6px;">Bill Items</label>
+      <label class="lbl" style="display:block;margin-bottom:6px;">Bill Items <span style="font-size:9px;color:var(--muted);font-weight:400;">(each item can have its own period)</span></label>
       <table class="itbl">
-        <thead><tr><th style="width:44%">Description</th><th style="width:14%">HSN/SAC</th><th style="width:17%">Amount (₹)</th><th style="width:13%">GST %</th><th style="width:12%"></th></tr></thead>
+        <thead><tr><th style="width:32%">Description</th><th style="width:13%">HSN/SAC</th><th style="width:14%">Amount (₹)</th><th style="width:10%">GST %</th><th style="width:19%">Period</th><th style="width:12%"></th></tr></thead>
         <tbody id="b-items"></tbody>
       </table>
       <button class="addbtn" onclick="addRow()"><i class="ti ti-plus"></i> Add row</button>
@@ -681,6 +685,7 @@ var SERVICES = [
   'VAT Return Filing',
   'VAT Audit Return Filing',
   'VAT Registration',
+  'GST Return',
   'GST Return Filing (M)',
   'GST Return Filing (Q)',
   'GSTR 9',
@@ -695,6 +700,11 @@ var SERVICES = [
   'Certification Charges',
   'Other'
 ];
+var BANK_DETAILS = {
+  'CM Doshi': { bank:'State Bank of India', branch:'Pandharpur', holder:'C M DOSHI & CO.', acNo:'34653111241', ifsc:'SBIN0000446' },
+  'PR Phade': { bank:'HDFC Bank Ltd', branch:'Pandharpur', holder:'PIYUSH R. PHADE AND CO.', acNo:'502000462812 61', ifsc:'HDFC0002803' },
+  'Prabha Computers': { bank:'The Pandharpur Urban Co-Op Bank Ltd', branch:'Navi Peth, Pandharpur', holder:'Prabha Computers', acNo:'002042001322', ifsc:'PUCB0000002' }
+};
 var FIRM_DETAILS = {
   'CM Doshi':        { printName:'C M Doshi and Co',    address:'Pandharpur, Maharashtra', gstin:'27AEWPD6934J1ZW', defaultGST:18, isGST:true  },
   'PR Phade':        { printName:'Piyush R Phade & Co', address:'Pandharpur, Maharashtra', gstin:'',               defaultGST:0,  isGST:false },
@@ -1043,7 +1053,6 @@ function openBill(id,name){
   curId=id;curName=name;
   document.getElementById('b-cname').textContent=name;
   document.getElementById('b-no').value='';
-  document.getElementById('b-period').value='';
   document.getElementById('b-nar').value='';
   document.getElementById('b-items').innerHTML=iRow();
   calcTots();suggestBillNo();openM('mAddBill');
@@ -1062,6 +1071,7 @@ function iRow(){
     +'<td><input type="text" class="ihsn" placeholder="998231" style="border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;width:100%;"></td>'
     +'<td><input type="number" placeholder="0" class="ia" oninput="calcTots()" style="border:none;padding:4px 6px;font-size:13px;background:transparent;outline:none;width:100%;"></td>'
     +'<td><input type="number" placeholder="18" class="ig" oninput="calcTots()" style="border:none;padding:4px 6px;font-size:13px;background:transparent;outline:none;width:100%;"></td>'
+    +'<td><input type="text" class="iperiod" placeholder="FY 2025-26" style="border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;width:100%;"></td>'
     +'<td><button class="delbtn" onclick="delRow(this)"><i class="ti ti-x"></i></button></td>'
     +'</tr>';
 }
@@ -1144,7 +1154,7 @@ function saveBill(){
   var dt=document.getElementById('b-date').value;
   var firm=document.getElementById('b-firm').value;
   if(!dt||!firm){toast('Date and firm are required','err');return;}
-  var tax=0,gst=0,items=[];
+  var tax=0,gst=0,items=[],periods=[];
   document.querySelectorAll('#b-items tr').forEach(function(r){
     var sel=r.querySelector('.isel');
     var inp=r.querySelector('.idesc');
@@ -1154,11 +1164,16 @@ function saveBill(){
     var hsn=r.querySelector('.ihsn')?r.querySelector('.ihsn').value:'998231';
     var a=parseFloat(r.querySelector('.ia').value)||0;
     var g=parseFloat(r.querySelector('.ig').value)||0;
+    var per=r.querySelector('.iperiod')?r.querySelector('.iperiod').value.trim():'';
     tax+=a;gst+=a*g/100;
-    if(desc||a)items.push({desc:desc,hsn:hsn||'998231',amt:a,gstR:g});
+    if(desc||a){
+      items.push({desc:desc,hsn:hsn||'998231',amt:a,gstR:g,period:per});
+      if(per) periods.push(per);
+    }
   });
   if(items.length===0){toast('Add at least one bill item','err');return;}
-  var period=document.getElementById('b-period').value;
+  // Combine all item periods into one string for the Period column (for filtering/reference)
+  var period=periods.filter(function(p,i){return periods.indexOf(p)===i;}).join(' | ');
   var narration=document.getElementById('b-nar').value;
   // pd.billNo will be filled after server responds
   var pd={billNo:'',date:fmtDate(dt),clientName:curName,firm:firm,
@@ -1496,13 +1511,14 @@ function billHTML(b,fmt_unused){
   var isTax=fd.isGST;
   // Always use fd.defaultGST for GST firms — never trust saved gstR which may be 0
   var gstPct=isTax?fd.defaultGST:0;
-  var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:gstPct}];
+  var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:gstPct,period:b.period||''}];
   var tax=0,gst=0;
   items.forEach(function(it){ var a=it.amt||0,g=isTax?gstPct:0; tax+=a; gst+=a*g/100; });
   var tot=tax+gst;
   var irows=items.map(function(it){
     var a=it.amt||0,g=isTax?gstPct:0;
-    return '<tr><td>'+esc(it.desc||'')+'</td><td>'+esc(it.hsn||'998231')+'</td><td class="r">₹'+fmt(a)+'</td>'
+    var descCell=esc(it.desc||'')+(it.period?'<div style="font-size:9px;color:#666;margin-top:2px;">Period: '+esc(it.period)+'</div>':'');
+    return '<tr><td>'+descCell+'</td><td>'+esc(it.hsn||'998231')+'</td><td class="r">₹'+fmt(a)+'</td>'
       +(isTax?'<td class="r">'+g+'%</td><td class="r">₹'+fmt(a*g/100)+'</td>':'')
       +'<td class="r">₹'+fmt(isTax?a+a*g/100:a)+'</td></tr>';
   }).join('');
@@ -1510,7 +1526,7 @@ function billHTML(b,fmt_unused){
     +'<div class="phdr"><div><div class="pfirm">'+esc(fd.printName)+'</div>'
     +'<div class="pfsub">'+esc(fd.address)+(fd.gstin?'<br>GSTIN: '+esc(fd.gstin):'')+'</div></div>'
     +'<div><div class="pdtype">'+(isTax?'Tax Invoice':'Bill of Supply')+'</div>'
-    +'<div class="pdmeta">Bill No: <strong>'+esc(b.billNo)+'</strong><br>Date: <strong>'+esc(b.date)+'</strong>'+(b.period?'<br>Period: '+esc(b.period):'')+'</div></div></div>'
+    +'<div class="pdmeta">Bill No: <strong>'+esc(b.billNo)+'</strong><br>Date: <strong>'+esc(b.date)+'</strong></div></div></div>'
     +'<div class="pparties"><div class="pparty"><div class="pplbl">From</div><div class="ppname">'+esc(fd.printName)+'</div>'+(fd.gstin?'<div style="font-size:10px;color:#555;margin-top:2px;">GSTIN: '+esc(fd.gstin)+'</div>':'')+'</div>'
     +'<div class="pparty"><div class="pplbl">Bill To</div><div class="ppname">'+esc(b.clientName)+'</div></div></div>'
     +'<table class="ptbl"><thead><tr>'
@@ -1582,6 +1598,7 @@ function switchTab(t){
   }
   if(t==='settings'){
     document.getElementById('st-clients').textContent=allClients.length;
+    renderBankDetails();
     document.getElementById('ob-client').innerHTML=allClients.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('');
     document.getElementById('ob-firm').innerHTML=FIRMS.map(function(f){return '<option>'+esc(f.label)+'</option>';}).join('');
     var od=document.getElementById('ob-date');if(!od.value)od.value=new Date().toISOString().split('T')[0];
@@ -1953,6 +1970,25 @@ function loadGSTR1(){
 }
 
 
+
+// ── BANK DETAILS (read-only) ──────────────────────────────────
+function renderBankDetails(){
+  var html='';
+  FIRMS.forEach(function(f){
+    var bd=BANK_DETAILS[f.label];
+    if(!bd) return;
+    html+='<div style="background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;border-left:3px solid '+f.color+';">'
+      +'<div style="font-weight:700;font-size:13px;color:'+f.color+';margin-bottom:8px;">'+esc(f.label)+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">'
+      +'<div><span style="color:var(--muted);">Bank:</span> '+esc(bd.bank)+'</div>'
+      +'<div><span style="color:var(--muted);">Branch:</span> '+esc(bd.branch)+'</div>'
+      +'<div style="grid-column:span 2;"><span style="color:var(--muted);">A/C Holder:</span> '+esc(bd.holder)+'</div>'
+      +'<div><span style="color:var(--muted);">A/C No:</span> <span style="font-family:monospace;">'+esc(bd.acNo)+'</span></div>'
+      +'<div><span style="color:var(--muted);">IFSC:</span> <span style="font-family:monospace;">'+esc(bd.ifsc)+'</span></div>'
+      +'</div></div>';
+  });
+  document.getElementById('bankDetailsView').innerHTML=html;
+}
 
 // ── GSTR-1 EXCEL EXPORT ──────────────────────────────────────
 function exportGSTR1Excel(){
