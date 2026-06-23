@@ -515,8 +515,10 @@ textarea{resize:vertical;min-height:56px;}
           <select id="r-mode"><option>Bank Transfer (NEFT/RTGS)</option><option>UPI</option><option>Cheque</option><option>Cash</option><option>IMPS</option></select>
         </div>
         <div class="fg"><label class="lbl">UTR / Reference</label><input id="r-ref" placeholder="Reference no."></div>
+        <div class="fg"><label class="lbl">Discount (₹) <span style="font-size:9px;color:var(--muted);font-weight:400;">(optional)</span></label><input type="number" id="r-discount" placeholder="0" oninput="updBal()"></div>
         <div class="fg sp2" id="r-bal" style="display:none;background:var(--bg);padding:10px;border-radius:var(--rs);">
           <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Outstanding before</span><span id="r-before" style="font-weight:600;">₹0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:3px;" id="r-discount-row"><span style="color:var(--muted);">Discount applied</span><span id="r-discount-val" style="font-weight:600;color:#b45309;">₹0</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:5px;"><span style="color:var(--muted);">Balance after</span><span id="r-after" style="font-weight:700;color:var(--green);">₹0</span></div>
         </div>
         <div class="fg sp2"><label class="lbl">Narration</label><textarea id="r-nar" placeholder="e.g. Received for Tax Audit FY 2025-26"></textarea></div>
@@ -700,6 +702,18 @@ var SERVICES = [
   'Certification Charges',
   'Other'
 ];
+
+// FY list — current year ± a few years for old bill entry
+function buildFYOptions(){
+  var d=new Date(), curYear=d.getFullYear();
+  var startFY=curYear-1; // 2 years back from current FY
+  var opts=[];
+  for(var y=startFY-2; y<=startFY+2; y++){
+    opts.push('FY '+y+'-'+String(y+1).slice(2));
+  }
+  return opts;
+}
+var FY_OPTIONS = buildFYOptions();
 var BANK_DETAILS = {
   'CM Doshi': { bank:'State Bank of India', branch:'Pandharpur', holder:'C M DOSHI & CO.', acNo:'34653111241', ifsc:'SBIN0000446' },
   'PR Phade': { bank:'HDFC Bank Ltd', branch:'Pandharpur', holder:'PIYUSH R. PHADE AND CO.', acNo:'50200046281261', ifsc:'HDFC0002803' },
@@ -1061,6 +1075,9 @@ function iRow(){
   var opts=SERVICES.map(function(s){
     return '<option value="'+esc(s)+'">'+esc(s)+'</option>';
   }).join('');
+  var fyOpts=FY_OPTIONS.map(function(fy){
+    return '<option value="'+esc(fy)+'">'+esc(fy)+'</option>';
+  }).join('');
   return '<tr>'
     +'<td style="padding:0;">'
       +'<select class="isel" onchange="handleSvcSel(this)" style="width:100%;border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;">'
@@ -1071,7 +1088,7 @@ function iRow(){
     +'<td><input type="text" class="ihsn" placeholder="998231" style="border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;width:100%;"></td>'
     +'<td><input type="number" placeholder="0" class="ia" oninput="calcTots()" style="border:none;padding:4px 6px;font-size:13px;background:transparent;outline:none;width:100%;"></td>'
     +'<td><input type="number" placeholder="18" class="ig" oninput="calcTots()" style="border:none;padding:4px 6px;font-size:13px;background:transparent;outline:none;width:100%;"></td>'
-    +'<td><input type="text" class="iperiod" placeholder="FY 2025-26" style="border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;width:100%;"></td>'
+    +'<td><select class="iperiod" style="border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;width:100%;cursor:pointer;"><option value="">— Period —</option>'+fyOpts+'</select></td>'
     +'<td><button class="delbtn" onclick="delRow(this)"><i class="ti ti-x"></i></button></td>'
     +'</tr>';
 }
@@ -1272,32 +1289,38 @@ function openRec(id,name,out){
   document.getElementById('r-no').value='';
   document.getElementById('r-amt').value='';
   document.getElementById('r-ref').value='';
+  document.getElementById('r-discount').value='';
   document.getElementById('r-nar').value='';
   document.getElementById('r-bal').style.display='none';
   suggestRecNo();openM('mAddReceipt');
 }
 function updBal(){
   var a=parseFloat(document.getElementById('r-amt').value)||0;
+  var disc=parseFloat(document.getElementById('r-discount').value)||0;
   document.getElementById('r-before').textContent='₹'+fmt(curOut);
-  document.getElementById('r-after').textContent='₹'+fmt(Math.max(0,curOut-a));
+  document.getElementById('r-discount-val').textContent='₹'+fmt(disc);
+  document.getElementById('r-discount-row').style.display=disc>0?'flex':'none';
+  document.getElementById('r-after').textContent='₹'+fmt(Math.max(0,curOut-a-disc));
   document.getElementById('r-bal').style.display='block';
 }
 function saveReceipt(){
   if(busy) return;
   var dt=document.getElementById('r-date').value;
   var amt=parseFloat(document.getElementById('r-amt').value)||0;
+  var disc=parseFloat(document.getElementById('r-discount').value)||0;
   var firm=document.getElementById('r-firm').value;
   if(!dt||!amt||!firm){toast('Date, amount and firm are required','err');return;}
   var mode=document.getElementById('r-mode').value;
   var ref=document.getElementById('r-ref').value;
   var recNar=document.getElementById('r-nar').value;
+  if(disc>0) recNar=(recNar?recNar+' — ':'')+'Discount ₹'+fmt(disc)+' applied';
   var pd={receiptNo:'',date:fmtDate(dt),clientName:curName,firm:firm,amount:amt,
-    mode:mode,ref:ref,narration:recNar};
+    mode:mode,ref:ref,narration:recNar,discount:disc};
   busy=true;
   document.getElementById('saveRecBtn').disabled=true;
   document.getElementById('saveRecBtn').textContent='Saving…';
   api({action:'addReceipt',receiptDate:dt,clientId:curId,clientName:curName,
-    firm:firm,amount:amt,mode:mode,ref:ref,narration:recNar
+    firm:firm,amount:amt,mode:mode,ref:ref,narration:recNar,discount:disc
   },function(d){
     busy=false;
     document.getElementById('saveRecBtn').disabled=false;
