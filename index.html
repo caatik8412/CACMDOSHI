@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:56px;}
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-title">CA CM Doshi &amp; Company — Client Manager</div>
-  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v2.7</span></div>
+  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v2.8</span></div>
 </div>
 
 <!-- TABS -->
@@ -862,7 +862,7 @@ function renderClients(){
   var outOnly=document.getElementById('outOnly').checked;
   var filtered=allClients.filter(function(c){
     if(q&&!c.name.toLowerCase().includes(q)&&!(c.group||'').toLowerCase().includes(q)&&!(c.pan||'').toLowerCase().includes(q)) return false;
-    if(outOnly){var t=Object.values(c.byFirm).reduce(function(a,b){return a+b;},0);if(t<=0) return false;}
+    if(outOnly){var t=Object.values(c.byFirm).reduce(function(a,b){return a+b;},0);if(t===0) return false;}
     return true;
   });
   var cols=2+FIRMS.length+2;
@@ -908,18 +908,23 @@ function cRow(c){
   var tot=0;
   var fc=FIRMS.map(function(f){
     var v=c.byFirm[f.label]||0;tot+=v;
-    return '<td class="amt'+(v>0?'':' amt0')+'" style="'+(v>0?'color:'+f.color:'')+'">'+(v>0?'₹'+fmt(v):'—')+'</td>';
+    if(v>0) return '<td class="amt" style="color:'+f.color+'">₹'+fmt(v)+'</td>';
+    if(v<0) return '<td class="amt"><span style="background:#dcfce7;color:#15803d;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;">Advance ₹'+fmt(Math.abs(v))+'</span></td>';
+    return '<td class="amt amt0">—</td>';
   }).join('');
   var smap={'44AB':'background:#eff6ff;color:#1d4ed8','44AD':'background:#f0fdf4;color:#15803d',
     '8% BUSINESS':'background:#f5f3ff;color:#6d28d9','PARTNER':'background:#fff7ed;color:#c2410c',
     'DIRECTOR':'background:#fdf4ff;color:#7e22ce','OTHER':'background:#f1f5f9;color:#475569',
     'HUF':'background:#fefce8;color:#854d0e','FIRM':'background:#ecfdf5;color:#065f46'};
   var ss=smap[c.status]||'background:#f1f5f9;color:#475569';
+  var totCell = tot>0 ? '₹'+fmt(tot)
+    : tot<0 ? '<span style="background:#dcfce7;color:#15803d;padding:1px 8px;border-radius:8px;font-size:11px;font-weight:700;">Advance ₹'+fmt(Math.abs(tot))+'</span>'
+    : '—';
   return '<tr class="row">'
     +'<td><div class="cname">'+esc(c.name)+'</div></td>'
     +'<td><span class="cbadge" style="'+ss+'">'+esc(c.status||'—')+'</span></td>'
     +fc
-    +'<td class="amt amtt">'+(tot>0?'₹'+fmt(tot):'—')+'</td>'
+    +'<td class="amt amtt">'+totCell+'</td>'
     +'<td><div class="acts">'
       +'<button class="icn ib" title="Add Bill" onclick="openBill(\''+c.id+'\',\''+esc(c.name)+'\')"><i class="ti ti-file-invoice"></i></button>'
       +'<button class="icn ir" title="Add Receipt" onclick="openRec(\''+c.id+'\',\''+esc(c.name)+'\','+tot+')"><i class="ti ti-receipt"></i></button>'
