@@ -1538,8 +1538,23 @@ function billHTML(b,fmt_unused){
     +(isTax?'<div class="ptrow"><span class="ptlbl">GST @ '+fd.defaultGST+'%</span><span class="ptval">₹'+fmt(gst)+'</span></div>':'')
     +'<div class="ptrow grand"><span class="ptlbl">Total Amount</span><span class="ptval">₹'+fmt(tot)+'</span></div></div>'
     +'<div class="pwords">Rupees: '+numWords(Math.round(tot))+' Only</div>'
+    +bankBlockHTML(b.firm)
     +'<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div>'
     +'<div class="psign">For '+esc(fd.printName)+'<br><br><br>Authorised Signatory</div></div></div>';
+}
+
+function bankBlockHTML(firm){
+  var bd=BANK_DETAILS[firm];
+  if(!bd) return '';
+  return '<div style="border:1px solid #ccc;border-radius:4px;padding:8px 10px;margin-bottom:4mm;font-size:10px;">'
+    +'<div style="font-weight:bold;font-size:10px;margin-bottom:4px;color:#1a3a5c;">Bank Details for Payment</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;color:#444;">'
+    +'<div>Bank: '+esc(bd.bank)+'</div>'
+    +'<div>Branch: '+esc(bd.branch)+'</div>'
+    +'<div style="grid-column:span 2;">A/C Holder: '+esc(bd.holder)+'</div>'
+    +'<div>A/C No: '+esc(bd.acNo)+'</div>'
+    +'<div>IFSC: '+esc(bd.ifsc)+'</div>'
+    +'</div></div>';
 }
 
 function recHTML(r){
