@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:56px;}
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-title">CA CM Doshi &amp; Company — Client Manager</div>
-  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v2.5</span></div>
+  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v2.7</span></div>
 </div>
 
 <!-- TABS -->
@@ -706,12 +706,13 @@ var SERVICES = [
 // FY list — current year ± a few years for old bill entry
 function buildFYOptions(){
   var d=new Date(), curYear=d.getFullYear();
-  var startFY=curYear-1; // 2 years back from current FY
+  var curFYStart = (d.getMonth()>=3) ? curYear : curYear-1; // current FY start year
+  var endFY = curFYStart+1; // one FY ahead of current
   var opts=[];
-  for(var y=startFY-2; y<=startFY+2; y++){
+  for(var y=2021; y<=endFY; y++){
     opts.push('FY '+y+'-'+String(y+1).slice(2));
   }
-  return opts;
+  return opts.reverse(); // most recent first
 }
 var FY_OPTIONS = buildFYOptions();
 var BANK_DETAILS = {
@@ -1088,9 +1089,27 @@ function iRow(){
     +'<td><input type="text" class="ihsn" placeholder="998231" style="border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;width:100%;"></td>'
     +'<td><input type="number" placeholder="0" class="ia" oninput="calcTots()" style="border:none;padding:4px 6px;font-size:13px;background:transparent;outline:none;width:100%;"></td>'
     +'<td><input type="number" placeholder="18" class="ig" oninput="calcTots()" style="border:none;padding:4px 6px;font-size:13px;background:transparent;outline:none;width:100%;"></td>'
-    +'<td><select class="iperiod" style="border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;width:100%;cursor:pointer;"><option value="">— Period —</option>'+fyOpts+'</select></td>'
+    +'<td style="padding:0;">'
+      +'<select class="iperiod" onchange="handlePeriodSel(this)" style="width:100%;border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;cursor:pointer;">'
+        +'<option value="">— Period —</option>'+fyOpts+'<option value="__manual__">Other (type manually)</option>'
+      +'</select>'
+      +'<input type="text" class="iperiodmanual" placeholder="e.g. Apr-Jun 2026" style="display:none;width:100%;border:none;padding:4px 6px;font-size:12px;background:transparent;outline:none;">'
+    +'</td>'
     +'<td><button class="delbtn" onclick="delRow(this)"><i class="ti ti-x"></i></button></td>'
     +'</tr>';
+}
+
+function handlePeriodSel(sel){
+  var tr=sel.closest('tr');
+  var manual=tr.querySelector('.iperiodmanual');
+  if(sel.value==='__manual__'){
+    sel.style.display='none';
+    manual.style.display='block';
+    manual.focus();
+  } else {
+    manual.style.display='none';
+    sel.style.display='block';
+  }
 }
 
 function handleSvcSel(sel){
@@ -1181,7 +1200,11 @@ function saveBill(){
     var hsn=r.querySelector('.ihsn')?r.querySelector('.ihsn').value:'998231';
     var a=parseFloat(r.querySelector('.ia').value)||0;
     var g=parseFloat(r.querySelector('.ig').value)||0;
-    var per=r.querySelector('.iperiod')?r.querySelector('.iperiod').value.trim():'';
+    var perSel=r.querySelector('.iperiod');
+    var perManual=r.querySelector('.iperiodmanual');
+    var per='';
+    if(perManual && perManual.style.display!=='none') per=perManual.value.trim();
+    else if(perSel) per=perSel.value;
     tax+=a;gst+=a*g/100;
     if(desc||a){
       items.push({desc:desc,hsn:hsn||'998231',amt:a,gstR:g,period:per});
