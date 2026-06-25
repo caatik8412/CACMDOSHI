@@ -206,17 +206,17 @@ textarea{resize:vertical;min-height:56px;}
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-title">CA CM Doshi &amp; Company — Client Manager</div>
-  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v3.3</span></div>
+  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v3.4</span></div>
 </div>
 
 <!-- TABS -->
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('clients')"><i class="ti ti-users"></i>Client Masterdata</div>
-  <div class="tab" onclick="switchTab('clientinfo')"><i class="ti ti-id"></i>Client Info</div>
+  <div class="tab active" onclick="switchTab('clients')"><i class="ti ti-users"></i>Outstanding</div>
+  <div class="tab" onclick="switchTab('clientinfo')"><i class="ti ti-id"></i>Client Masterdata</div>
   <div class="tab" onclick="switchTab('bills')"><i class="ti ti-file-invoice"></i>Bills</div>
   <div class="tab" onclick="switchTab('receipts')"><i class="ti ti-receipt"></i>Receipts</div>
-  <div class="tab" onclick="switchTab('settings')"><i class="ti ti-settings"></i>Settings</div>
   <div class="tab" onclick="switchTab('gstr1')"><i class="ti ti-file-spreadsheet"></i>GSTR-1</div>
+  <div class="tab" onclick="switchTab('settings')"><i class="ti ti-settings"></i>Settings</div>
 </div>
 
 <!-- CLIENTS TAB -->
@@ -463,18 +463,6 @@ textarea{resize:vertical;min-height:56px;}
         <div class="stat-box"><div class="stat-n" id="st-bills">—</div><div class="stat-l">Bills</div></div>
         <div class="stat-box"><div class="stat-n" id="st-receipts">—</div><div class="stat-l">Receipts</div></div>
       </div>
-    </div>
-    <div class="set-section">
-      <div class="set-title"><i class="ti ti-calendar-stats"></i> Opening Balance Entry</div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Add outstanding as on a date without entering old bills.</p>
-      <div class="fg2">
-        <div class="fg"><label class="lbl">Client</label><select id="ob-client"></select></div>
-        <div class="fg"><label class="lbl">Firm</label><select id="ob-firm"></select></div>
-        <div class="fg"><label class="lbl">As On Date</label><input type="date" id="ob-date"></div>
-        <div class="fg"><label class="lbl">Amount (₹)</label><input type="number" id="ob-amount" placeholder="0"></div>
-        <div class="fg sp2"><label class="lbl">Narration</label><input type="text" id="ob-nar" placeholder="Opening Balance as on 01/06/2026"></div>
-      </div>
-      <button class="btn btn-p btn-sm" id="saveOBBtn" style="margin-top:8px;" onclick="saveOB()"><i class="ti ti-plus"></i> Add Opening Balance</button>
     </div>
     <div class="set-section">
       <div class="set-title"><i class="ti ti-database"></i> Data</div>
@@ -1649,25 +1637,6 @@ function saveClient(){
 }
 
 // ── OPENING BALANCE ───────────────────────────────────────────
-function saveOB(){
-  var obBtn=document.getElementById('saveOBBtn');
-  if(obBtn.disabled) return; // already saving — block duplicate clicks
-  var cid=document.getElementById('ob-client').value;
-  var cname=document.getElementById('ob-client').options[document.getElementById('ob-client').selectedIndex].text;
-  var firm=document.getElementById('ob-firm').value;
-  var date=document.getElementById('ob-date').value;
-  var amt=parseFloat(document.getElementById('ob-amount').value)||0;
-  var nar=document.getElementById('ob-nar').value.trim()||'Opening Balance';
-  if(!cid||!firm||!date||!amt){toast('All fields required','err');return;}
-  obBtn.disabled=true; obBtn.textContent='Saving…';
-  api({action:'addBill',billDate:date,clientId:cid,clientName:cname,
-    firm:firm,description:nar,period:'Opening Balance',taxable:amt,gstRate:0,narration:nar
-  },function(d){
-    obBtn.disabled=false; obBtn.innerHTML='<i class="ti ti-plus"></i> Add Opening Balance';
-    if(d.ok){toast('Opening balance added ✓','ok');document.getElementById('ob-amount').value='';loadAll();}
-    else toast(d.error||'Failed','err');
-  });
-}
 
 // ── PRINT ─────────────────────────────────────────────────────
 function doPrint(format){
@@ -1832,9 +1801,6 @@ function switchTab(t){
   if(t==='settings'){
     document.getElementById('st-clients').textContent=allClients.length;
     renderBankDetails();
-    document.getElementById('ob-client').innerHTML=allClients.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('');
-    document.getElementById('ob-firm').innerHTML=FIRMS.map(function(f){return '<option>'+esc(f.label)+'</option>';}).join('');
-    var od=document.getElementById('ob-date');if(!od.value)od.value=new Date().toISOString().split('T')[0];
   }
 }
 function openM(id){document.getElementById(id).classList.add('open');}
