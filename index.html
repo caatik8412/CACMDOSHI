@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:56px;}
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-title">CA CM Doshi &amp; Company — Client Manager</div>
-  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v2.9</span></div>
+  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v3.0</span></div>
 </div>
 
 <!-- TABS -->
@@ -567,6 +567,7 @@ textarea{resize:vertical;min-height:56px;}
         </div>
         <div class="fg"><label class="lbl">Mobile</label><input id="ec-mobile"></div>
         <div class="fg"><label class="lbl">GSTIN</label><input id="ec-gstin" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="fg"><label class="lbl">TAN</label><input id="ec-tan" maxlength="10" oninput="this.value=this.value.toUpperCase()"></div>
       </div>
     </div>
     <div class="mfoot">
@@ -595,7 +596,8 @@ textarea{resize:vertical;min-height:56px;}
           <select id="nc-status"><option>44AB</option><option>44AD</option><option>8% BUSINESS</option><option>PARTNER</option><option>DIRECTOR</option><option>OTHER</option><option>HUF</option><option>FIRM</option></select>
         </div>
         <div class="fg sp2"><label class="lbl">Mobile</label><input id="nc-mobile" placeholder="10-digit number"></div>
-        <div class="fg sp2"><label class="lbl">GSTIN <span style="font-weight:400;color:var(--muted);">(if GST registered)</span></label><input id="nc-gstin" placeholder="27XXXXX0000X0XX" style="text-transform:uppercase"></div>
+        <div class="fg"><label class="lbl">GSTIN <span style="font-weight:400;color:var(--muted);">(if registered)</span></label><input id="nc-gstin" placeholder="27XXXXX0000X0XX" style="text-transform:uppercase"></div>
+        <div class="fg"><label class="lbl">TAN <span style="font-weight:400;color:var(--muted);">(if registered)</span></label><input id="nc-tan" placeholder="PNDX12345A" maxlength="10" style="text-transform:uppercase"></div>
       </div>
     </div>
     <div class="mfoot">
@@ -1505,7 +1507,8 @@ function saveClient(){
     pan:pan,
     status:document.getElementById('nc-status').value,
     mobile:document.getElementById('nc-mobile').value.trim(),
-    gstin:document.getElementById('nc-gstin').value.trim().toUpperCase()
+    gstin:document.getElementById('nc-gstin').value.trim().toUpperCase(),
+    tan:document.getElementById('nc-tan').value.trim().toUpperCase()
   },function(d){
     btn.disabled=false;
     btn.innerHTML='<i class="ti ti-plus"></i> Add Client';
@@ -2082,6 +2085,7 @@ function openEditClient(id){
   document.getElementById('ec-status').value=c.status||'44AB';
   document.getElementById('ec-mobile').value=c.mobile||'';
   document.getElementById('ec-gstin').value=c.gstin||'';
+  document.getElementById('ec-tan').value=c.tan||'';
   // Populate group datalist with existing groups
   var groups={};
   allClients.forEach(function(cl){ if(cl.group) groups[cl.group.trim().toLowerCase()]=cl.group.trim(); });
@@ -2111,7 +2115,8 @@ function saveEditClient(){
     pan:pan,
     status:document.getElementById('ec-status').value,
     mobile:document.getElementById('ec-mobile').value.trim(),
-    gstin:document.getElementById('ec-gstin').value.trim().toUpperCase()
+    gstin:document.getElementById('ec-gstin').value.trim().toUpperCase(),
+    tan:document.getElementById('ec-tan').value.trim().toUpperCase()
   },function(d){
     btn.disabled=false; btn.innerHTML='<i class="ti ti-device-floppy"></i> Save Changes';
     if(d.ok){
