@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:56px;}
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-title">CA CM Doshi &amp; Company — Client Manager</div>
-  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v3.1</span></div>
+  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v3.2</span></div>
 </div>
 
 <!-- TABS -->
@@ -261,8 +261,23 @@ textarea{resize:vertical;min-height:56px;}
 
 <!-- CLIENT INFO TAB -->
 <div id="p-clientinfo" class="panel">
-  <div class="bar">
+  <div class="bar" style="flex-wrap:wrap;gap:8px;">
     <div class="sbox"><i class="ti ti-search"></i><input id="cisearch" placeholder="Search client / group…" oninput="renderClientInfo()"></div>
+    <select class="sel" id="ci-gstin" onchange="renderClientInfo()" style="min-width:110px;">
+      <option value="">GSTIN: All</option><option value="yes">GSTIN: Yes</option><option value="no">GSTIN: No</option>
+    </select>
+    <select class="sel" id="ci-tan" onchange="renderClientInfo()" style="min-width:100px;">
+      <option value="">TAN: All</option><option value="yes">TAN: Yes</option><option value="no">TAN: No</option>
+    </select>
+    <select class="sel" id="ci-status" onchange="renderClientInfo()" style="min-width:130px;">
+      <option value="">Status: All</option>
+    </select>
+    <select class="sel" id="ci-staff" onchange="renderClientInfo()" style="min-width:120px;">
+      <option value="">Staff: All</option>
+    </select>
+    <select class="sel" id="ci-accountant" onchange="renderClientInfo()" style="min-width:140px;">
+      <option value="">Accountant: All</option>
+    </select>
     <button class="btn btn-o" onclick="loadAll()"><i class="ti ti-refresh"></i> Refresh</button>
   </div>
   <div class="twrap"><div class="tbox">
@@ -996,11 +1011,50 @@ function cRow(c){
 }
 
 // ── CLIENT INFO TAB (read-only: PAN, GSTIN, TAN) ───────────────
-function renderClientInfo(){
-  var q=document.getElementById('cisearch').value.toLowerCase();
-  var filtered=allClients.filter(function(c){
-    return !q || c.name.toLowerCase().includes(q) || (c.group||'').toLowerCase().includes(q) || (c.pan||'').toLowerCase().includes(q);
+function populateCIFilterOptions(){
+  var statusSet={},staffSet={},accSet={};
+  allClients.forEach(function(c){
+    if(c.status) statusSet[c.status.trim()]=1;
+    if(c.staff) staffSet[c.staff.trim()]=1;
+    if(c.accountant) accSet[c.accountant.trim()]=1;
   });
+  var statusSel=document.getElementById('ci-status');
+  var curStatus=statusSel.value;
+  statusSel.innerHTML='<option value="">Status: All</option>'+Object.keys(statusSet).sort().map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join('');
+  statusSel.value=curStatus;
+
+  var staffSel=document.getElementById('ci-staff');
+  var curStaff=staffSel.value;
+  staffSel.innerHTML='<option value="">Staff: All</option>'+Object.keys(staffSet).sort().map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join('');
+  staffSel.value=curStaff;
+
+  var accSel=document.getElementById('ci-accountant');
+  var curAcc=accSel.value;
+  accSel.innerHTML='<option value="">Accountant: All</option>'+Object.keys(accSet).sort().map(function(a){return '<option value="'+esc(a)+'">'+esc(a)+'</option>';}).join('');
+  accSel.value=curAcc;
+}
+
+function renderClientInfo(){
+  populateCIFilterOptions();
+  var q=document.getElementById('cisearch').value.toLowerCase();
+  var fGstin=document.getElementById('ci-gstin').value;
+  var fTan=document.getElementById('ci-tan').value;
+  var fStatus=document.getElementById('ci-status').value;
+  var fStaff=document.getElementById('ci-staff').value;
+  var fAcc=document.getElementById('ci-accountant').value;
+
+  var filtered=allClients.filter(function(c){
+    if(q && !c.name.toLowerCase().includes(q) && !(c.group||'').toLowerCase().includes(q) && !(c.pan||'').toLowerCase().includes(q)) return false;
+    if(fGstin==='yes' && !c.gstin) return false;
+    if(fGstin==='no' && c.gstin) return false;
+    if(fTan==='yes' && !c.tan) return false;
+    if(fTan==='no' && c.tan) return false;
+    if(fStatus && (c.status||'')!==fStatus) return false;
+    if(fStaff && (c.staff||'')!==fStaff) return false;
+    if(fAcc && (c.accountant||'')!==fAcc) return false;
+    return true;
+  });
+
   if(!filtered.length){
     document.getElementById('cibody').innerHTML='<tr><td colspan="7"><div class="empty"><i class="ti ti-search-off"></i>No clients found.</div></td></tr>';
     return;
