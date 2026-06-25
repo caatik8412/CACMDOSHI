@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:56px;}
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-title">CA CM Doshi &amp; Company — Client Manager</div>
-  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v3.0</span></div>
+  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v3.1</span></div>
 </div>
 
 <!-- TABS -->
@@ -267,9 +267,9 @@ textarea{resize:vertical;min-height:56px;}
   </div>
   <div class="twrap"><div class="tbox">
     <table>
-      <thead><tr><th>Client</th><th>Status</th><th>PAN</th><th>GSTIN</th><th>TAN</th></tr></thead>
+      <thead><tr><th>Client</th><th>Status</th><th>PAN</th><th>GSTIN</th><th>TAN</th><th>Accountant</th><th>Staff</th></tr></thead>
       <tbody id="cibody">
-        <tr class="ldg"><td colspan="5"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading…</div></td></tr>
+        <tr class="ldg"><td colspan="7"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading…</div></td></tr>
       </tbody>
     </table>
   </div></div>
@@ -585,6 +585,14 @@ textarea{resize:vertical;min-height:56px;}
         <div class="fg"><label class="lbl">Mobile</label><input id="ec-mobile"></div>
         <div class="fg"><label class="lbl">GSTIN</label><input id="ec-gstin" oninput="this.value=this.value.toUpperCase()"></div>
         <div class="fg"><label class="lbl">TAN</label><input id="ec-tan" maxlength="10" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="fg"><label class="lbl">Accountant</label>
+          <input id="ec-accountant" list="accountantListEdit" autocomplete="off">
+          <datalist id="accountantListEdit"></datalist>
+        </div>
+        <div class="fg"><label class="lbl">Staff</label>
+          <input id="ec-staff" list="staffListEdit" autocomplete="off">
+          <datalist id="staffListEdit"></datalist>
+        </div>
       </div>
     </div>
     <div class="mfoot">
@@ -994,7 +1002,7 @@ function renderClientInfo(){
     return !q || c.name.toLowerCase().includes(q) || (c.group||'').toLowerCase().includes(q) || (c.pan||'').toLowerCase().includes(q);
   });
   if(!filtered.length){
-    document.getElementById('cibody').innerHTML='<tr><td colspan="5"><div class="empty"><i class="ti ti-search-off"></i>No clients found.</div></td></tr>';
+    document.getElementById('cibody').innerHTML='<tr><td colspan="7"><div class="empty"><i class="ti ti-search-off"></i>No clients found.</div></td></tr>';
     return;
   }
 
@@ -1007,11 +1015,11 @@ function renderClientInfo(){
 
   var rows='';
   Object.keys(groups).sort().forEach(function(g){
-    rows+='<tr class="grp"><td colspan="5"><i class="ti ti-folder" style="margin-right:5px;opacity:.75;"></i><strong>'+esc(glabel[g])+'</strong></td></tr>';
+    rows+='<tr class="grp"><td colspan="7"><i class="ti ti-folder" style="margin-right:5px;opacity:.75;"></i><strong>'+esc(glabel[g])+'</strong></td></tr>';
     groups[g].forEach(function(c){ rows+=ciRow(c); });
   });
   if(nogrp.length){
-    rows+='<tr class="grp" style="background:#475569"><td colspan="5"><i class="ti ti-user" style="margin-right:5px;"></i>Other Clients ('+nogrp.length+')</td></tr>';
+    rows+='<tr class="grp" style="background:#475569"><td colspan="7"><i class="ti ti-user" style="margin-right:5px;"></i>Other Clients ('+nogrp.length+')</td></tr>';
     nogrp.forEach(function(c){ rows+=ciRow(c); });
   }
   document.getElementById('cibody').innerHTML=rows;
@@ -1029,6 +1037,8 @@ function ciRow(c){
     +'<td style="font-size:12px;font-family:monospace;">'+esc(c.pan||'—')+'</td>'
     +'<td style="font-size:12px;font-family:monospace;color:var(--muted);">'+esc(c.gstin||'—')+'</td>'
     +'<td style="font-size:12px;font-family:monospace;color:var(--muted);">'+esc(c.tan||'—')+'</td>'
+    +'<td style="font-size:12px;">'+esc(c.accountant||'—')+'</td>'
+    +'<td style="font-size:12px;">'+esc(c.staff||'—')+'</td>'
   +'</tr>';
 }
 
@@ -2151,6 +2161,16 @@ function openEditClient(id){
   document.getElementById('ec-mobile').value=c.mobile||'';
   document.getElementById('ec-gstin').value=c.gstin||'';
   document.getElementById('ec-tan').value=c.tan||'';
+  document.getElementById('ec-accountant').value=c.accountant||'';
+  document.getElementById('ec-staff').value=c.staff||'';
+  // Populate Accountant/Staff datalists from existing values
+  var accSet={},staffSet={};
+  allClients.forEach(function(cl){
+    if(cl.accountant) accSet[cl.accountant.trim()]=1;
+    if(cl.staff) staffSet[cl.staff.trim()]=1;
+  });
+  document.getElementById('accountantListEdit').innerHTML=Object.keys(accSet).sort().map(function(a){return '<option value="'+esc(a)+'">';}).join('');
+  document.getElementById('staffListEdit').innerHTML=Object.keys(staffSet).sort().map(function(s){return '<option value="'+esc(s)+'">';}).join('');
   // Populate group datalist with existing groups
   var groups={};
   allClients.forEach(function(cl){ if(cl.group) groups[cl.group.trim().toLowerCase()]=cl.group.trim(); });
@@ -2181,7 +2201,9 @@ function saveEditClient(){
     status:document.getElementById('ec-status').value,
     mobile:document.getElementById('ec-mobile').value.trim(),
     gstin:document.getElementById('ec-gstin').value.trim().toUpperCase(),
-    tan:document.getElementById('ec-tan').value.trim().toUpperCase()
+    tan:document.getElementById('ec-tan').value.trim().toUpperCase(),
+    accountant:document.getElementById('ec-accountant').value.trim(),
+    staff:document.getElementById('ec-staff').value.trim()
   },function(d){
     btn.disabled=false; btn.innerHTML='<i class="ti ti-device-floppy"></i> Save Changes';
     if(d.ok){
