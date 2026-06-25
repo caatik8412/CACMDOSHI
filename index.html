@@ -56,11 +56,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 /* TOOLBAR */
 .bar{display:flex;align-items:center;gap:8px;padding:12px 20px;background:#fff;border-bottom:1px solid var(--border);flex-wrap:wrap;}
-.sbox{position:relative;flex:1;min-width:160px;max-width:280px;}
+.sbox{position:relative;flex:0 1 240px;min-width:160px;max-width:280px;}
 .sbox i{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;}
 .sbox input{width:100%;padding:7px 8px 7px 30px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;outline:none;}
 .sbox input:focus{border-color:var(--accent);}
-select.sel{padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;outline:none;background:#fff;}
+select.sel{padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;outline:none;background:#fff;flex:0 0 auto;width:auto;}
 input[type=date].dt{padding:5px 8px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;outline:none;width:130px;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .12s;}
 .btn-p{background:var(--accent);color:#fff;}.btn-p:hover{background:#1d4ed8;}
@@ -206,7 +206,7 @@ textarea{resize:vertical;min-height:56px;}
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-title">CA CM Doshi &amp; Company — Client Manager</div>
-  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v3.2</span></div>
+  <div class="hdr-sub">Powered by Bhayani Business Sol<sup style="font-size:9px;">n</sup> &nbsp;·&nbsp; <span style="opacity:.5;font-size:10px;">v3.3</span></div>
 </div>
 
 <!-- TABS -->
