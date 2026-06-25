@@ -258,6 +258,22 @@ textarea{resize:vertical;min-height:56px;}
   </div>
 </div>
 
+<!-- CLIENT INFO TAB -->
+<div id="p-clientinfo" class="panel">
+  <div class="bar">
+    <div class="sbox"><i class="ti ti-search"></i><input id="cisearch" placeholder="Search client / group…" oninput="renderClientInfo()"></div>
+    <button class="btn btn-o" onclick="loadAll()"><i class="ti ti-refresh"></i> Refresh</button>
+  </div>
+  <div class="twrap"><div class="tbox">
+    <table>
+      <thead><tr><th>Client</th><th>Status</th><th>Group</th><th>PAN</th><th>GSTIN</th><th>TAN</th></tr></thead>
+      <tbody id="cibody">
+        <tr class="ldg"><td colspan="6"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading…</div></td></tr>
+      </tbody>
+    </table>
+  </div></div>
+</div>
+
 <!-- BILLS TAB -->
 <div id="p-bills" class="panel">
   <div class="stabs">
@@ -967,6 +983,52 @@ function cRow(c){
       +'<button class="icn il" title="Ledger" onclick="openLedger(\''+c.id+'\',\''+esc(c.name)+'\')"><i class="ti ti-book"></i></button>'
       +'<button class="icn" title="Archive Client" style="color:#94a3b8;" onclick="doArchive(\''+c.id+'\',\''+esc(c.name)+'\')" ><i class="ti ti-archive"></i></button>'
     +'</div></td>'
+  +'</tr>';
+}
+
+// ── CLIENT INFO TAB (read-only: PAN, GSTIN, TAN) ───────────────
+function renderClientInfo(){
+  var q=document.getElementById('cisearch').value.toLowerCase();
+  var filtered=allClients.filter(function(c){
+    return !q || c.name.toLowerCase().includes(q) || (c.group||'').toLowerCase().includes(q) || (c.pan||'').toLowerCase().includes(q);
+  });
+  if(!filtered.length){
+    document.getElementById('cibody').innerHTML='<tr><td colspan="6"><div class="empty"><i class="ti ti-search-off"></i>No clients found.</div></td></tr>';
+    return;
+  }
+
+  // Group (case-insensitive) — same pattern as Client Masterdata
+  var groups={},glabel={},nogrp=[];
+  filtered.forEach(function(c){
+    if(c.group){var k=c.group.trim().toLowerCase();if(!groups[k]){groups[k]=[];glabel[k]=c.group.trim();}groups[k].push(c);}
+    else nogrp.push(c);
+  });
+
+  var rows='';
+  Object.keys(groups).sort().forEach(function(g){
+    rows+='<tr class="grp"><td colspan="6"><i class="ti ti-folder" style="margin-right:5px;opacity:.75;"></i><strong>'+esc(glabel[g])+'</strong></td></tr>';
+    groups[g].forEach(function(c){ rows+=ciRow(c); });
+  });
+  if(nogrp.length){
+    rows+='<tr class="grp" style="background:#475569"><td colspan="6"><i class="ti ti-user" style="margin-right:5px;"></i>Other Clients ('+nogrp.length+')</td></tr>';
+    nogrp.forEach(function(c){ rows+=ciRow(c); });
+  }
+  document.getElementById('cibody').innerHTML=rows;
+}
+
+function ciRow(c){
+  var smap={'44AB':'background:#eff6ff;color:#1d4ed8','44AD':'background:#f0fdf4;color:#15803d',
+    '8% BUSINESS':'background:#f5f3ff;color:#6d28d9','PARTNER':'background:#fff7ed;color:#c2410c',
+    'DIRECTOR':'background:#fdf4ff;color:#7e22ce','OTHER':'background:#f1f5f9;color:#475569',
+    'HUF':'background:#fefce8;color:#854d0e','FIRM':'background:#ecfdf5;color:#065f46'};
+  var ss=smap[c.status]||'background:#f1f5f9;color:#475569';
+  return '<tr class="row">'
+    +'<td><div class="cname">'+esc(c.name)+'</div></td>'
+    +'<td><span class="cbadge" style="'+ss+'">'+esc(c.status||'—')+'</span></td>'
+    +'<td style="font-size:12px;color:var(--muted);">'+esc(c.group||'—')+'</td>'
+    +'<td style="font-size:12px;font-family:monospace;">'+esc(c.pan||'—')+'</td>'
+    +'<td style="font-size:12px;font-family:monospace;color:var(--muted);">'+esc(c.gstin||'—')+'</td>'
+    +'<td style="font-size:12px;font-family:monospace;color:var(--muted);">'+esc(c.tan||'—')+'</td>'
   +'</tr>';
 }
 
@@ -1690,9 +1752,12 @@ function exportCSV(){
 
 // ── TAB / MODAL UTILS ─────────────────────────────────────────
 function switchTab(t){
-  var tabs=['clients','bills','receipts','settings','gstr1'];
+  var tabs=['clients','clientinfo','bills','receipts','settings','gstr1'];
   document.querySelectorAll('.tab').forEach(function(el,i){el.classList.toggle('active',tabs[i]===t);});
   tabs.forEach(function(id){document.getElementById('p-'+id).classList.toggle('active',id===t);});
+  if(t==='clientinfo'){
+    renderClientInfo();
+  }
   if(t==='gstr1'){
     // Set default month/year to current
     var now=new Date();
