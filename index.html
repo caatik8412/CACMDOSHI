@@ -216,6 +216,7 @@ textarea{resize:vertical;min-height:56px;}
   <div class="tab" onclick="switchTab('bills')"><i class="ti ti-file-invoice"></i>Bills</div>
   <div class="tab" onclick="switchTab('receipts')"><i class="ti ti-receipt"></i>Receipts</div>
   <div class="tab" onclick="switchTab('gstr1')"><i class="ti ti-file-spreadsheet"></i>GSTR-1</div>
+  <div class="tab" onclick="switchTab('docs')"><i class="ti ti-folder"></i>Document Vault</div>
   <div class="tab" onclick="switchTab('settings')"><i class="ti ti-settings"></i>Settings</div>
 </div>
 
@@ -479,6 +480,82 @@ textarea{resize:vertical;min-height:56px;}
       <div id="connStatus" style="font-size:13px;margin-bottom:10px;"></div>
       <button class="btn btn-o btn-sm" onclick="testConn()"><i class="ti ti-plug"></i> Test Connection</button>
     </div>
+  </div>
+</div>
+
+<!-- DOCUMENT VAULT TAB -->
+<div id="p-docs" class="panel">
+  <div class="stabs">
+    <div class="stab active" id="stab-doc-upload" onclick="switchDocTab('upload')">Upload</div>
+    <div class="stab" id="stab-doc-records" onclick="switchDocTab('records')">Records</div>
+  </div>
+
+  <!-- UPLOAD SUB-TAB -->
+  <div id="doc-upload-section">
+    <div class="twrap" style="max-width:560px;">
+      <div class="set-section">
+        <div class="set-title"><i class="ti ti-upload"></i> Upload Document</div>
+
+        <div class="fg">
+          <label class="lbl">Client *</label>
+          <input id="doc-client" list="docClientList" autocomplete="off" placeholder="Type to search client…" oninput="onDocClientPick()">
+          <datalist id="docClientList"></datalist>
+        </div>
+
+        <div class="fg2">
+          <div class="fg">
+            <label class="lbl">Category *</label>
+            <select id="doc-category-main" onchange="handleDocMainCategory()">
+              <option value="">— Select Category —</option>
+              <option value="KYC">KYC</option>
+              <option value="INCOME TAX">Income Tax</option>
+              <option value="GST">GST</option>
+              <option value="ROC">ROC</option>
+              <option value="OTHERS">Others</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label class="lbl">Sub-Category *</label>
+            <select id="doc-category-sub" onchange="handleDocSubCategory()">
+              <option value="">— Select Category First —</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg" id="doc-category-other-wrap" style="display:none;">
+          <label class="lbl">Specify</label>
+          <input type="text" id="doc-category-other" placeholder="Type the document type…">
+        </div>
+
+        <div class="fg">
+          <label class="lbl">File *</label>
+          <input type="file" id="doc-file">
+        </div>
+
+        <div class="fg">
+          <label class="lbl">Note <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+          <textarea id="doc-note" placeholder="e.g. AY 2025-26 acknowledgement"></textarea>
+        </div>
+
+        <button class="btn btn-p" id="saveDocBtn" onclick="saveDocument()"><i class="ti ti-device-floppy"></i> Upload</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECORDS SUB-TAB -->
+  <div id="doc-records-section" style="display:none;">
+    <div class="bar" style="gap:6px;">
+      <div class="sbox"><i class="ti ti-search"></i><input id="docsearch" placeholder="Search client / category / filename…" oninput="renderDocs()"></div>
+      <select class="sel" id="doc-cat-filter" onchange="renderDocs()">
+        <option value="">All Categories</option>
+      </select>
+      <button class="btn btn-o" onclick="fetchDocuments()"><i class="ti ti-refresh"></i> Refresh</button>
+    </div>
+    <div class="twrap"><div class="tbox">
+      <table>
+        <thead><tr><th>Client</th><th>Category</th><th>File Name</th><th>Note</th><th>Uploaded</th><th class="r">Actions</th></tr></thead>
+        <tbody id="docbody"><tr><td colspan="6"><div class="fetch-msg"><i class="ti ti-folder"></i><p>Click Refresh to load documents.</p></div></td></tr></tbody>
+      </table>
+    </div></div>
   </div>
 </div>
 
@@ -791,7 +868,7 @@ var FIRM_DETAILS = {
 };
 
 // ── STATE ─────────────────────────────────────────────────────
-var FIRMS=[], allClients=[], allBills=[], allReceipts=[];
+var FIRMS=[], allClients=[], allBills=[], allReceipts=[], allDocuments=[];
 var curId='', curName='', curOut=0, printData=null, busy=false;
 
 // ── LOGIN ─────────────────────────────────────────────────────
@@ -840,6 +917,25 @@ function api(params,cb){
     return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);
   }).join('&');
   fetch(SCRIPT_URL+'?'+qs)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.error) toast(d.error,'err');
+      if(cb) cb(d);
+    })
+    .catch(function(e){
+      toast('Network error: '+e.message,'err');
+      if(cb) cb({error:e.message});
+    });
+}
+
+// POST variant — used for large payloads like document/file uploads where a
+// GET query string would exceed URL length limits.
+function apiPost(params,cb){
+  fetch(SCRIPT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'}, // avoids CORS preflight on Apps Script
+    body:JSON.stringify(params)
+  })
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.error) toast(d.error,'err');
@@ -1785,7 +1881,7 @@ function exportCSV(){
 
 // ── TAB / MODAL UTILS ─────────────────────────────────────────
 function switchTab(t){
-  var tabs=['clients','clientinfo','bills','receipts','settings','gstr1'];
+  var tabs=['clients','clientinfo','bills','receipts','gstr1','docs','settings'];
   document.querySelectorAll('.tab').forEach(function(el,i){el.classList.toggle('active',tabs[i]===t);});
   tabs.forEach(function(id){document.getElementById('p-'+id).classList.toggle('active',id===t);});
   if(t==='clientinfo'){
@@ -1797,6 +1893,9 @@ function switchTab(t){
     var mo=String(now.getMonth()+1).padStart(2,'0');
     document.getElementById('g1month').value=mo;
     document.getElementById('g1year').value=String(now.getFullYear());
+  }
+  if(t==='docs'){
+    populateDocClientList();
   }
   if(t==='settings'){
     document.getElementById('st-clients').textContent=allClients.length;
@@ -1845,6 +1944,184 @@ function switchClientTab(tab){
   document.getElementById('sumstrip').style.display = tab==='active'?'':'none';
   document.getElementById('clients-inactive-section').style.display = tab==='inactive'?'':'none';
   if(tab==='inactive') loadInactiveClients();
+}
+
+function switchDocTab(tab){
+  document.getElementById('stab-doc-upload').classList.toggle('active', tab==='upload');
+  document.getElementById('stab-doc-records').classList.toggle('active', tab==='records');
+  document.getElementById('doc-upload-section').style.display = tab==='upload'?'':'none';
+  document.getElementById('doc-records-section').style.display = tab==='records'?'':'none';
+  if(tab==='records' && allDocuments.length===0) fetchDocuments();
+}
+
+// ── DOCUMENT VAULT ─────────────────────────────────────────────
+function populateDocClientList(){
+  var dl=document.getElementById('docClientList');
+  if(!dl) return;
+  dl.innerHTML=allClients.map(function(c){return '<option value="'+esc(c.name)+'" data-id="'+esc(c.id)+'">';}).join('');
+}
+
+function onDocClientPick(){
+  var val=document.getElementById('doc-client').value;
+  var match=allClients.find(function(c){return c.name===val;});
+  window._docClientId = match ? match.id : '';
+}
+
+// Two-level Document Vault category map — main category -> sub-categories
+var DOC_CATEGORY_MAP = {
+  'KYC': [
+    'Aadhar Card',
+    'PAN Card',
+    'Partnership Deed',
+    'MOA / AOA',
+    'Photo',
+    'Address Proof',
+    'Bank Statement / Cancelled Cheque',
+    'Other'
+  ],
+  'INCOME TAX': [
+    'ITR',
+    'P&L Account',
+    'Balance Sheet',
+    'Audit Report',
+    'Tax Audit Report (3CA-3CD / 3CB-3CD)',
+    'Computation of Income',
+    '26AS / AIS / TIS',
+    'Challan',
+    'Notice / Order',
+    'Other'
+  ],
+  'GST': [
+    'GST Registration Certificate',
+    'GSTR-1',
+    'GSTR-3B',
+    'GSTR-9 / 9C',
+    'E-Way Bill',
+    'Reconciliation',
+    'Notice / Order',
+    'Other'
+  ],
+  'ROC': [
+    'Certificate of Incorporation',
+    'MOA',
+    'AOA',
+    'Annual Return (MGT-7)',
+    'Financial Statements (AOC-4)',
+    'DIR-3 KYC',
+    'Board Resolution',
+    'Other'
+  ],
+  'OTHERS': [
+    'Other'
+  ]
+};
+
+function handleDocMainCategory(){
+  var main=document.getElementById('doc-category-main').value;
+  var subSel=document.getElementById('doc-category-sub');
+  var list=DOC_CATEGORY_MAP[main]||[];
+  subSel.innerHTML = main
+    ? '<option value="">— Select Sub-Category —</option>'+list.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join('')
+    : '<option value="">— Select Category First —</option>';
+  document.getElementById('doc-category-other-wrap').style.display='none';
+  document.getElementById('doc-category-other').value='';
+}
+
+function handleDocSubCategory(){
+  var sub=document.getElementById('doc-category-sub').value;
+  document.getElementById('doc-category-other-wrap').style.display = sub==='Other'?'block':'none';
+}
+
+function saveDocument(){
+  if(busy) return;
+  var clientName=document.getElementById('doc-client').value.trim();
+  var main=document.getElementById('doc-category-main').value;
+  var sub=document.getElementById('doc-category-sub').value;
+  var other=document.getElementById('doc-category-other').value.trim();
+  var fileInput=document.getElementById('doc-file');
+  var note=document.getElementById('doc-note').value.trim();
+
+  if(!clientName){toast('Select a client','err');return;}
+  if(!main){toast('Select a category','err');return;}
+  if(!sub){toast('Select a sub-category','err');return;}
+  if(sub==='Other' && !other){toast('Specify the document type','err');return;}
+  if(!fileInput.files.length){toast('Choose a file','err');return;}
+
+  var category = main+' - '+(sub==='Other'?other:sub);
+
+  var file=fileInput.files[0];
+  if(file.size > 15*1024*1024){toast('File too large (max 15MB)','err');return;}
+
+  var reader=new FileReader();
+  reader.onload=function(){
+    var base64 = reader.result.split(',')[1];
+    busy=true;
+    document.getElementById('saveDocBtn').disabled=true;
+    document.getElementById('saveDocBtn').textContent='Uploading…';
+    apiPost({
+      action:'uploadDocument',
+      clientId: window._docClientId || '',
+      clientName: clientName,
+      category: category,
+      fileName: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      fileData: base64,
+      note: note
+    }, function(d){
+      busy=false;
+      document.getElementById('saveDocBtn').disabled=false;
+      document.getElementById('saveDocBtn').innerHTML='<i class="ti ti-device-floppy"></i> Upload';
+      if(d.ok){
+        toast('Document uploaded ✓','ok');
+        document.getElementById('doc-client').value='';
+        document.getElementById('doc-category-main').value='';
+        document.getElementById('doc-category-sub').innerHTML='<option value="">— Select Category First —</option>';
+        document.getElementById('doc-category-other').value='';
+        document.getElementById('doc-category-other-wrap').style.display='none';
+        document.getElementById('doc-note').value='';
+        fileInput.value='';
+        fetchDocuments();
+      } else toast(d.error||'Upload failed','err');
+    });
+  };
+  reader.onerror=function(){ toast('Could not read file','err'); };
+  reader.readAsDataURL(file);
+}
+
+function fetchDocuments(){
+  document.getElementById('docbody').innerHTML='<tr class="ldg"><td colspan="6"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Fetching…</div></td></tr>';
+  api({action:'getDocuments'}, function(d){
+    allDocuments = d.documents || [];
+    var catSet={};
+    allDocuments.forEach(function(doc){ if(doc.category) catSet[doc.category]=1; });
+    var sel=document.getElementById('doc-cat-filter');
+    var cur=sel.value;
+    sel.innerHTML='<option value="">All Categories</option>'+Object.keys(catSet).sort().map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
+    sel.value=cur;
+    renderDocs();
+  });
+}
+
+function renderDocs(){
+  var q=document.getElementById('docsearch').value.toLowerCase();
+  var catF=document.getElementById('doc-cat-filter').value;
+  var list=allDocuments.filter(function(doc){
+    if(catF && doc.category!==catF) return false;
+    if(q && !(doc.clientName||'').toLowerCase().includes(q) && !(doc.category||'').toLowerCase().includes(q) && !(doc.fileName||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  list.sort(function(a,b){ return parseDate(b.rawDate||b.uploadedAt)-parseDate(a.rawDate||a.uploadedAt); });
+  if(!list.length){document.getElementById('docbody').innerHTML='<tr><td colspan="6"><div class="empty"><i class="ti ti-folder-off"></i>No documents found.</div></td></tr>';return;}
+  document.getElementById('docbody').innerHTML=list.map(function(doc){
+    return '<tr class="row">'
+      +'<td style="font-weight:500;">'+esc(doc.clientName)+'</td>'
+      +'<td><span class="cbadge" style="background:#eff6ff;color:#1d4ed8;">'+esc(doc.category)+'</span></td>'
+      +'<td style="font-size:12px;">'+esc(doc.fileName)+'</td>'
+      +'<td style="font-size:12px;color:var(--muted);">'+esc(doc.note||'—')+'</td>'
+      +'<td style="font-size:12px;color:var(--muted);">'+esc(doc.uploadedAt)+'</td>'
+      +'<td><div class="acts"><a class="icn ib" href="'+esc(doc.fileUrl)+'" target="_blank" title="Open"><i class="ti ti-external-link"></i></a></div></td>'
+    +'</tr>';
+  }).join('');
 }
 
 // ── CANCEL BILL ───────────────────────────────────────────────
