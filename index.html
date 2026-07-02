@@ -586,6 +586,11 @@ textarea{resize:vertical;min-height:56px;}
         <div><div class="btot-lbl">Total</div><div class="btot-big" id="b-tot">₹0</div></div>
       </div>
       <div class="fg" style="margin-top:12px;"><label class="lbl">Narration</label><textarea id="b-nar" placeholder="Optional…"></textarea></div>
+      <div class="fg" style="margin-top:4px;">
+        <label class="lbl">Client Address <span style="font-weight:400;color:var(--muted);">(for bill — auto-filled from client record, editable)</span></label>
+        <textarea id="b-addr" placeholder="e.g. Near Bus Stand, Main Road, Pandharpur – 413 304" style="min-height:52px;"></textarea>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;"><i class="ti ti-info-circle" style="font-size:10px;"></i> Any changes here will also update the client's saved address.</div>
+      </div>
     </div>
     <div class="mfoot">
       <button class="btn btn-o" onclick="closeM('mAddBill')">Cancel</button>
@@ -665,6 +670,7 @@ textarea{resize:vertical;min-height:56px;}
         <div class="fg"><label class="lbl">Mobile</label><input id="ec-mobile"></div>
         <div class="fg"><label class="lbl">GSTIN</label><input id="ec-gstin" oninput="this.value=this.value.toUpperCase()"></div>
         <div class="fg"><label class="lbl">TAN</label><input id="ec-tan" maxlength="10" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="fg sp2"><label class="lbl">Address</label><textarea id="ec-address" placeholder="Full address…" style="min-height:52px;"></textarea></div>
         <div class="fg"><label class="lbl">Accountant</label>
           <input id="ec-accountant" list="accountantListEdit" autocomplete="off">
           <datalist id="accountantListEdit"></datalist>
@@ -703,6 +709,7 @@ textarea{resize:vertical;min-height:56px;}
         <div class="fg sp2"><label class="lbl">Mobile</label><input id="nc-mobile" placeholder="10-digit number"></div>
         <div class="fg"><label class="lbl">GSTIN <span style="font-weight:400;color:var(--muted);">(if registered)</span></label><input id="nc-gstin" placeholder="27XXXXX0000X0XX" style="text-transform:uppercase"></div>
         <div class="fg"><label class="lbl">TAN <span style="font-weight:400;color:var(--muted);">(if registered)</span></label><input id="nc-tan" placeholder="PNDX12345A" maxlength="10" style="text-transform:uppercase"></div>
+        <div class="fg sp2"><label class="lbl">Address</label><textarea id="nc-address" placeholder="Full address…" style="min-height:52px;"></textarea></div>
       </div>
     </div>
     <div class="mfoot">
@@ -1320,6 +1327,9 @@ function openBill(id,name){
   document.getElementById('b-cname').textContent=name;
   document.getElementById('b-no').value='';
   document.getElementById('b-nar').value='';
+  // Auto-fill client address from saved record
+  var client=allClients.find(function(c){return c.id===id;});
+  document.getElementById('b-addr').value=(client&&client.address)||'';
   document.getElementById('b-items').innerHTML=iRow();
   calcTots();suggestBillNo();openM('mAddBill');
 }
@@ -1466,16 +1476,19 @@ function saveBill(){
   // Combine all item periods into one string for the Period column (for filtering/reference)
   var period=periods.filter(function(p,i){return periods.indexOf(p)===i;}).join(' | ');
   var narration=document.getElementById('b-nar').value;
+  var clientAddr=document.getElementById('b-addr').value.trim();
   // pd.billNo will be filled after server responds
   var pd={billNo:'',date:fmtDate(dt),clientName:curName,firm:firm,
-    period:period,taxable:tax,gst:gst,total:tax+gst,narration:narration,items:items};
+    period:period,taxable:tax,gst:gst,total:tax+gst,narration:narration,
+    clientAddress:clientAddr,items:items};
   busy=true;
   document.getElementById('saveBillBtn').disabled=true;
   document.getElementById('saveBillBtn').textContent='Saving…';
   api({action:'addBill',billDate:dt,clientId:curId,clientName:curName,firm:firm,
     description:items.map(function(i){return i.desc;}).filter(Boolean).join('; '),
     period:period,taxable:tax,
-    gstRate:items.length?items[0].gstR:0,narration:narration
+    gstRate:items.length?items[0].gstR:0,narration:narration,
+    clientAddress:clientAddr
   },function(d){
     busy=false;
     document.getElementById('saveBillBtn').disabled=false;
@@ -1718,7 +1731,8 @@ function saveClient(){
     status:document.getElementById('nc-status').value,
     mobile:document.getElementById('nc-mobile').value.trim(),
     gstin:document.getElementById('nc-gstin').value.trim().toUpperCase(),
-    tan:document.getElementById('nc-tan').value.trim().toUpperCase()
+    tan:document.getElementById('nc-tan').value.trim().toUpperCase(),
+    address:document.getElementById('nc-address').value.trim()
   },function(d){
     btn.disabled=false;
     btn.innerHTML='<i class="ti ti-plus"></i> Add Client';
@@ -1751,107 +1765,123 @@ function doPrint(format){
 }
 
 function printCSS(){
-  return '<style>*{box-sizing:border-box;margin:0;padding:0;}'
-    +'body{font-family:Arial,sans-serif;font-size:12px;color:#000;background:#fff;}'
-    +'.doc{width:100%;max-width:190mm;margin:0 auto;padding:10mm 12mm;}'
-    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5mm;padding-bottom:3mm;border-bottom:1.5px solid #000;}'
-    +'.pfirm{font-size:15px;font-weight:bold;}'
-    +'.pfsub{font-size:10px;color:#444;margin-top:2px;}'
-    +'.pdtype{font-size:13px;font-weight:bold;text-align:right;text-transform:uppercase;}'
-    +'.pdmeta{font-size:11px;color:#444;text-align:right;margin-top:3px;line-height:1.6;}'
-    +'.pparties{display:grid;grid-template-columns:1fr 1fr;gap:5mm;margin-bottom:5mm;}'
-    +'.pparty{border:1px solid #ccc;padding:3mm;}'
-    +'.pplbl{font-size:9px;font-weight:bold;text-transform:uppercase;color:#555;margin-bottom:2px;}'
-    +'.ppname{font-size:12px;font-weight:bold;}'
-    +'.ptbl{width:100%;border-collapse:collapse;margin-bottom:4mm;}'
-    +'.ptbl th{border:1px solid #000;padding:5px 8px;text-align:left;font-size:11px;background:#f0f0f0;}'
-    +'.ptbl th.r,.ptbl td.r{text-align:right;}'
-    +'.ptbl td{padding:6px 8px;border:1px solid #ccc;font-size:11px;}'
-    +'.ptots{margin-bottom:4mm;}'
-    +'.ptrow{display:flex;justify-content:flex-end;gap:15mm;font-size:11px;padding:2px 0;}'
-    +'.ptrow.grand{font-size:13px;font-weight:bold;border-top:1.5px solid #000;padding-top:4px;margin-top:3px;}'
-    +'.ptlbl{min-width:30mm;text-align:right;color:#444;}'
-    +'.ptval{min-width:25mm;text-align:right;}'
-    +'.pwords{border:1px solid #ccc;padding:5px 8px;font-size:11px;margin-bottom:4mm;}'
-    +'.pfooter{display:flex;justify-content:space-between;align-items:flex-end;padding-top:3mm;border-top:1px solid #ccc;margin-top:5mm;}'
-    +'.ppow{font-size:9px;color:#444;font-weight:600;}'
-    +'.psign{text-align:right;font-size:11px;line-height:2;}'
-    +'.rtitle{font-size:16px;font-weight:bold;text-align:center;margin-bottom:4mm;border-bottom:1.5px solid #000;padding-bottom:3mm;}'
-    +'.rtbl{width:100%;border-collapse:collapse;margin-bottom:4mm;}'
-    +'.rtbl td{padding:6px 10px;border-bottom:1px solid #ddd;font-size:11px;}'
-    +'.rtbl td:first-child{color:#555;width:40%;}'
-    +'.rtbl td:last-child{font-weight:bold;}'
-    +'.ramt{text-align:center;font-size:20px;font-weight:bold;border:1.5px solid #000;padding:4mm;margin-bottom:4mm;}'
-    +'.rwords{font-size:11px;color:#444;text-align:center;margin-bottom:5mm;}'
+  return '<style>'\
+    +'*{box-sizing:border-box;margin:0;padding:0;}'\
+    +'body{font-family:Arial,sans-serif;background:#fff;color:#000;}'\
+    +'.doc{width:210mm;height:297mm;padding:13mm 15mm;display:flex;flex-direction:column;}'\
+    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:5mm;border-bottom:3px solid #000;margin-bottom:6mm;flex-shrink:0;}'\
+    +'.pfirm{font-size:28px;font-weight:900;}'\
+    +'.pfsub{font-size:13.5px;margin-top:6px;line-height:1.9;color:#000;}'\
+    +'.pdtype{font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;border:3px solid #000;padding:7px 20px;text-align:center;}'\
+    +'.pdmeta{font-size:14px;text-align:right;margin-top:10px;line-height:2.1;font-weight:600;}'\
+    +'.billto{border:2px solid #000;padding:6mm 7mm;margin-bottom:6mm;flex-shrink:0;}'\
+    +'.billto-lbl{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;}'\
+    +'.billto-name{font-size:22px;font-weight:900;line-height:1.4;}'\
+    +'.billto-addr{font-size:14px;margin-top:5px;line-height:1.7;color:#000;}'\
+    +'.ptbl{width:100%;border-collapse:collapse;flex-shrink:0;}'\
+    +'.ptbl th{border:2px solid #000;padding:10px 12px;text-align:left;font-size:14px;font-weight:900;background:#000;color:#fff;}'\
+    +'.ptbl th.r,.ptbl td.r{text-align:right;}'\
+    +'.ptbl td{padding:14px 12px;border:2px solid #000;font-size:16px;vertical-align:top;}'\
+    +'.desc-name{font-weight:700;font-size:17px;}'\
+    +'.period{font-size:14px;font-weight:900;margin-top:5px;}'\
+    +'.totals-wrap{display:flex;justify-content:flex-end;padding:4mm 0;border-bottom:2px solid #000;margin-bottom:6mm;flex-shrink:0;}'\
+    +'.totals-inner{width:105mm;}'\
+    +'.trow{display:flex;font-size:15px;padding:5px 0;border-bottom:1px solid #bbb;}'\
+    +'.trow:last-child{border-bottom:none;}'\
+    +'.trow.grand{font-size:19px;font-weight:900;border-top:2.5px solid #000;border-bottom:none;padding-top:8px;margin-top:5px;}'\
+    +'.tlbl{flex:1;text-align:right;padding-right:12mm;color:#222;}'\
+    +'.trow.grand .tlbl{color:#000;}'\
+    +'.tval{min-width:34mm;text-align:right;font-weight:700;}'\
+    +'.trow.grand .tval{font-weight:900;}'\
+    +'.pwords{border:2px solid #000;padding:10px 14px;font-size:15px;margin-bottom:6mm;flex-shrink:0;}'\
+    +'.pnar{border-left:6px solid #000;background:#f2f2f2;padding:9px 14px;font-size:15px;margin-bottom:6mm;line-height:1.7;flex-shrink:0;}'\
+    +'.pnar-lbl{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}'\
+    +'.bank{border:2px solid #000;padding:10px 14px;margin-bottom:0;flex-shrink:0;}'\
+    +'.bank-ttl{font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}'\
+    +'.bank-grid{display:grid;grid-template-columns:1fr 1fr;font-size:14.5px;line-height:2.1;}'\
+    +'.bank-grid .full{grid-column:span 2;}'\
+    +'.pfooter{display:flex;justify-content:space-between;align-items:flex-end;padding-top:5mm;border-top:2px solid #000;margin-top:auto;flex-shrink:0;}'\
+    +'.ppow{font-size:12px;font-weight:700;}'\
+    +'.psign{text-align:right;font-size:15px;line-height:3;font-weight:700;}'\
+    +'.rtitle{font-size:22px;font-weight:900;text-align:center;margin-bottom:6mm;border-bottom:3px solid #000;padding-bottom:4mm;}'\
+    +'.rtbl{width:100%;border-collapse:collapse;margin-bottom:6mm;}'\
+    +'.rtbl td{padding:10px 12px;border-bottom:1.5px solid #000;font-size:15px;}'\
+    +'.rtbl td:first-child{color:#333;width:40%;font-weight:700;}'\
+    +'.rtbl td:last-child{font-weight:700;font-size:16px;}'\
+    +'.ramt{text-align:center;font-size:32px;font-weight:900;border:3px solid #000;padding:6mm;margin-bottom:6mm;}'\
+    +'.rwords{font-size:15px;text-align:center;margin-bottom:6mm;font-style:italic;}'\
     +'@media print{.no-print{display:none!important;}}</style>';
 }
 
-function billHTML(b,fmt_unused){
+function billHTML(b){
   var fd=FIRM_DETAILS[b.firm]||{printName:b.firm,address:'Pandharpur, Maharashtra',gstin:'',defaultGST:0,isGST:false};
   var isTax=fd.isGST;
-  // Always use fd.defaultGST for GST firms — never trust saved gstR which may be 0
   var gstPct=isTax?fd.defaultGST:0;
   var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:gstPct,period:b.period||''}];
   var tax=0,gst=0;
-  items.forEach(function(it){ var a=it.amt||0,g=isTax?gstPct:0; tax+=a; gst+=a*g/100; });
+  items.forEach(function(it){var a=it.amt||0,g=isTax?gstPct:0;tax+=a;gst+=a*g/100;});
   var tot=tax+gst;
   var irows=items.map(function(it){
     var a=it.amt||0,g=isTax?gstPct:0;
-    var descCell=esc(it.desc||'')+(it.period?'<div style="font-size:9px;color:#666;margin-top:2px;">Period: '+esc(it.period)+'</div>':'');
-    return '<tr><td>'+descCell+'</td><td>'+esc(it.hsn||'998231')+'</td><td class="r">₹'+fmt(a)+'</td>'
+    return '<tr>'
+      +'<td><div class="desc-name">'+esc(it.desc||'')+'</div>'+(it.period?'<div class="period">Period: '+esc(it.period)+'</div>':'')+'</td>'
+      +'<td>'+esc(it.hsn||'998231')+'</td>'
+      +'<td class="r">₹'+fmt(a)+'</td>'
       +(isTax?'<td class="r">'+g+'%</td><td class="r">₹'+fmt(a*g/100)+'</td>':'')
-      +'<td class="r">₹'+fmt(isTax?a+a*g/100:a)+'</td></tr>';
+      +'<td class="r">₹'+fmt(isTax?a+a*g/100:a)+'</td>'
+      +'</tr>';
   }).join('');
-  return '<div class="doc">'
-    +'<div class="phdr"><div><div class="pfirm">'+esc(fd.printName)+'</div>'
-    +'<div class="pfsub">'+esc(fd.address)+(fd.gstin?'<br>GSTIN: '+esc(fd.gstin):'')+'</div></div>'
-    +'<div><div class="pdtype">'+(isTax?'Tax Invoice':'Bill of Supply')+'</div>'
-    +'<div class="pdmeta">Bill No: <strong>'+esc(b.billNo)+'</strong><br>Date: <strong>'+esc(b.date)+'</strong></div></div></div>'
-    +'<div class="pparties"><div class="pparty"><div class="pplbl">From</div><div class="ppname">'+esc(fd.printName)+'</div>'+(fd.gstin?'<div style="font-size:10px;color:#555;margin-top:2px;">GSTIN: '+esc(fd.gstin)+'</div>':'')+'</div>'
-    +'<div class="pparty"><div class="pplbl">Bill To</div><div class="ppname">'+esc(b.clientName)+'</div></div></div>'
-    +'<table class="ptbl"><thead><tr>'
-    +'<th style="width:44%">Description</th><th style="width:12%">HSN/SAC</th><th class="r" style="width:14%">Amount</th>'
-    +(isTax?'<th class="r" style="width:10%">GST%</th><th class="r" style="width:12%">GST Amt</th>':'')
-    +'<th class="r" style="width:'+(isTax?'8':'14')+'%">Total</th>'
-    +'</tr></thead><tbody>'+irows+'</tbody></table>'
-    +'<div class="ptots"><div class="ptrow"><span class="ptlbl">Taxable Amount</span><span class="ptval">₹'+fmt(tax)+'</span></div>'
-    +(isTax?'<div class="ptrow"><span class="ptlbl">GST @ '+fd.defaultGST+'%</span><span class="ptval">₹'+fmt(gst)+'</span></div>':'')
-    +'<div class="ptrow grand"><span class="ptlbl">Total Amount</span><span class="ptval">₹'+fmt(tot)+'</span></div></div>'
-    +'<div class="pwords">Rupees: '+numWords(Math.round(tot))+' Only</div>'
-    +bankBlockHTML(b.firm)
-    +'<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div>'
-    +'<div class="psign">For '+esc(fd.printName)+'<br><br><br>Authorised Signatory</div></div></div>';
+  var narBlock=b.narration?'<div class="pnar"><div class="pnar-lbl">Narration</div>'+esc(b.narration)+'</div>':'';
+  var addrLine=b.clientAddress?'<div class="billto-addr">'+esc(b.clientAddress).replace(/\n/g,'<br>')+'</div>':'';
+  return '<div class="doc">'\
+    +'<div class="phdr">'\
+      +'<div><div class="pfirm">'+esc(fd.printName)+'</div><div class="pfsub">'+esc(fd.address)+(fd.gstin?'<br>GSTIN: '+esc(fd.gstin):'')+'</div></div>'\
+      +'<div><div class="pdtype">'+(isTax?'Tax Invoice':'Bill of Supply')+'</div><div class="pdmeta">Bill No: <strong>'+esc(b.billNo)+'</strong><br>Date: <strong>'+esc(b.date)+'</strong></div></div>'\
+    +'</div>'\
+    +'<div class="billto"><div class="billto-lbl">Bill To</div><div class="billto-name">'+esc(b.clientName)+'</div>'+addrLine+'</div>'\
+    +'<table class="ptbl"><thead><tr>'\
+      +'<th style="width:40%">Description</th><th style="width:13%">HSN/SAC</th><th class="r" style="width:15%">Amount (₹)</th>'\
+      +(isTax?'<th class="r" style="width:10%">GST%</th><th class="r" style="width:13%">GST Amt</th>':'')+'<th class="r" style="width:'+(isTax?'9':'22')+'%">Total</th>'\
+    +'</tr></thead><tbody>'+irows+'</tbody></table>'\
+    +'<div class="totals-wrap"><div class="totals-inner">'\
+      +'<div class="trow"><span class="tlbl">Taxable Amount</span><span class="tval">₹'+fmt(tax)+'</span></div>'\
+      +(isTax?'<div class="trow"><span class="tlbl">GST @ '+gstPct+'%</span><span class="tval">₹'+fmt(gst)+'</span></div>':'')\
+      +'<div class="trow grand"><span class="tlbl">Total Amount</span><span class="tval">₹'+fmt(tot)+'</span></div>'\
+    +'</div></div>'\
+    +'<div class="pwords"><strong>Rupees:</strong> '+numWords(Math.round(tot))+' Only</div>'\
+    +narBlock\
+    +bankBlockHTML(b.firm)\
+    +'<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div><div class="psign">For '+esc(fd.printName)+'<br><br><br>Authorised Signatory</div></div>'\
+    +'</div>';
 }
 
 function bankBlockHTML(firm){
   var bd=BANK_DETAILS[firm];
   if(!bd) return '';
-  return '<div style="border:1px solid #ccc;border-radius:4px;padding:8px 10px;margin-bottom:4mm;font-size:10px;">'
-    +'<div style="font-weight:bold;font-size:10px;margin-bottom:4px;color:#1a3a5c;">Bank Details for Payment</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;color:#444;">'
-    +'<div>Bank: '+esc(bd.bank)+'</div>'
-    +'<div>Branch: '+esc(bd.branch)+'</div>'
-    +'<div style="grid-column:span 2;">A/C Holder: '+esc(bd.holder)+'</div>'
-    +'<div>A/C No: '+esc(bd.acNo)+'</div>'
-    +'<div>IFSC: '+esc(bd.ifsc)+'</div>'
+  return '<div class="bank">'\
+    +'<div class="bank-ttl">Bank Details for Payment</div>'\
+    +'<div class="bank-grid">'\
+      +'<div>Bank: '+esc(bd.bank)+'</div><div>Branch: '+esc(bd.branch)+'</div>'\
+      +'<div class="full">A/C Holder: '+esc(bd.holder)+'</div>'\
+      +'<div>A/C No: '+esc(bd.acNo)+'</div><div>IFSC: '+esc(bd.ifsc)+'</div>'\
     +'</div></div>';
 }
 
 function recHTML(r){
   var fd=FIRM_DETAILS[r.firm]||{printName:r.firm,address:'Pandharpur, Maharashtra'};
-  return '<div class="doc"><div class="phdr"><div><div class="pfirm">'+esc(fd.printName)+'</div><div class="pfsub">'+esc(fd.address)+'</div></div>'
-    +'<div><div class="pdtype">Receipt Voucher</div>'
-    +'<div class="pdmeta">Receipt No: <strong>'+esc(r.receiptNo)+'</strong><br>Date: <strong>'+esc(r.date)+'</strong></div></div></div>'
-    +'<div class="rtitle">RECEIPT</div>'
-    +'<div class="ramt">₹ '+fmt(r.amount)+'</div>'
-    +'<div class="rwords">Rupees: '+numWords(Math.round(r.amount))+' Only</div>'
-    +'<table class="rtbl">'
-    +'<tr><td>Received From</td><td>'+esc(r.clientName)+'</td></tr>'
-    +'<tr><td>Mode of Payment</td><td>'+esc(r.mode)+'</td></tr>'
-    +'<tr><td>Reference / UTR</td><td>'+esc(r.ref||'—')+'</td></tr>'
-    +'<tr><td>Narration</td><td>'+esc(r.narration||'—')+'</td></tr>'
-    +'</table>'
-    +'<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div>'
+  return '<div class="doc">'\
+    +'<div class="phdr"><div><div class="pfirm">'+esc(fd.printName)+'</div><div class="pfsub">'+esc(fd.address)+'</div></div>'\
+    +'<div><div class="pdtype">Receipt Voucher</div><div class="pdmeta">Receipt No: <strong>'+esc(r.receiptNo)+'</strong><br>Date: <strong>'+esc(r.date)+'</strong></div></div></div>'\
+    +'<div class="rtitle">RECEIPT</div>'\
+    +'<div class="ramt">₹ '+fmt(r.amount)+'</div>'\
+    +'<div class="rwords">Rupees: '+numWords(Math.round(r.amount))+' Only</div>'\
+    +'<table class="rtbl">'\
+    +'<tr><td>Received From</td><td>'+esc(r.clientName)+'</td></tr>'\
+    +'<tr><td>Mode of Payment</td><td>'+esc(r.mode)+'</td></tr>'\
+    +'<tr><td>Reference / UTR</td><td>'+esc(r.ref||'—')+'</td></tr>'\
+    +'<tr><td>Narration</td><td>'+esc(r.narration||'—')+'</td></tr>'\
+    +'</table>'\
+    +'<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div>'\
     +'<div class="psign">For '+esc(fd.printName)+'<br><br><br>Authorised Signatory</div></div></div>';
 }
 
@@ -2458,6 +2488,7 @@ function openEditClient(id){
   document.getElementById('ec-mobile').value=c.mobile||'';
   document.getElementById('ec-gstin').value=c.gstin||'';
   document.getElementById('ec-tan').value=c.tan||'';
+  document.getElementById('ec-address').value=c.address||'';
   document.getElementById('ec-accountant').value=c.accountant||'';
   document.getElementById('ec-staff').value=c.staff||'';
   // Populate Accountant/Staff datalists from existing values
@@ -2500,7 +2531,8 @@ function saveEditClient(){
     gstin:document.getElementById('ec-gstin').value.trim().toUpperCase(),
     tan:document.getElementById('ec-tan').value.trim().toUpperCase(),
     accountant:document.getElementById('ec-accountant').value.trim(),
-    staff:document.getElementById('ec-staff').value.trim()
+    staff:document.getElementById('ec-staff').value.trim(),
+    address:document.getElementById('ec-address').value.trim()
   },function(d){
     btn.disabled=false; btn.innerHTML='<i class="ti ti-device-floppy"></i> Save Changes';
     if(d.ok){
