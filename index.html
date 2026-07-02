@@ -869,7 +869,7 @@ var BANK_DETAILS = {
   'Prabha Computers': { bank:'The Pandharpur Urban Co-Op Bank Ltd', branch:'Navi Peth, Pandharpur', holder:'Prabha Computers', acNo:'002042001322', ifsc:'PUCB0000002' }
 };
 var FIRM_DETAILS = {
-  'CM Doshi':        { printName:'C M Doshi and Co',    address:'Pandharpur, Maharashtra', gstin:'27AEWPD6934J1ZW', defaultGST:18, isGST:true  },
+  'CM Doshi':        { printName:'C M Doshi and Co',    address:'4012, Hira Building, Station Road\nPandharpur, Dist: Solapur - 413 304', gstin:'27AEWPD6934J1ZW', defaultGST:18, isGST:true  },
   'PR Phade':        { printName:'Piyush R Phade & Co', address:'Pandharpur, Maharashtra', gstin:'',               defaultGST:0,  isGST:false },
   'Prabha Computers':{ printName:'Prabha Computers',    address:'Pandharpur, Maharashtra', gstin:'',               defaultGST:0,  isGST:false }
 };
@@ -1768,49 +1768,50 @@ function printCSS(){
   return '<style>'
     +'*{box-sizing:border-box;margin:0;padding:0;}'
     +'body{font-family:Arial,sans-serif;background:#fff;color:#000;}'
-    +'.doc{width:210mm;height:297mm;padding:13mm 15mm;display:flex;flex-direction:column;}'
-    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:5mm;border-bottom:3px solid #000;margin-bottom:6mm;flex-shrink:0;}'
-    +'.pfirm{font-size:28px;font-weight:900;}'
-    +'.pfsub{font-size:13.5px;margin-top:6px;line-height:1.9;color:#000;}'
-    +'.pdtype{font-size:17px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;border:3px solid #000;padding:7px 20px;text-align:center;}'
-    +'.pdmeta{font-size:14px;text-align:right;margin-top:10px;line-height:2.1;font-weight:600;}'
-    +'.billto{border:2px solid #000;padding:6mm 7mm;margin-bottom:6mm;flex-shrink:0;}'
-    +'.billto-lbl{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;}'
-    +'.billto-name{font-size:22px;font-weight:900;line-height:1.4;}'
-    +'.billto-addr{font-size:14px;margin-top:5px;line-height:1.7;color:#000;}'
+    +'@page{size:145mm 210mm;margin:0;}'
+    +'.doc{width:145mm;height:210mm;padding:8mm 9mm;display:flex;flex-direction:column;}'
+    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:3mm;border-bottom:2px solid #000;margin-bottom:4mm;flex-shrink:0;}'
+    +'.pfirm{font-size:17px;font-weight:900;}'
+    +'.pfsub{font-size:8.5px;margin-top:3px;line-height:1.7;color:#000;}'
+    +'.pdtype{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;border:2px solid #000;padding:4px 10px;text-align:center;}'
+    +'.pdmeta{font-size:9px;text-align:right;margin-top:5px;line-height:1.9;font-weight:600;}'
+    +'.billto{border:1.5px solid #000;padding:3mm 4mm;margin-bottom:4mm;flex-shrink:0;}'
+    +'.billto-lbl{font-size:7.5px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}'
+    +'.billto-name{font-size:13px;font-weight:900;line-height:1.4;}'
+    +'.billto-addr{font-size:9px;margin-top:3px;line-height:1.6;color:#000;}'
     +'.ptbl{width:100%;border-collapse:collapse;flex-shrink:0;}'
-    +'.ptbl th{border:2px solid #000;padding:10px 12px;text-align:left;font-size:14px;font-weight:900;background:#000;color:#fff;}'
+    +'.ptbl th{border:1.5px solid #000;padding:5px 6px;text-align:left;font-size:8.5px;font-weight:900;background:#fff;color:#000;border-bottom:1.5px solid #000;}'
     +'.ptbl th.r,.ptbl td.r{text-align:right;}'
-    +'.ptbl td{padding:14px 12px;border:2px solid #000;font-size:16px;vertical-align:top;}'
-    +'.desc-name{font-weight:700;font-size:17px;}'
-    +'.period{font-size:14px;font-weight:900;margin-top:5px;}'
-    +'.totals-wrap{display:flex;justify-content:flex-end;padding:4mm 0;border-bottom:2px solid #000;margin-bottom:6mm;flex-shrink:0;}'
-    +'.totals-inner{width:105mm;}'
-    +'.trow{display:flex;font-size:15px;padding:5px 0;border-bottom:1px solid #bbb;}'
+    +'.ptbl td{padding:7px 6px;border:1.5px solid #000;font-size:10px;vertical-align:top;}'
+    +'.desc-name{font-weight:700;font-size:10.5px;}'
+    +'.period{font-size:8.5px;font-weight:900;margin-top:3px;}'
+    +'.totals-wrap{display:flex;justify-content:flex-end;padding:3mm 0;border-bottom:1.5px solid #000;margin-bottom:4mm;flex-shrink:0;}'
+    +'.totals-inner{width:68mm;}'
+    +'.trow{display:flex;font-size:9.5px;padding:3px 0;border-bottom:1px solid #ccc;}'
     +'.trow:last-child{border-bottom:none;}'
-    +'.trow.grand{font-size:19px;font-weight:900;border-top:2.5px solid #000;border-bottom:none;padding-top:8px;margin-top:5px;}'
-    +'.tlbl{flex:1;text-align:right;padding-right:12mm;color:#222;}'
+    +'.trow.grand{font-size:12px;font-weight:900;border-top:2px solid #000;border-bottom:none;padding-top:4px;margin-top:3px;}'
+    +'.tlbl{flex:1;text-align:right;padding-right:6mm;color:#222;}'
     +'.trow.grand .tlbl{color:#000;}'
-    +'.tval{min-width:34mm;text-align:right;font-weight:700;}'
+    +'.tval{min-width:20mm;text-align:right;font-weight:700;}'
     +'.trow.grand .tval{font-weight:900;}'
-    +'.pwords{border:2px solid #000;padding:10px 14px;font-size:15px;margin-bottom:6mm;flex-shrink:0;}'
-    +'.pnar{border-left:6px solid #000;background:#f2f2f2;padding:9px 14px;font-size:15px;margin-bottom:6mm;line-height:1.7;flex-shrink:0;}'
-    +'.pnar-lbl{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}'
-    +'.bank{border:2px solid #000;padding:10px 14px;margin-bottom:0;flex-shrink:0;}'
-    +'.bank-ttl{font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}'
-    +'.bank-grid{display:grid;grid-template-columns:1fr 1fr;font-size:14.5px;line-height:2.1;}'
+    +'.pwords{border:1.5px solid #000;padding:5px 7px;font-size:8.5px;margin-bottom:3mm;flex-shrink:0;}'
+    +'.pnar{border-left:4px solid #000;background:#f2f2f2;padding:5px 7px;font-size:8.5px;margin-bottom:3mm;line-height:1.6;flex-shrink:0;}'
+    +'.pnar-lbl{font-size:7px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}'
+    +'.bank{border:1.5px solid #000;padding:5px 7px;margin-bottom:0;flex-shrink:0;}'
+    +'.bank-ttl{font-weight:900;font-size:8.5px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}'
+    +'.bank-grid{display:grid;grid-template-columns:1fr 1fr;font-size:8.5px;line-height:1.8;}'
     +'.bank-grid .full{grid-column:span 2;}'
-    +'.pfooter{display:flex;justify-content:space-between;align-items:flex-end;padding-top:5mm;border-top:2px solid #000;margin-top:auto;flex-shrink:0;}'
-    +'.ppow{font-size:12px;font-weight:700;}'
-    +'.psign{text-align:right;font-size:15px;line-height:3;font-weight:700;}'
-    +'.rtitle{font-size:22px;font-weight:900;text-align:center;margin-bottom:6mm;border-bottom:3px solid #000;padding-bottom:4mm;}'
-    +'.rtbl{width:100%;border-collapse:collapse;margin-bottom:6mm;}'
-    +'.rtbl td{padding:10px 12px;border-bottom:1.5px solid #000;font-size:15px;}'
+    +'.pfooter{display:flex;justify-content:space-between;align-items:flex-end;padding-top:3mm;border-top:1.5px solid #000;margin-top:auto;flex-shrink:0;}'
+    +'.ppow{font-size:7px;font-weight:700;}'
+    +'.psign{text-align:right;font-size:9px;line-height:2.8;font-weight:700;}'
+    +'.rtitle{font-size:15px;font-weight:900;text-align:center;margin-bottom:4mm;border-bottom:2px solid #000;padding-bottom:3mm;}'
+    +'.rtbl{width:100%;border-collapse:collapse;margin-bottom:4mm;}'
+    +'.rtbl td{padding:6px 8px;border-bottom:1px solid #000;font-size:9.5px;}'
     +'.rtbl td:first-child{color:#333;width:40%;font-weight:700;}'
-    +'.rtbl td:last-child{font-weight:700;font-size:16px;}'
-    +'.ramt{text-align:center;font-size:32px;font-weight:900;border:3px solid #000;padding:6mm;margin-bottom:6mm;}'
-    +'.rwords{font-size:15px;text-align:center;margin-bottom:6mm;font-style:italic;}'
-    +'@media print{.no-print{display:none!important;}}</style>';
+    +'.rtbl td:last-child{font-weight:700;font-size:10px;}'
+    +'.ramt{text-align:center;font-size:22px;font-weight:900;border:2px solid #000;padding:4mm;margin-bottom:4mm;}'
+    +'.rwords{font-size:9px;text-align:center;margin-bottom:4mm;font-style:italic;}'
+    +'@media print{.no-print{display:none!important;}body{margin:0;}}</style>';
 }
 
 function billHTML(b){
@@ -1832,10 +1833,11 @@ function billHTML(b){
       +'</tr>';
   }).join('');
   var narBlock=b.narration?'<div class="pnar"><div class="pnar-lbl">Narration</div>'+esc(b.narration)+'</div>':'';
-  var addrLine=b.clientAddress?'<div class="billto-addr">'+esc(b.clientAddress).replace(/\n/g,'<br>')+'</div>':'';
+  var addrLine=b.clientAddress?'<div class="billto-addr">'+esc(b.clientAddress).replace(/\n/g,'<br>').replace(/\\n/g,'<br>')+'</div>':'';
+  var firmAddrHtml=esc(fd.address||'').replace(/\n/g,'<br>');
   return '<div class="doc">'
     +'<div class="phdr">'
-    +'<div><div class="pfirm">'+esc(fd.printName)+'</div><div class="pfsub">'+esc(fd.address)+(fd.gstin?'<br>GSTIN: '+esc(fd.gstin):'')+'</div></div>'
+    +'<div><div class="pfirm">'+esc(fd.printName)+'</div><div class="pfsub">'+firmAddrHtml+(fd.gstin?'<br>GSTIN: '+esc(fd.gstin):'')+'</div></div>'
     +'<div><div class="pdtype">'+(isTax?'Tax Invoice':'Bill of Supply')+'</div><div class="pdmeta">Bill No: <strong>'+esc(b.billNo)+'</strong><br>Date: <strong>'+esc(b.date)+'</strong></div></div>'
     +'</div>'
     +'<div class="billto"><div class="billto-lbl">Bill To</div><div class="billto-name">'+esc(b.clientName)+'</div>'+addrLine+'</div>'
@@ -1870,8 +1872,9 @@ function bankBlockHTML(firm){
 
 function recHTML(r){
   var fd=FIRM_DETAILS[r.firm]||{printName:r.firm,address:'Pandharpur, Maharashtra'};
+  var firmAddrHtml=esc(fd.address||'').replace(/\n/g,'<br>');
   return '<div class="doc">'
-    +'<div class="phdr"><div><div class="pfirm">'+esc(fd.printName)+'</div><div class="pfsub">'+esc(fd.address)+'</div></div>'
+    +'<div class="phdr"><div><div class="pfirm">'+esc(fd.printName)+'</div><div class="pfsub">'+firmAddrHtml+'</div></div>'
     +'<div><div class="pdtype">Receipt Voucher</div><div class="pdmeta">Receipt No: <strong>'+esc(r.receiptNo)+'</strong><br>Date: <strong>'+esc(r.date)+'</strong></div></div></div>'
     +'<div class="rtitle">RECEIPT</div>'
     +'<div class="ramt">&#8377; '+fmt(r.amount)+'</div>'
