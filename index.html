@@ -71,6 +71,12 @@ input[type=date].dt{padding:5px 8px;border:1px solid var(--border);border-radius
 .btn:disabled{opacity:.5;cursor:not-allowed;}
 .toggle-wrap{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--navy);white-space:nowrap;background:#e8f0f8;padding:5px 12px;border-radius:20px;border:1px solid #bfdbfe;}
 .toggle-wrap input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;}
+.bill-chk-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer;font-size:12px;transition:background .1s;}
+.bill-chk-row:hover{background:#f8fafc;}.bill-chk-row:last-child{border-bottom:none;}
+.bill-chk-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.bill-chk-info{flex:1;display:flex;flex-direction:column;gap:1px;}
+.bill-chk-date{font-size:11px;color:var(--muted);}
+.bill-chk-amt{font-weight:700;color:var(--accent);white-space:nowrap;}
 
 /* SUMMARY STRIP */
 .sumstrip{display:flex;gap:10px;padding:12px 20px;background:#fff;border-bottom:1px solid var(--border);overflow-x:auto;}
@@ -612,11 +618,11 @@ textarea{resize:vertical;min-height:56px;}
         <div class="fg"><label class="lbl">Receipt No <span style="font-size:9px;color:var(--muted);font-weight:400;">(assigned on save)</span></label><input id="r-no" placeholder="Will be assigned on save" disabled style="background:#f8fafc;color:var(--muted);cursor:not-allowed;"></div>
         <div class="fg"><label class="lbl">Receipt Date *</label><input type="date" id="r-date"></div>
         <div class="fg sp2">
-          <label class="lbl">Against Bill <span style="font-weight:400;color:var(--muted);">(select if payment is for a specific bill)</span></label>
-          <select id="r-billref" onchange="onBillRefChange()">
-            <option value="">— General Receipt / Loading bills… —</option>
-          </select>
-          <div id="r-billref-info" style="display:none;margin-top:5px;background:#f0f4fa;border-radius:4px;padding:6px 10px;font-size:12px;color:var(--navy);"></div>
+          <label class="lbl">Against Bills <span style="font-weight:400;color:var(--muted);">(tick one or more bills this payment covers — leave all unchecked for general receipt)</span></label>
+          <div id="r-bill-checklist" style="border:1px solid var(--border);border-radius:5px;max-height:160px;overflow-y:auto;background:#fff;">
+            <div style="padding:10px;color:var(--muted);font-size:12px;">Loading bills…</div>
+          </div>
+          <div id="r-bills-summary" style="display:none;margin-top:6px;background:#f0f4fa;border-radius:4px;padding:7px 12px;font-size:12px;color:var(--navy);font-weight:500;"></div>
         </div>
         <div class="fg"><label class="lbl">Firm *</label><select id="r-firm" onchange="suggestRecNo()"></select></div>
         <div class="fg"><label class="lbl">Amount (₹) *</label><input type="number" id="r-amt" placeholder="0" oninput="updBal()"></div>
@@ -1592,33 +1598,32 @@ function openRec(id,name,out,prefillBill){
   document.getElementById('r-discount').value='';
   document.getElementById('r-nar').value='';
   document.getElementById('r-bal').style.display='none';
-  document.getElementById('r-billref-info').style.display='none';
-  window._linkedBill=null;
-  // Load open bills for this client
-  var sel=document.getElementById('r-billref');
-  sel.innerHTML='<option value="">Loading bills…</option>';
+  document.getElementById('r-bills-summary').style.display='none';
+  window._linkedBills=[];
+  // Load open bills as checkbox list
+  var checklist=document.getElementById('r-bill-checklist');
+  checklist.innerHTML='<div style="padding:10px;color:var(--muted);font-size:12px;">Loading bills…</div>';
   api({action:'getBills',clientId:id,from:'2000-01-01',to:'2099-12-31'},function(d){
     var bills=(d.bills||[]).filter(function(b){return b.status!=='Cancelled';});
-    sel.innerHTML='<option value="">— General Receipt (no specific bill) —</option>';
-    bills.forEach(function(b){
-      var opt=document.createElement('option');
-      opt.value=b.id;
-      opt.setAttribute('data-billno',b.billNo);
-      opt.setAttribute('data-firm',b.firm);
-      opt.setAttribute('data-total',b.total);
-      opt.setAttribute('data-date',b.date);
-      opt.textContent=b.billNo+' — '+b.date+' — ₹'+fmt(b.total);
-      sel.appendChild(opt);
-    });
-    // Auto-select if opened from Bills tab
+    if(!bills.length){
+      checklist.innerHTML='<div style="padding:10px;color:var(--muted);font-size:12px;">No open bills — this will be a general receipt</div>';
+      return;
+    }
+    checklist.innerHTML=bills.map(function(b){
+      return '<label class="bill-chk-row">';
+        +'<input type="checkbox" class="bill-chk" data-billno="'+esc(b.billNo)+'" data-firm="'+esc(b.firm)+'" data-total="'+b.total+'" data-date="'+esc(b.date)+'" onchange="onBillCheckChange()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;">'
+        +'<span style="flex:1;"><strong>'+esc(b.billNo)+'</strong> &nbsp;<span style="color:var(--muted);">'+esc(b.date)+'</span></span>'
+        +'<span style="font-weight:700;color:var(--accent);">₹'+fmt(b.total)+'</span>'
+        +'</label>';
+    }).join('');
+    // Auto-check if opened from Bills tab
     if(prefillBill){
-      for(var i=0;i<sel.options.length;i++){
-        if(sel.options[i].getAttribute('data-billno')===prefillBill.billNo){
-          sel.value=sel.options[i].value;
-          onBillRefChange();
-          break;
-        }
-      }
+      var chks=checklist.querySelectorAll('.bill-chk');
+      chks.forEach(function(chk){
+        if(chk.getAttribute('data-billno')===prefillBill.billNo){ chk.checked=true; }
+      });
+      onBillCheckChange();
+      document.getElementById('r-firm').value=prefillBill.firm;
     }
   });
   suggestRecNo();openM('mAddReceipt');
@@ -1627,31 +1632,34 @@ function openRec(id,name,out,prefillBill){
 function openRecFromBill(btn){
   var b=(window._bills||{})[parseInt(btn.getAttribute('data-idx'))];
   if(!b) return;
-  // Set firm dropdown to bill's firm
   document.getElementById('r-firm').value=b.firm;
   openRec(b.clientId,b.clientName,0,b);
 }
 
-function onBillRefChange(){
-  var sel=document.getElementById('r-billref');
-  var opt=sel.options[sel.selectedIndex];
-  var info=document.getElementById('r-billref-info');
-  if(!sel.value){
-    info.style.display='none';
-    window._linkedBill=null;
+function onBillCheckChange(){
+  var chks=document.querySelectorAll('#r-bill-checklist .bill-chk:checked');
+  var summary=document.getElementById('r-bills-summary');
+  if(!chks.length){
+    window._linkedBills=[];
+    summary.style.display='none';
+    document.getElementById('r-amt').value='';
     return;
   }
-  var billNo=opt.getAttribute('data-billno');
-  var firm=opt.getAttribute('data-firm');
-  var total=parseFloat(opt.getAttribute('data-total'))||0;
-  var date=opt.getAttribute('data-date');
-  window._linkedBill={billNo:billNo,firm:firm,total:total,date:date};
-  // Auto-fill amount and firm
+  var bills=[]; var total=0; var firms={};
+  chks.forEach(function(chk){
+    var amt=parseFloat(chk.getAttribute('data-total'))||0;
+    bills.push({billNo:chk.getAttribute('data-billno'),total:amt,firm:chk.getAttribute('data-firm')});
+    total+=amt;
+    firms[chk.getAttribute('data-firm')]=1;
+  });
+  window._linkedBills=bills;
   document.getElementById('r-amt').value=total;
-  document.getElementById('r-firm').value=firm;
+  curOut=total;
   updBal();
-  info.style.display='block';
-  info.innerHTML='✓ Bill: <strong>'+billNo+'</strong> dated '+date+' — Total <strong>₹'+fmt(total)+'</strong>';
+  var firmKeys=Object.keys(firms);
+  if(firmKeys.length===1) document.getElementById('r-firm').value=firmKeys[0];
+  summary.style.display='block';
+  summary.innerHTML='✓ <strong>'+bills.length+' bill'+(bills.length>1?'s':'')+' selected</strong> &nbsp;—&nbsp; Total: <strong>₹'+fmt(total)+'</strong>'+(firmKeys.length>1?' &nbsp;<span style="color:var(--red);font-size:11px;">(multiple firms — select firm manually)</span>':'');
 }
 function updBal(){
   var a=parseFloat(document.getElementById('r-amt').value)||0;
@@ -1674,23 +1682,20 @@ function saveReceipt(){
   var recNar=document.getElementById('r-nar').value;
   if(disc>0) recNar=(recNar?recNar+' — ':'')+'Discount ₹'+fmt(disc)+' applied';
   var pd={receiptNo:'',date:fmtDate(dt),clientName:curName,firm:firm,amount:amt,
-    mode:mode,ref:ref,narration:recNar,discount:disc,linkedBillNo:'',linkedBillTotal:0};
+    mode:mode,ref:ref,narration:recNar,discount:disc,linkedBills:linkedBills};
   busy=true;
   document.getElementById('saveRecBtn').disabled=true;
   document.getElementById('saveRecBtn').textContent='Saving…';
-  var linkedBill=window._linkedBill||null;
+  var linkedBills=window._linkedBills||[];
   api({action:'addReceipt',receiptDate:dt,clientId:curId,clientName:curName,
     firm:firm,amount:amt,mode:mode,ref:ref,narration:recNar,discount:disc,
-    linkedBillNo:linkedBill?linkedBill.billNo:'',
-    linkedBillTotal:linkedBill?linkedBill.total:''
+    linkedBills:JSON.stringify(linkedBills)
   },function(d){
     busy=false;
     document.getElementById('saveRecBtn').disabled=false;
     document.getElementById('saveRecBtn').innerHTML='<i class="ti ti-device-floppy"></i> Save Receipt';
     if(d.ok){
       pd.receiptNo=d.receiptNo;
-      pd.linkedBillNo=linkedBill?linkedBill.billNo:'';
-      pd.linkedBillTotal=linkedBill?linkedBill.total:0;
       closeM('mAddReceipt');toast('Receipt saved — '+d.receiptNo+' ✓','ok');loadAll();
       printData={type:'receipt',data:pd};doPrint('receipt');
     }
@@ -1847,8 +1852,9 @@ function printCSS(){
   return '<style>'
     +'*{box-sizing:border-box;margin:0;padding:0;}'
     +'body{font-family:Arial,sans-serif;background:#fff;color:#000;}'
-    +'@page{size:A4;margin:0;}'
-    +'.doc{width:210mm;min-height:297mm;padding:10mm 12mm;display:flex;flex-direction:column;font-size:12px;}'
+    +'@page{size:A4;margin:10mm 12mm;}'
+    +'.doc{width:100%;min-height:calc(297mm - 20mm);border:2px solid #000;padding:8mm 10mm;display:flex;flex-direction:column;}'
+    +'.original-label{text-align:right;font-size:10px;font-style:italic;margin-bottom:1mm;}'
     +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm;min-height:22mm;}'
     +'.hdr-logo{width:32mm;flex-shrink:0;overflow:visible;}'
     +'.hdr-logo img{width:32mm;height:auto;display:block;}'
@@ -1857,7 +1863,6 @@ function printCSS(){
     +'.hdr-firm-addr{font-size:10px;margin-top:3px;line-height:1.7;color:#333;}'
     +'.hdr-divider{border:none;border-top:2px solid #000;margin-bottom:4mm;}'
     +'.doc-type-label{text-align:center;font-size:13px;font-weight:700;margin-bottom:4mm;letter-spacing:1px;}'
-    +'.original-label{text-align:right;font-size:10px;font-style:italic;margin-bottom:1mm;}'
     +'.parties{display:grid;grid-template-columns:1fr auto;gap:5mm;margin-bottom:3mm;}'
     +'.party-to{border:1px solid #ccc;padding:4mm;}'
     +'.party-to-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#555;margin-bottom:3px;}'
@@ -1868,37 +1873,51 @@ function printCSS(){
     +'.meta-lbl{color:#555;min-width:22mm;}'
     +'.meta-val{font-weight:700;}'
     +'.rc-row{font-size:10px;margin-bottom:3mm;padding:3px 4mm;border-top:1px solid #ccc;border-bottom:1px solid #ccc;}'
-    +'.ptbl{width:100%;border-collapse:collapse;margin-bottom:0;}'
+    +'.ptbl{width:100%;border-collapse:collapse;flex-shrink:0;}'
     +'.ptbl th{border:1px solid #000;padding:6px 8px;text-align:left;font-size:10.5px;font-weight:900;background:#f0f0f0;}'
     +'.ptbl th.r,.ptbl td.r{text-align:right;}'
     +'.ptbl td{padding:8px 8px;border:1px solid #ccc;font-size:12px;vertical-align:top;}'
-    +'.ptbl td.gst-row{font-size:10.5px;color:#333;text-align:right;border-left:none;border-right:none;}'
-    +'.ptbl td.total-row{font-size:13px;font-weight:900;text-align:right;border-top:2px solid #000;}'
     +'.desc-main{font-weight:700;font-size:12.5px;}'
     +'.period-tag{font-size:10px;font-weight:600;margin-top:3px;}'
-    +'.words-row{font-size:10.5px;padding:4px 8px;border:1px solid #ccc;border-top:none;margin-bottom:4mm;font-weight:600;letter-spacing:.2px;}'
-    +'.hsn-tbl{width:100%;border-collapse:collapse;margin-bottom:4mm;}'
+    +'.doc-spacer{flex:1;}'
+    +'.totals-block{flex-shrink:0;}'
+    +'.gst-line{display:flex;justify-content:flex-end;border:1px solid #ccc;border-top:none;padding:5px 8px;font-size:10.5px;color:#333;}'
+    +'.gst-line-lbl{flex:1;text-align:right;padding-right:4mm;}'
+    +'.gst-line-val{min-width:30mm;text-align:right;}'
+    +'.total-line{display:flex;justify-content:flex-end;border:2px solid #000;border-top:2px solid #000;padding:7px 8px;font-size:14px;font-weight:900;}'
+    +'.total-line-lbl{flex:1;text-align:right;padding-right:4mm;}'
+    +'.total-line-val{min-width:30mm;text-align:right;}'
+    +'.words-row{font-size:10.5px;padding:5px 8px;border:1px solid #ccc;border-top:none;margin-bottom:4mm;font-weight:600;letter-spacing:.2px;}'
+    +'.hsn-wrap{margin-bottom:4mm;flex-shrink:0;}'
+    +'.hsn-title{font-size:10px;font-weight:700;margin-bottom:2mm;text-transform:uppercase;letter-spacing:.5px;}'
+    +'.hsn-tbl{width:100%;border-collapse:collapse;}'
     +'.hsn-tbl th{border:1px solid #000;padding:5px 7px;font-size:10px;font-weight:900;background:#f0f0f0;text-align:right;}'
     +'.hsn-tbl th:first-child{text-align:left;}'
     +'.hsn-tbl td{border:1px solid #ccc;padding:5px 7px;font-size:11px;text-align:right;}'
     +'.hsn-tbl td:first-child{text-align:left;}'
     +'.hsn-tbl tr.tot td{font-weight:900;border-top:2px solid #000;background:#f8f8f8;}'
     +'.tax-words{font-size:10px;font-weight:700;padding:3px 0;margin-bottom:4mm;text-transform:uppercase;letter-spacing:.3px;}'
-    +'.footer-row{display:flex;justify-content:space-between;align-items:flex-start;margin-top:auto;padding-top:4mm;border-top:1px solid #ccc;}'
+    +'.footer-row{display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0;padding-top:4mm;border-top:1px solid #ccc;}'
     +'.bank-block{font-size:10.5px;line-height:1.9;}'
     +'.bank-title{font-weight:900;font-size:11px;margin-bottom:4px;}'
     +'.sign-block{text-align:right;font-size:12px;font-weight:700;}'
     +'.sign-block .for-lbl{font-size:10px;font-weight:400;margin-bottom:18mm;}'
     +'.sign-block .firm-stamp{font-size:14px;font-weight:900;}'
+    +'.bhayani-credit{font-size:9.5px;color:#555;margin-top:5px;font-weight:400;}'
     +'.rec-tbl{width:100%;border-collapse:collapse;margin-bottom:0;}'
     +'.rec-tbl th{border:1px solid #000;padding:6px 8px;font-size:10.5px;font-weight:900;background:#f0f0f0;}'
     +'.rec-tbl th.r,.rec-tbl td.r{text-align:right;}'
     +'.rec-tbl td{border:1px solid #ccc;padding:8px 8px;font-size:12px;vertical-align:top;}'
-    +'.rec-total-row{display:flex;justify-content:flex-end;align-items:center;border:1px solid #ccc;border-top:2px solid #000;padding:6px 8px;font-size:13px;font-weight:900;gap:20mm;}'
+    +'.rec-total-row{display:flex;justify-content:flex-end;align-items:center;border:2px solid #000;padding:6px 8px;font-size:14px;font-weight:900;gap:20mm;}'
     +'.rec-words{font-size:10.5px;font-weight:700;padding:4px 8px;border:1px solid #ccc;border-top:none;border-bottom:2px solid #000;margin-bottom:3mm;}'
     +'.rec-remark{font-size:10.5px;padding:3px 8px;margin-bottom:4mm;border-bottom:1px solid #ccc;}'
     +'.pay-mode{font-size:11px;margin-bottom:3mm;}'
-    +'.bhayani-credit{font-size:8px;color:#888;margin-top:5px;font-weight:400;}'
+    +'.bill-chk-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer;font-size:12px;}'
+    +'.bill-chk-row:hover{background:#f8fafc;}.bill-chk-row:last-child{border-bottom:none;}'
+    +'.bill-chk-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}'
+    +'.bill-chk-info{flex:1;display:flex;flex-direction:column;gap:1px;}'
+    +'.bill-chk-date{font-size:11px;color:var(--muted);}'
+    +'.bill-chk-amt{font-weight:700;color:var(--accent);white-space:nowrap;}'
     +'@media print{.no-print{display:none!important;}body{margin:0;background:#fff;}}</style>';
 }
 
@@ -1921,18 +1940,30 @@ function billHTML(b){
       +'</tr>';
   }).join('');
 
-  var gstRow=isTax?'<tr><td colspan="2" class="gst-row">GST'+gstPct+'% ('+gstPct/2+'% CGST + '+gstPct/2+'% SGST)</td><td class="r" style="border:1px solid #ccc;font-size:10.5px;text-align:right;">'+fmt(gst)+'</td></tr>':'';
+  var gstLine=isTax?'<div class="gst-line"><span class="gst-line-lbl">GST '+gstPct+'% ('+gstPct/2+'% CGST + '+gstPct/2+'% SGST)</span><span class="gst-line-val">'+fmt(gst)+'</span></div>':'';
 
-  var hsnBlock=isTax?'<div style="font-size:10px;font-weight:700;margin-bottom:2mm;text-transform:uppercase;letter-spacing:.5px;">HSN/SAC Summary</div>'
+  var hsnBlock=isTax?'<div class="hsn-wrap">'
+    +'<div class="hsn-title">HSN/SAC Summary</div>'
     +'<table class="hsn-tbl"><thead><tr>'
-    +'<th>HSN/SAC</th><th>Taxable Value</th><th>Rate</th><th>GST'+gstPct+'%</th><th>Total Tax Amt</th>'
+    +'<th>HSN/SAC</th><th>Taxable Value</th><th>Rate</th><th>GST '+gstPct+'%</th><th>Total Tax Amt</th>'
     +'</tr></thead><tbody>'
     +'<tr><td>'+esc(items[0]?items[0].hsn||'998231':'998231')+'</td><td>'+fmt(tax)+'</td><td>'+gstPct+'%</td><td>'+fmt(gst)+'</td><td>'+fmt(gst)+'</td></tr>'
     +'<tr class="tot"><td>Total</td><td>'+fmt(tax)+'</td><td></td><td>'+fmt(gst)+'</td><td>'+fmt(gst)+'</td></tr>'
     +'</tbody></table>'
-    +'<div class="tax-words">Tax — '+numWords(Math.round(gst))+' Only</div>':'';
+    +'<div class="tax-words">Tax — '+numWords(Math.round(gst))+' Only</div>'
+    +'</div>':'';
 
   var clientAddr=b.clientAddress?'<div class="party-detail">'+esc(b.clientAddress).replace(/\n/g,'<br>')+'</div>':'';
+
+  var bd=BANK_DETAILS[b.firm];
+  var bankHtml=bd?'<div class="bank-block">'
+    +'<div class="bank-title">Company\'s Bank Detail</div>'
+    +'<div>Bank Name : '+esc(bd.bank)+'</div>'
+    +'<div>Branch : '+esc(bd.branch)+'</div>'
+    +'<div>A/C Holder : '+esc(bd.holder)+'</div>'
+    +'<div>A/C No : '+esc(bd.acNo)+'</div>'
+    +'<div>IFSC : '+esc(bd.ifsc)+'</div>'
+    +'</div>':'<div></div>';
 
   return '<div class="doc">'
     +'<div class="original-label">Original</div>'
@@ -1959,17 +1990,24 @@ function billHTML(b){
     +'</div>'
     +(isTax?'<div class="rc-row">Tax is payable on reverse charge (Yes/No) : &nbsp;<strong>No</strong> &nbsp;&nbsp;&nbsp; GSTIN : <strong>'+esc(fd.gstin)+'</strong></div>':'')
     +'<table class="ptbl"><thead><tr><th style="width:60%">Particulars</th><th class="r" style="width:20%">HSN/SAC</th><th class="r" style="width:20%">Amount</th></tr></thead>'
-    +'<tbody>'+irows+gstRow
-    +'<tr><td colspan="2" class="total-row">Total.</td><td class="total-row">INR '+fmt(tot)+'</td></tr>'
-    +'</tbody></table>'
+    +'<tbody>'+irows+'</tbody></table>'
+    +'<div class="doc-spacer"></div>'
+    +'<div class="totals-block">'
+    +gstLine
+    +'<div class="total-line"><span class="total-line-lbl">Total.</span><span class="total-line-val">INR '+fmt(tot)+'</span></div>'
     +'<div class="words-row">INR - '+numWords(Math.round(tot)).toUpperCase()+' ONLY</div>'
     +hsnBlock
-    +bankBlockHTML(b.firm)
+    +'<div class="footer-row">'
+    +bankHtml
+    +'<div class="sign-block"><div class="for-lbl">For,</div><div class="firm-stamp">'+esc(fd.printName.toUpperCase())+'</div><div class="bhayani-credit">Powered by Bhayani Business Sol<sup>n</sup></div></div>'
+    +'</div>'
+    +'</div>'
     +'</div>';
 }
 
 function bankBlockHTML(firm){
   var bd=BANK_DETAILS[firm];
+  var fd=FIRM_DETAILS[firm]||{printName:firm};
   var bankHtml=bd?'<div class="bank-block">'
     +'<div class="bank-title">Company\'s Bank Detail</div>'
     +'<div>Bank Name : '+esc(bd.bank)+'</div>'
@@ -1978,7 +2016,6 @@ function bankBlockHTML(firm){
     +'<div>A/C No : '+esc(bd.acNo)+'</div>'
     +'<div>IFSC : '+esc(bd.ifsc)+'</div>'
     +'</div>':'<div></div>';
-  var fd=FIRM_DETAILS[firm]||{printName:firm};
   return '<div class="footer-row">'
     +bankHtml
     +'<div class="sign-block"><div class="for-lbl">For,</div><div class="firm-stamp">'+esc(fd.printName.toUpperCase())+'</div><div class="bhayani-credit">Powered by Bhayani Business Sol<sup>n</sup></div></div>'
@@ -1988,7 +2025,20 @@ function bankBlockHTML(firm){
 function recHTML(r){
   var fd=FIRM_DETAILS[r.firm]||{printName:r.firm,address:COMMON_ADDR};
   var addrLines=esc(fd.address||'').replace(/\n/g,'<br>');
-  var linked=r.linkedBillNo?'Invoice No - '+esc(r.linkedBillNo)+(r.linkedBillTotal?' (Amount : '+fmt(r.linkedBillTotal)+'.00)':''):'Received with thanks';
+  var linkedBills=[];
+  if(r.linkedBills){
+    try{ linkedBills=typeof r.linkedBills==='string'?JSON.parse(r.linkedBills):r.linkedBills; }catch(e){}
+  }
+  if(!linkedBills.length && r.linkedBillNo){
+    linkedBills=[{billNo:r.linkedBillNo,total:r.linkedBillTotal||0}];
+  }
+  var particRows=linkedBills.length
+    ? linkedBills.map(function(b,i){
+        return '<tr><td style="text-align:center;">'+(i+1)+'</td>'
+          +'<td>Invoice No - '+esc(b.billNo)+(b.total?' (Amount : '+fmt(b.total)+'.00)':'')+'</td>'
+          +'<td class="r">'+fmt(b.total)+'</td></tr>';
+      }).join('')
+    : '<tr><td style="text-align:center;">1</td><td>Received with thanks</td><td class="r">'+fmt(r.amount)+'</td></tr>';
 
   return '<div class="doc">'
     +'<div class="doc-type-label">Receipt</div>'
@@ -2013,15 +2063,12 @@ function recHTML(r){
     +'</div>'
     +'</div>'
     +'<table class="rec-tbl"><thead><tr><th style="width:10%">Sr.No</th><th>Particulars</th><th class="r" style="width:25%">Amount</th></tr></thead>'
-    +'<tbody><tr>'
-    +'<td style="text-align:center;">1</td>'
-    +'<td>'+linked+'</td>'
-    +'<td class="r">'+fmt(r.amount)+'</td>'
-    +'</tr></tbody></table>'
+    +'<tbody>'+particRows+'</tbody></table>'
+    +'<div class="doc-spacer"></div>'
     +'<div class="rec-total-row"><span>TOTAL</span><span>INR '+fmt(r.amount)+'</span></div>'
     +'<div class="rec-words">INR - '+numWords(Math.round(r.amount)).toUpperCase()+' ONLY</div>'
     +'<div class="rec-remark">Remark : '+esc(r.narration||'')+'</div>'
-    +'<div class="footer-row" style="margin-top:auto;">' 
+    +'<div class="footer-row" style="margin-top:6mm;">'
     +'<div class="pay-mode"><strong>Payment Mode : </strong>'+esc(r.mode)+(r.ref?'<br>'+esc(r.ref):'')+'</div>'
     +'<div class="sign-block"><div class="for-lbl">For,</div><div class="firm-stamp">'+esc(fd.printName.toUpperCase())+'</div><div class="bhayani-credit">Powered by Bhayani Business Sol<sup>n</sup></div></div>'
     +'</div>'
