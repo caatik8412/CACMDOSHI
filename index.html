@@ -611,6 +611,13 @@ textarea{resize:vertical;min-height:56px;}
       <div class="fg2">
         <div class="fg"><label class="lbl">Receipt No <span style="font-size:9px;color:var(--muted);font-weight:400;">(assigned on save)</span></label><input id="r-no" placeholder="Will be assigned on save" disabled style="background:#f8fafc;color:var(--muted);cursor:not-allowed;"></div>
         <div class="fg"><label class="lbl">Receipt Date *</label><input type="date" id="r-date"></div>
+        <div class="fg sp2">
+          <label class="lbl">Against Bill <span style="font-weight:400;color:var(--muted);">(select if payment is for a specific bill)</span></label>
+          <select id="r-billref" onchange="onBillRefChange()">
+            <option value="">— General Receipt / Loading bills… —</option>
+          </select>
+          <div id="r-billref-info" style="display:none;margin-top:5px;background:#f0f4fa;border-radius:4px;padding:6px 10px;font-size:12px;color:var(--navy);"></div>
+        </div>
         <div class="fg"><label class="lbl">Firm *</label><select id="r-firm" onchange="suggestRecNo()"></select></div>
         <div class="fg"><label class="lbl">Amount (₹) *</label><input type="number" id="r-amt" placeholder="0" oninput="updBal()"></div>
         <div class="fg"><label class="lbl">Mode</label>
@@ -868,6 +875,9 @@ var BANK_DETAILS = {
   'PR Phade': { bank:'HDFC Bank Ltd', branch:'Pandharpur', holder:'PIYUSH R. PHADE AND CO.', acNo:'50200046281261', ifsc:'HDFC0002803' },
   'Prabha Computers': { bank:'The Pandharpur Urban Co-Op Bank Ltd', branch:'Navi Peth, Pandharpur', holder:'Prabha Computers', acNo:'002042001322', ifsc:'PUCB0000002' }
 };
+var CA_LOGO_B64 = 'data:image/jpeg;base64,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';
+var FIRM_PHONE = '9922885001';
+var FIRM_EMAIL = 'cmdoshi123@gmail.com';
 var COMMON_ADDR = '4012, Hira Building, Station Road\nPandharpur, Dist: Solapur – 413 304';
 var FIRM_DETAILS = {
   'CM Doshi':        { printName:'C M Doshi and Co',    address:COMMON_ADDR, gstin:'27AEWPD6934J1ZW', defaultGST:18, isGST:true  },
@@ -1557,6 +1567,7 @@ function renderBills(){
       +'<td class="amt amtt">₹'+fmt(b.total)+'</td>'
       +'<td><div class="acts">'
         +'<button class="icn ip" data-idx="'+idx+'" onclick="printBillIdx(this)" title="Print"><i class="ti ti-printer"></i></button>'
+        +'<button class="icn ir" data-idx="'+idx+'" onclick="openRecFromBill(this)" title="Add Receipt against this bill"><i class="ti ti-receipt"></i></button>'
         +'<button class="icn" style="color:var(--red);" data-idx="'+idx+'" onclick="cancelBillIdx(this)" title="Cancel"><i class="ti ti-ban"></i></button>'
       +'</div></td>'
     +'</tr>';
@@ -1572,7 +1583,7 @@ function printBillIdx(btn){
 function printBillRow(btn){ printBillIdx(btn); }
 
 // ── RECEIPT MODAL ─────────────────────────────────────────────
-function openRec(id,name,out){
+function openRec(id,name,out,prefillBill){
   curId=id;curName=name;curOut=out;
   document.getElementById('r-cname').textContent=name;
   document.getElementById('r-no').value='';
@@ -1581,7 +1592,66 @@ function openRec(id,name,out){
   document.getElementById('r-discount').value='';
   document.getElementById('r-nar').value='';
   document.getElementById('r-bal').style.display='none';
+  document.getElementById('r-billref-info').style.display='none';
+  window._linkedBill=null;
+  // Load open bills for this client
+  var sel=document.getElementById('r-billref');
+  sel.innerHTML='<option value="">Loading bills…</option>';
+  api({action:'getBills',clientId:id,from:'2000-01-01',to:'2099-12-31'},function(d){
+    var bills=(d.bills||[]).filter(function(b){return b.status!=='Cancelled';});
+    sel.innerHTML='<option value="">— General Receipt (no specific bill) —</option>';
+    bills.forEach(function(b){
+      var opt=document.createElement('option');
+      opt.value=b.id;
+      opt.setAttribute('data-billno',b.billNo);
+      opt.setAttribute('data-firm',b.firm);
+      opt.setAttribute('data-total',b.total);
+      opt.setAttribute('data-date',b.date);
+      opt.textContent=b.billNo+' — '+b.date+' — ₹'+fmt(b.total);
+      sel.appendChild(opt);
+    });
+    // Auto-select if opened from Bills tab
+    if(prefillBill){
+      for(var i=0;i<sel.options.length;i++){
+        if(sel.options[i].getAttribute('data-billno')===prefillBill.billNo){
+          sel.value=sel.options[i].value;
+          onBillRefChange();
+          break;
+        }
+      }
+    }
+  });
   suggestRecNo();openM('mAddReceipt');
+}
+
+function openRecFromBill(btn){
+  var b=(window._bills||{})[parseInt(btn.getAttribute('data-idx'))];
+  if(!b) return;
+  // Set firm dropdown to bill's firm
+  document.getElementById('r-firm').value=b.firm;
+  openRec(b.clientId,b.clientName,0,b);
+}
+
+function onBillRefChange(){
+  var sel=document.getElementById('r-billref');
+  var opt=sel.options[sel.selectedIndex];
+  var info=document.getElementById('r-billref-info');
+  if(!sel.value){
+    info.style.display='none';
+    window._linkedBill=null;
+    return;
+  }
+  var billNo=opt.getAttribute('data-billno');
+  var firm=opt.getAttribute('data-firm');
+  var total=parseFloat(opt.getAttribute('data-total'))||0;
+  var date=opt.getAttribute('data-date');
+  window._linkedBill={billNo:billNo,firm:firm,total:total,date:date};
+  // Auto-fill amount and firm
+  document.getElementById('r-amt').value=total;
+  document.getElementById('r-firm').value=firm;
+  updBal();
+  info.style.display='block';
+  info.innerHTML='✓ Bill: <strong>'+billNo+'</strong> dated '+date+' — Total <strong>₹'+fmt(total)+'</strong>';
 }
 function updBal(){
   var a=parseFloat(document.getElementById('r-amt').value)||0;
@@ -1604,18 +1674,23 @@ function saveReceipt(){
   var recNar=document.getElementById('r-nar').value;
   if(disc>0) recNar=(recNar?recNar+' — ':'')+'Discount ₹'+fmt(disc)+' applied';
   var pd={receiptNo:'',date:fmtDate(dt),clientName:curName,firm:firm,amount:amt,
-    mode:mode,ref:ref,narration:recNar,discount:disc};
+    mode:mode,ref:ref,narration:recNar,discount:disc,linkedBillNo:'',linkedBillTotal:0};
   busy=true;
   document.getElementById('saveRecBtn').disabled=true;
   document.getElementById('saveRecBtn').textContent='Saving…';
+  var linkedBill=window._linkedBill||null;
   api({action:'addReceipt',receiptDate:dt,clientId:curId,clientName:curName,
-    firm:firm,amount:amt,mode:mode,ref:ref,narration:recNar,discount:disc
+    firm:firm,amount:amt,mode:mode,ref:ref,narration:recNar,discount:disc,
+    linkedBillNo:linkedBill?linkedBill.billNo:'',
+    linkedBillTotal:linkedBill?linkedBill.total:''
   },function(d){
     busy=false;
     document.getElementById('saveRecBtn').disabled=false;
     document.getElementById('saveRecBtn').innerHTML='<i class="ti ti-device-floppy"></i> Save Receipt';
     if(d.ok){
       pd.receiptNo=d.receiptNo;
+      pd.linkedBillNo=linkedBill?linkedBill.billNo:'';
+      pd.linkedBillTotal=linkedBill?linkedBill.total:0;
       closeM('mAddReceipt');toast('Receipt saved — '+d.receiptNo+' ✓','ok');loadAll();
       printData={type:'receipt',data:pd};doPrint('receipt');
     }
@@ -1674,6 +1749,7 @@ function renderReceipts(){
 function printRecIdx(btn){
   var r=(window._recs||{})[parseInt(btn.getAttribute('data-idx'))];
   if(!r) return;
+  // linkedBillNo comes from the receipt data returned by server
   printData={type:'receipt',data:r};
   doPrint('receipt');
 }
@@ -1772,126 +1848,185 @@ function printCSS(){
     +'*{box-sizing:border-box;margin:0;padding:0;}'
     +'body{font-family:Arial,sans-serif;background:#fff;color:#000;}'
     +'@page{size:A4;margin:0;}'
-    +'.doc{width:210mm;min-height:297mm;padding:12mm 15mm 12mm 15mm;display:flex;flex-direction:column;}'
-    +'.phdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:5mm;border-bottom:2.5px solid #000;margin-bottom:6mm;flex-shrink:0;}'
-    +'.pfirm{font-size:22px;font-weight:900;}'
-    +'.pfsub{font-size:11px;margin-top:5px;line-height:1.8;color:#000;}'
-    +'.pdtype{font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:1px;border:2.5px solid #000;padding:6px 16px;text-align:center;}'
-    +'.pdmeta{font-size:11.5px;text-align:right;margin-top:8px;line-height:2.1;font-weight:700;}'
-    +'.billto{border:1.5px solid #000;padding:5mm 6mm;margin-bottom:6mm;flex-shrink:0;}'
-    +'.billto-lbl{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}'
-    +'.billto-name{font-size:16px;font-weight:900;line-height:1.4;}'
-    +'.billto-addr{font-size:11px;margin-top:4px;line-height:1.7;color:#000;}'
-    +'.ptbl{width:100%;border-collapse:collapse;flex-shrink:0;}'
-    +'.ptbl th{border:1.5px solid #000;padding:8px 10px;text-align:left;font-size:11px;font-weight:900;background:#fff;color:#000;}'
+    +'.doc{width:210mm;min-height:297mm;padding:10mm 12mm;display:flex;flex-direction:column;font-size:12px;}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm;}'
+    +'.hdr-logo{width:26mm;height:26mm;overflow:hidden;display:flex;align-items:center;justify-content:center;}'
+    +'.hdr-logo img{width:40mm;height:40mm;object-fit:cover;transform:scale(1.12);flex-shrink:0;}'
+    +'.hdr-firm{text-align:right;}'
+    +'.hdr-firm-name{font-size:18px;font-weight:900;letter-spacing:.5px;}'
+    +'.hdr-firm-addr{font-size:10px;margin-top:3px;line-height:1.7;color:#333;}'
+    +'.hdr-divider{border:none;border-top:2px solid #000;margin-bottom:4mm;}'
+    +'.doc-type-label{text-align:center;font-size:13px;font-weight:700;margin-bottom:4mm;letter-spacing:1px;}'
+    +'.original-label{text-align:right;font-size:10px;font-style:italic;margin-bottom:1mm;}'
+    +'.parties{display:grid;grid-template-columns:1fr auto;gap:5mm;margin-bottom:3mm;}'
+    +'.party-to{border:1px solid #ccc;padding:4mm;}'
+    +'.party-to-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#555;margin-bottom:3px;}'
+    +'.party-name{font-size:14px;font-weight:900;margin-bottom:3px;}'
+    +'.party-detail{font-size:10.5px;color:#000;line-height:1.7;}'
+    +'.party-meta{min-width:60mm;border:1px solid #ccc;padding:4mm;}'
+    +'.meta-row{display:flex;gap:2mm;margin-bottom:3px;font-size:11px;}'
+    +'.meta-lbl{color:#555;min-width:22mm;}'
+    +'.meta-val{font-weight:700;}'
+    +'.rc-row{font-size:10px;margin-bottom:3mm;padding:3px 4mm;border-top:1px solid #ccc;border-bottom:1px solid #ccc;}'
+    +'.ptbl{width:100%;border-collapse:collapse;margin-bottom:0;}'
+    +'.ptbl th{border:1px solid #000;padding:6px 8px;text-align:left;font-size:10.5px;font-weight:900;background:#f0f0f0;}'
     +'.ptbl th.r,.ptbl td.r{text-align:right;}'
-    +'.ptbl td{padding:12px 10px;border:1.5px solid #000;font-size:13px;vertical-align:top;}'
-    +'.desc-name{font-weight:700;font-size:14px;}'
-    +'.period{font-size:11px;font-weight:700;margin-top:4px;color:#000;}'
-    +'.totals-wrap{display:flex;justify-content:flex-end;padding:5mm 0;border-bottom:1.5px solid #000;margin-bottom:6mm;flex-shrink:0;}'
-    +'.totals-inner{width:95mm;}'
-    +'.trow{display:flex;font-size:12px;padding:5px 0;border-bottom:1px solid #ccc;}'
-    +'.trow:last-child{border-bottom:none;}'
-    +'.trow.grand{font-size:17px;font-weight:900;border-top:2px solid #000;border-bottom:none;padding-top:6px;margin-top:5px;}'
-    +'.tlbl{flex:1;text-align:right;padding-right:10mm;color:#333;}'
-    +'.trow.grand .tlbl{color:#000;}'
-    +'.tval{min-width:30mm;text-align:right;font-weight:700;}'
-    +'.trow.grand .tval{font-weight:900;}'
-    +'.pwords{border:1.5px solid #000;padding:8px 12px;font-size:12px;margin-bottom:6mm;flex-shrink:0;}'
-    +'.pnar{border-left:5px solid #000;background:#f4f4f4;padding:8px 12px;font-size:12px;margin-bottom:6mm;line-height:1.7;flex-shrink:0;}'
-    +'.pnar-lbl{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px;}'
-    +'.bank{border:1.5px solid #000;padding:9px 12px;flex-shrink:0;}'
-    +'.bank-ttl{font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}'
-    +'.bank-grid{display:grid;grid-template-columns:1fr 1fr;font-size:11.5px;line-height:2.1;}'
-    +'.bank-grid .full{grid-column:span 2;}'
-    +'.pfooter{display:flex;justify-content:space-between;align-items:flex-end;padding-top:6mm;border-top:1.5px solid #000;margin-top:auto;flex-shrink:0;}'
-    +'.ppow{font-size:9px;font-weight:700;}'
-    +'.psign{text-align:right;font-size:12px;line-height:3.5;font-weight:700;}'
-    +'.rtitle{font-size:20px;font-weight:900;text-align:center;margin-bottom:7mm;border-bottom:2.5px solid #000;padding-bottom:5mm;}'
-    +'.rtbl{width:100%;border-collapse:collapse;margin-bottom:7mm;}'
-    +'.rtbl td{padding:11px 13px;border-bottom:1.5px solid #000;font-size:13px;}'
-    +'.rtbl td:first-child{color:#333;width:40%;font-weight:700;}'
-    +'.rtbl td:last-child{font-weight:700;font-size:14px;}'
-    +'.ramt{text-align:center;font-size:28px;font-weight:900;border:2.5px solid #000;padding:7mm;margin-bottom:7mm;}'
-    +'.rwords{font-size:13px;text-align:center;margin-bottom:7mm;font-style:italic;}'
+    +'.ptbl td{padding:8px 8px;border:1px solid #ccc;font-size:12px;vertical-align:top;}'
+    +'.ptbl td.gst-row{font-size:10.5px;color:#333;text-align:right;border-left:none;border-right:none;}'
+    +'.ptbl td.total-row{font-size:13px;font-weight:900;text-align:right;border-top:2px solid #000;}'
+    +'.desc-main{font-weight:700;font-size:12.5px;}'
+    +'.period-tag{font-size:10px;font-weight:600;margin-top:3px;}'
+    +'.words-row{font-size:10.5px;padding:4px 8px;border:1px solid #ccc;border-top:none;margin-bottom:4mm;font-weight:600;letter-spacing:.2px;}'
+    +'.hsn-tbl{width:100%;border-collapse:collapse;margin-bottom:4mm;}'
+    +'.hsn-tbl th{border:1px solid #000;padding:5px 7px;font-size:10px;font-weight:900;background:#f0f0f0;text-align:right;}'
+    +'.hsn-tbl th:first-child{text-align:left;}'
+    +'.hsn-tbl td{border:1px solid #ccc;padding:5px 7px;font-size:11px;text-align:right;}'
+    +'.hsn-tbl td:first-child{text-align:left;}'
+    +'.hsn-tbl tr.tot td{font-weight:900;border-top:2px solid #000;background:#f8f8f8;}'
+    +'.tax-words{font-size:10px;font-weight:700;padding:3px 0;margin-bottom:4mm;text-transform:uppercase;letter-spacing:.3px;}'
+    +'.footer-row{display:flex;justify-content:space-between;align-items:flex-start;margin-top:auto;padding-top:4mm;border-top:1px solid #ccc;}'
+    +'.bank-block{font-size:10.5px;line-height:1.9;}'
+    +'.bank-title{font-weight:900;font-size:11px;margin-bottom:4px;}'
+    +'.sign-block{text-align:right;font-size:12px;font-weight:700;}'
+    +'.sign-block .for-lbl{font-size:10px;font-weight:400;margin-bottom:18mm;}'
+    +'.sign-block .firm-stamp{font-size:14px;font-weight:900;}'
+    +'.rec-tbl{width:100%;border-collapse:collapse;margin-bottom:0;}'
+    +'.rec-tbl th{border:1px solid #000;padding:6px 8px;font-size:10.5px;font-weight:900;background:#f0f0f0;}'
+    +'.rec-tbl th.r,.rec-tbl td.r{text-align:right;}'
+    +'.rec-tbl td{border:1px solid #ccc;padding:8px 8px;font-size:12px;vertical-align:top;}'
+    +'.rec-total-row{display:flex;justify-content:flex-end;align-items:center;border:1px solid #ccc;border-top:2px solid #000;padding:6px 8px;font-size:13px;font-weight:900;gap:20mm;}'
+    +'.rec-words{font-size:10.5px;font-weight:700;padding:4px 8px;border:1px solid #ccc;border-top:none;border-bottom:2px solid #000;margin-bottom:3mm;}'
+    +'.rec-remark{font-size:10.5px;padding:3px 8px;margin-bottom:4mm;border-bottom:1px solid #ccc;}'
+    +'.pay-mode{font-size:11px;margin-bottom:3mm;}'
+    +'.bhayani-credit{font-size:8px;color:#888;margin-top:5px;font-weight:400;}'
     +'@media print{.no-print{display:none!important;}body{margin:0;background:#fff;}}</style>';
 }
 
 function billHTML(b){
-  var fd=FIRM_DETAILS[b.firm]||{printName:b.firm,address:'Pandharpur, Maharashtra',gstin:'',defaultGST:0,isGST:false};
+  var fd=FIRM_DETAILS[b.firm]||{printName:b.firm,address:COMMON_ADDR,gstin:'',defaultGST:0,isGST:false};
   var isTax=fd.isGST;
   var gstPct=isTax?fd.defaultGST:0;
   var items=b.items||[{desc:b.description||'Professional Services',hsn:'998231',amt:b.taxable,gstR:gstPct,period:b.period||''}];
   var tax=0,gst=0;
   items.forEach(function(it){var a=it.amt||0,g=isTax?gstPct:0;tax+=a;gst+=a*g/100;});
   var tot=tax+gst;
+  var addrLines=esc(fd.address||'').replace(/\n/g,'<br>');
+
   var irows=items.map(function(it){
-    var a=it.amt||0,g=isTax?gstPct:0;
+    var a=it.amt||0;
     return '<tr>'
-      +'<td><div class="desc-name">'+esc(it.desc||'')+'</div>'+(it.period?'<div class="period">Period: '+esc(it.period)+'</div>':'')+'</td>'
-      +'<td>'+esc(it.hsn||'998231')+'</td>'
-      +'<td class="r">&#8377;'+fmt(a)+'</td>'
-      +(isTax?'<td class="r">'+g+'%</td><td class="r">&#8377;'+fmt(a*g/100)+'</td>':'')
-      +'<td class="r">&#8377;'+fmt(isTax?a+a*g/100:a)+'</td>'
+      +'<td><div class="desc-main">'+esc(it.desc||'')+'</div>'+(it.period?'<div class="period-tag">'+esc(it.period)+'</div>':'')+'</td>'
+      +'<td class="r">'+esc(it.hsn||'998231')+'</td>'
+      +'<td class="r">'+fmt(a)+'</td>'
       +'</tr>';
   }).join('');
-  var narBlock=b.narration?'<div class="pnar"><div class="pnar-lbl">Narration</div>'+esc(b.narration)+'</div>':'';
-  var addrLine=b.clientAddress?'<div class="billto-addr">'+esc(b.clientAddress).replace(/\n/g,'<br>')+'</div>':'';
-  var firmAddrHtml=esc(fd.address||'').replace(/\n/g,'<br>');
+
+  var gstRow=isTax?'<tr><td colspan="2" class="gst-row">GST'+gstPct+'% ('+gstPct/2+'% CGST + '+gstPct/2+'% SGST)</td><td class="r" style="border:1px solid #ccc;font-size:10.5px;text-align:right;">'+fmt(gst)+'</td></tr>':'';
+
+  var hsnBlock=isTax?'<div style="font-size:10px;font-weight:700;margin-bottom:2mm;text-transform:uppercase;letter-spacing:.5px;">HSN/SAC Summary</div>'
+    +'<table class="hsn-tbl"><thead><tr>'
+    +'<th>HSN/SAC</th><th>Taxable Value</th><th>Rate</th><th>GST'+gstPct+'%</th><th>Total Tax Amt</th>'
+    +'</tr></thead><tbody>'
+    +'<tr><td>'+esc(items[0]?items[0].hsn||'998231':'998231')+'</td><td>'+fmt(tax)+'</td><td>'+gstPct+'%</td><td>'+fmt(gst)+'</td><td>'+fmt(gst)+'</td></tr>'
+    +'<tr class="tot"><td>Total</td><td>'+fmt(tax)+'</td><td></td><td>'+fmt(gst)+'</td><td>'+fmt(gst)+'</td></tr>'
+    +'</tbody></table>'
+    +'<div class="tax-words">Tax — '+numWords(Math.round(gst))+' Only</div>':'';
+
+  var clientAddr=b.clientAddress?'<div class="party-detail">'+esc(b.clientAddress).replace(/\n/g,'<br>')+'</div>':'';
+
   return '<div class="doc">'
-    +'<div class="phdr">'
-    +'<div><div class="pfirm">'+esc(fd.printName)+'</div><div class="pfsub">'+firmAddrHtml+(fd.gstin?'<br>GSTIN: '+esc(fd.gstin):'')+'</div></div>'
-    +'<div><div class="pdtype">'+(isTax?'Tax Invoice':'Bill of Supply')+'</div><div class="pdmeta">Bill No: <strong>'+esc(b.billNo)+'</strong><br>Date: <strong>'+esc(b.date)+'</strong></div></div>'
+    +'<div class="original-label">Original</div>'
+    +'<div class="hdr">'
+    +'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>'
+    +'<div class="hdr-firm">'
+    +'<div class="hdr-firm-name">'+esc(fd.printName.toUpperCase())+'</div>'
+    +'<div class="hdr-firm-addr">'+addrLines+'<br>'+FIRM_PHONE+',<br>'+FIRM_EMAIL+'</div>'
     +'</div>'
-    +'<div class="billto"><div class="billto-lbl">Bill To</div><div class="billto-name">'+esc(b.clientName)+'</div>'+addrLine+'</div>'
-    +'<table class="ptbl"><thead><tr>'
-    +'<th style="width:42%">Description</th>'
-    +'<th style="width:13%">HSN/SAC</th>'
-    +'<th class="r" style="width:15%">Amount (&#8377;)</th>'
-    +(isTax?'<th class="r" style="width:10%">GST%</th><th class="r" style="width:12%">GST Amt</th>':'')
-    +'<th class="r" style="width:'+(isTax?'8':'30')+'%">Total</th>'
-    +'</tr></thead><tbody>'+irows+'</tbody></table>'
-    +'<div class="totals-wrap"><div class="totals-inner">'
-    +'<div class="trow"><span class="tlbl">Taxable Amount</span><span class="tval">&#8377;'+fmt(tax)+'</span></div>'
-    +(isTax?'<div class="trow"><span class="tlbl">GST @ '+gstPct+'%</span><span class="tval">&#8377;'+fmt(gst)+'</span></div>':'')
-    +'<div class="trow grand"><span class="tlbl">Total Amount</span><span class="tval">&#8377;'+fmt(tot)+'</span></div>'
-    +'</div></div>'
-    +'<div class="pwords"><strong>Rupees:</strong> '+numWords(Math.round(tot))+' Only</div>'
-    +narBlock
+    +'</div>'
+    +'<hr class="hdr-divider">'
+    +'<div class="parties">'
+    +'<div class="party-to">'
+    +'<div class="party-to-lbl">Invoiced to,</div>'
+    +'<div class="party-name">'+esc(b.clientName)+'</div>'
+    +clientAddr
+    +'</div>'
+    +'<div class="party-meta">'
+    +'<div class="meta-row"><span class="meta-lbl">Invoice No.</span><span class="meta-val">'+esc(b.billNo)+'</span></div>'
+    +'<div class="meta-row"><span class="meta-lbl">Date.</span><span class="meta-val">'+esc(b.date)+'</span></div>'
+    +'<div class="meta-row"><span class="meta-lbl">Due Date.</span><span class="meta-val"></span></div>'
+    +'<div class="meta-row"><span class="meta-lbl">Currency.</span><span class="meta-val">INR</span></div>'
+    +'</div>'
+    +'</div>'
+    +(isTax?'<div class="rc-row">Tax is payable on reverse charge (Yes/No) : &nbsp;<strong>No</strong> &nbsp;&nbsp;&nbsp; GSTIN : <strong>'+esc(fd.gstin)+'</strong></div>':'')
+    +'<table class="ptbl"><thead><tr><th style="width:60%">Particulars</th><th class="r" style="width:20%">HSN/SAC</th><th class="r" style="width:20%">Amount</th></tr></thead>'
+    +'<tbody>'+irows+gstRow
+    +'<tr><td colspan="2" class="total-row">Total.</td><td class="total-row">INR '+fmt(tot)+'</td></tr>'
+    +'</tbody></table>'
+    +'<div class="words-row">INR - '+numWords(Math.round(tot)).toUpperCase()+' ONLY</div>'
+    +hsnBlock
     +bankBlockHTML(b.firm)
-    +'<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div><div class="psign">For '+esc(fd.printName)+'<br><br><br><br>Authorised Signatory</div></div>'
     +'</div>';
 }
 
 function bankBlockHTML(firm){
   var bd=BANK_DETAILS[firm];
-  if(!bd) return '';
-  return '<div class="bank">'
-    +'<div class="bank-ttl">Bank Details for Payment</div>'
-    +'<div class="bank-grid">'
-    +'<div>Bank: '+esc(bd.bank)+'</div><div>Branch: '+esc(bd.branch)+'</div>'
-    +'<div class="full">A/C Holder: '+esc(bd.holder)+'</div>'
-    +'<div>A/C No: '+esc(bd.acNo)+'</div><div>IFSC: '+esc(bd.ifsc)+'</div>'
-    +'</div></div>';
+  var bankHtml=bd?'<div class="bank-block">'
+    +'<div class="bank-title">Company\'s Bank Detail</div>'
+    +'<div>Bank Name : '+esc(bd.bank)+'</div>'
+    +'<div>Branch : '+esc(bd.branch)+'</div>'
+    +'<div>A/C Holder : '+esc(bd.holder)+'</div>'
+    +'<div>A/C No : '+esc(bd.acNo)+'</div>'
+    +'<div>IFSC : '+esc(bd.ifsc)+'</div>'
+    +'</div>':'<div></div>';
+  var fd=FIRM_DETAILS[firm]||{printName:firm};
+  return '<div class="footer-row">'
+    +bankHtml
+    +'<div class="sign-block"><div class="for-lbl">For,</div><div class="firm-stamp">'+esc(fd.printName.toUpperCase())+'</div><div class="bhayani-credit">Powered by Bhayani Business Sol<sup>n</sup></div></div>'
+    +'</div>';
 }
 
 function recHTML(r){
-  var fd=FIRM_DETAILS[r.firm]||{printName:r.firm,address:'Pandharpur, Maharashtra'};
-  var firmAddrHtml=esc(fd.address||'').replace(/\n/g,'<br>');
+  var fd=FIRM_DETAILS[r.firm]||{printName:r.firm,address:COMMON_ADDR};
+  var addrLines=esc(fd.address||'').replace(/\n/g,'<br>');
+  var linked=r.linkedBillNo?'Invoice No - '+esc(r.linkedBillNo)+(r.linkedBillTotal?' (Amount : '+fmt(r.linkedBillTotal)+'.00)':''):'Received with thanks';
+
   return '<div class="doc">'
-    +'<div class="phdr"><div><div class="pfirm">'+esc(fd.printName)+'</div><div class="pfsub">'+firmAddrHtml+'</div></div>'
-    +'<div><div class="pdtype">Receipt Voucher</div><div class="pdmeta">Receipt No: <strong>'+esc(r.receiptNo)+'</strong><br>Date: <strong>'+esc(r.date)+'</strong></div></div></div>'
-    +'<div class="rtitle">RECEIPT</div>'
-    +'<div class="ramt">&#8377; '+fmt(r.amount)+'</div>'
-    +'<div class="rwords">Rupees: '+numWords(Math.round(r.amount))+' Only</div>'
-    +'<table class="rtbl">'
-    +'<tr><td>Received From</td><td>'+esc(r.clientName)+'</td></tr>'
-    +'<tr><td>Mode of Payment</td><td>'+esc(r.mode)+'</td></tr>'
-    +'<tr><td>Reference / UTR</td><td>'+esc(r.ref||'--')+'</td></tr>'
-    +'<tr><td>Narration</td><td>'+esc(r.narration||'--')+'</td></tr>'
-    +'</table>'
-    +'<div class="pfooter"><div class="ppow">Bhayani Business Sol<sup>n</sup></div>'
-    +'<div class="psign">For '+esc(fd.printName)+'<br><br><br><br>Authorised Signatory</div></div></div>';
+    +'<div class="doc-type-label">Receipt</div>'
+    +'<div class="hdr">'
+    +'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>'
+    +'<div class="hdr-firm">'
+    +'<div class="hdr-firm-name">'+esc(fd.printName.toUpperCase())+'</div>'
+    +'<div class="hdr-firm-addr">'+addrLines+'<br>'+FIRM_PHONE+',<br>'+FIRM_EMAIL+'</div>'
+    +'</div>'
+    +'</div>'
+    +'<hr class="hdr-divider">'
+    +'<div class="parties">'
+    +'<div class="party-to">'
+    +'<div class="party-to-lbl">Receipt To</div>'
+    +'<div class="party-name">'+esc(r.clientName)+'</div>'
+    +(r.clientAddress?'<div class="party-detail">'+esc(r.clientAddress).replace(/\n/g,'<br>')+'</div>':'')
+    +'</div>'
+    +'<div class="party-meta">'
+    +'<div class="meta-row"><span class="meta-lbl">Receipt No.</span><span class="meta-val">'+esc(r.receiptNo)+'</span></div>'
+    +'<div class="meta-row"><span class="meta-lbl">Date.</span><span class="meta-val">'+esc(r.date)+'</span></div>'
+    +'<div class="meta-row"><span class="meta-lbl">Currency.</span><span class="meta-val">INR</span></div>'
+    +'</div>'
+    +'</div>'
+    +'<table class="rec-tbl"><thead><tr><th style="width:10%">Sr.No</th><th>Particulars</th><th class="r" style="width:25%">Amount</th></tr></thead>'
+    +'<tbody><tr>'
+    +'<td style="text-align:center;">1</td>'
+    +'<td>'+linked+'</td>'
+    +'<td class="r">'+fmt(r.amount)+'</td>'
+    +'</tr></tbody></table>'
+    +'<div class="rec-total-row"><span>TOTAL</span><span>INR '+fmt(r.amount)+'</span></div>'
+    +'<div class="rec-words">INR - '+numWords(Math.round(r.amount)).toUpperCase()+' ONLY</div>'
+    +'<div class="rec-remark">Remark : '+esc(r.narration||'')+'</div>'
+    +'<div style="flex:1;"></div>'
+    +'<div class="footer-row">'
+    +'<div class="pay-mode"><strong>Payment Mode : </strong>'+esc(r.mode)+(r.ref?'<br>'+esc(r.ref):'')+'</div>'
+    +'<div class="sign-block"><div class="for-lbl">For,</div><div class="firm-stamp">'+esc(fd.printName.toUpperCase())+'</div><div class="bhayani-credit">Powered by Bhayani Business Sol<sup>n</sup></div></div>'
+    +'</div>'
+    +'</div>';
 }
 
 // ── SETTINGS ─────────────────────────────────────────────────
