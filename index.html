@@ -880,7 +880,7 @@ var FIRM_PHONE = '9922885001';
 var FIRM_EMAIL = 'cmdoshi123@gmail.com';
 var COMMON_ADDR = '4012, Hira Building, Station Road\nPandharpur, Dist: Solapur – 413 304';
 var FIRM_DETAILS = {
-  'CM Doshi':        { printName:'C M Doshi and Co',    address:COMMON_ADDR, gstin:'27AEWPD6934J1ZW', defaultGST:18, isGST:true  },
+  'CM Doshi':        { printName:'C M Doshi & Company',    address:COMMON_ADDR, gstin:'27AEWPD6934J1ZW', defaultGST:18, isGST:true  },
   'PR Phade':        { printName:'Piyush R Phade & Co', address:COMMON_ADDR, gstin:'',               defaultGST:0,  isGST:false },
   'Prabha Computers':{ printName:'Prabha Computers',    address:COMMON_ADDR, gstin:'',               defaultGST:0,  isGST:false }
 };
@@ -1849,9 +1849,9 @@ function printCSS(){
     +'body{font-family:Arial,sans-serif;background:#fff;color:#000;}'
     +'@page{size:A4;margin:0;}'
     +'.doc{width:210mm;min-height:297mm;padding:10mm 12mm;display:flex;flex-direction:column;font-size:12px;}'
-    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm;}'
-    +'.hdr-logo{width:28mm;flex-shrink:0;}'
-    +'.hdr-logo img{width:28mm;height:auto;}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm;min-height:22mm;}'
+    +'.hdr-logo{width:32mm;flex-shrink:0;overflow:visible;}'
+    +'.hdr-logo img{width:32mm;height:auto;display:block;}'
     +'.hdr-firm{text-align:right;}'
     +'.hdr-firm-name{font-size:18px;font-weight:900;letter-spacing:.5px;}'
     +'.hdr-firm-addr{font-size:10px;margin-top:3px;line-height:1.7;color:#333;}'
