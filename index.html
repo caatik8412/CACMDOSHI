@@ -1683,12 +1683,12 @@ function saveReceipt(){
   var ref=document.getElementById('r-ref').value;
   var recNar=document.getElementById('r-nar').value;
   if(disc>0) recNar=(recNar?recNar+' — ':'')+'Discount ₹'+fmt(disc)+' applied';
+  var linkedBills=window._linkedBills||[];
   var pd={receiptNo:'',date:fmtDate(dt),clientName:curName,firm:firm,amount:amt,
     mode:mode,ref:ref,narration:recNar,discount:disc,linkedBills:linkedBills};
   busy=true;
   document.getElementById('saveRecBtn').disabled=true;
   document.getElementById('saveRecBtn').textContent='Saving…';
-  var linkedBills=window._linkedBills||[];
   api({action:'addReceipt',receiptDate:dt,clientId:curId,clientName:curName,
     firm:firm,amount:amt,mode:mode,ref:ref,narration:recNar,discount:disc,
     linkedBills:JSON.stringify(linkedBills)
