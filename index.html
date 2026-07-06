@@ -1970,7 +1970,7 @@ function billHTML(b){
   return '<div class="doc">'
     +'<div class="original-label">Original</div>'
     +'<div class="hdr">'
-    +'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>'
+    +(b.firm!=='Prabha Computers'?'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>':'')
     +'<div class="hdr-firm">'
     +'<div class="hdr-firm-name">'+esc(fd.printName.toUpperCase())+'</div>'
     +'<div class="hdr-firm-addr">'+addrLines+'<br>'+FIRM_PHONE+',<br>'+FIRM_EMAIL+'</div>'
@@ -2045,7 +2045,7 @@ function recHTML(r){
   return '<div class="doc">'
     +'<div class="doc-type-label">Receipt</div>'
     +'<div class="hdr">'
-    +'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>'
+    +(r.firm!=='Prabha Computers'?'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>':'')
     +'<div class="hdr-firm">'
     +'<div class="hdr-firm-name">'+esc(fd.printName.toUpperCase())+'</div>'
     +'<div class="hdr-firm-addr">'+addrLines+'<br>'+FIRM_PHONE+',<br>'+FIRM_EMAIL+'</div>'
