@@ -2044,7 +2044,8 @@ function bankBlockHTML(firm){
 
 function recHTML(r){
   var fd=FIRM_DETAILS[r.firm]||{printName:r.firm,address:COMMON_ADDR};
-  var addrLines=esc(fd.address||'').replace(/\n/g,'<br>');
+  var addrLines=esc(fd.address||'').replace(/
+/g,'<br>');
   var linkedBills=[];
   if(r.linkedBills){
     try{ linkedBills=typeof r.linkedBills==='string'?JSON.parse(r.linkedBills):r.linkedBills; }catch(e){}
@@ -2052,18 +2053,43 @@ function recHTML(r){
   if(!linkedBills.length && r.linkedBillNo){
     linkedBills=[{billNo:r.linkedBillNo,total:r.linkedBillTotal||0}];
   }
-  var particRows=linkedBills.length
-    ? linkedBills.map(function(b,i){
-        return '<tr><td style="text-align:center;">'+(i+1)+'</td>'
-          +'<td>Invoice No - '+esc(b.billNo)+(b.total?' (Amount : '+fmt(b.total)+'.00)':'')+'</td>'
-          +'<td class="r">'+fmt(b.total)+'</td></tr>';
-      }).join('')
-    : '<tr><td style="text-align:center;">1</td><td>Received with thanks</td><td class="r">'+fmt(r.amount)+'</td></tr>';
 
+  var receiptDesc='Received with thanks';
+  if(linkedBills.length===1){
+    receiptDesc='Received against Invoice No. '+(linkedBills[0].billNo||'');
+  }else if(linkedBills.length>1){
+    receiptDesc='Received against following invoices';
+  }
+
+  var mainRows=linkedBills.length
+    ? linkedBills.map(function(b){
+        return '<tr>'
+          +'<td><div class="desc-name">Invoice No. '+esc(b.billNo||'')+'</div>'+(b.total?'<div class="period-tag">Receipt against bill amount</div>':'')+'</td>'
+          +'<td class="r">&mdash;</td>'
+          +'<td class="r">'+fmt(b.total||0)+'</td>'
+          +'</tr>';
+      }).join('')
+    : '<tr>'
+      +'<td><div class="desc-name">'+receiptDesc+'</div>'+(r.narration?'<div class="period-tag">'+esc(r.narration)+'</div>':'')+'</td>'
+      +'<td class="r">&mdash;</td>'
+      +'<td class="r">'+fmt(r.amount||0)+'</td>'
+      +'</tr>';
+
+  var remarkRow=r.narration
+    ? '<tr class="gst-tr"><td colspan="2" class="r">Remark</td><td class="r">'+esc(r.narration)+'</td></tr>'
+    : '';
+
+  var modeText = esc(r.mode||'');
+  if(r.ref) modeText += ' / ' + esc(r.ref);
+  var paymentRow=(r.mode||r.ref)
+    ? '<tr class="gst-tr"><td colspan="2" class="r">Payment Mode</td><td class="r">'+modeText+'</td></tr>'
+    : '';
+
+  var totalRow='<tr class="total-tr"><td colspan="2" class="r">Total.</td><td class="r">INR '+fmt(r.amount||0)+'</td></tr>';
   var showLogo = r.firm!=='Prabha Computers';
 
   return '<div class="doc">'
-    +'<div class="doc-type-label">Receipt</div>'
+    +'<div class="original-label">Original</div>'
     +'<div class="hdr">'
     +(showLogo?'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>':'')
     +'<div class="hdr-firm">'
@@ -2072,26 +2098,37 @@ function recHTML(r){
     +'</div>'
     +'</div>'
     +'<hr class="hdr-divider">'
+    +'<div class="doc-type-label">RECEIPT</div>'
     +'<div class="parties">'
     +'<div class="party-to">'
-    +'<div class="party-to-lbl">Receipt To</div>'
+    +'<div class="party-to-lbl">Received From,</div>'
     +'<div class="party-name">'+esc(r.clientName)+'</div>'
-    +(r.clientAddress?'<div class="party-detail">'+esc(r.clientAddress).replace(/\n/g,'<br>')+'</div>':'')
+    +(r.clientAddress?'<div class="party-detail">'+esc(r.clientAddress).replace(/
+/g,'<br>')+'</div>':'')
     +'</div>'
     +'<div class="party-meta">'
     +'<div class="meta-row"><span class="meta-lbl">Receipt No.</span><span class="meta-val">'+esc(r.receiptNo)+'</span></div>'
     +'<div class="meta-row"><span class="meta-lbl">Date.</span><span class="meta-val">'+esc(r.date)+'</span></div>'
     +'<div class="meta-row"><span class="meta-lbl">Currency.</span><span class="meta-val">INR</span></div>'
+    +'<div class="meta-row"><span class="meta-lbl">Reference.</span><span class="meta-val">'+esc(r.ref||'')+'</span></div>'
     +'</div>'
     +'</div>'
-    +'<table class="rec-tbl"><thead><tr><th style="width:10%">Sr.No</th><th>Particulars</th><th class="r" style="width:28%">Amount</th></tr></thead>'
-    +'<tbody>'+particRows+'</tbody></table>'
+    +'<table class="ptbl"><thead><tr>'
+    +'<th style="width:60%">Particulars</th><th class="r" style="width:20%">Ref.</th><th class="r" style="width:20%">Amount</th>'
+    +'</tr></thead><tbody>'
+    +mainRows
+    +remarkRow
+    +paymentRow
+    +totalRow
+    +'</tbody></table>'
     +'<div class="doc-spacer"></div>'
-    +'<div class="rec-total-row"><span>TOTAL</span><span>INR '+fmt(r.amount)+'</span></div>'
-    +'<div class="rec-words">INR &mdash; '+numWords(Math.round(r.amount)).toUpperCase()+' ONLY</div>'
-    +'<div class="rec-remark">Remark : '+esc(r.narration||'')+'</div>'
-    +'<div class="footer-row" style="margin-top:6mm;">'
-    +'<div class="pay-mode"><strong>Payment Mode : </strong>'+esc(r.mode)+(r.ref?'<br>'+esc(r.ref):'')+'</div>'
+    +'<div class="words-row"><strong>INR &mdash;</strong> '+numWords(Math.round(r.amount||0)).toUpperCase()+' ONLY</div>'
+    +'<div class="footer-row">'
+    +'<div class="bank-block"><div class="bank-title">Payment Details</div>'
+    +'<div>Mode : '+esc(r.mode||'')+'</div>'
+    +'<div>Reference : '+esc(r.ref||'')+'</div>'
+    +(r.narration?'<div>Remark : '+esc(r.narration)+'</div>':'')
+    +'</div>'
     +'<div class="sign-block"><div class="for-lbl">For,</div><div class="firm-stamp">'+esc(fd.printName.toUpperCase())+'</div><div class="bhayani-credit">Powered by Bhayani Business Sol<sup>n</sup></div></div>'
     +'</div>'
     +'</div>';
