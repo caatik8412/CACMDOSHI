@@ -1837,16 +1837,39 @@ function saveClient(){
 
 function doPrint(format){
   closeM('mPrint');
-  var d=printData.data;
-  var html=printData.type==='bill'?billHTML(d,format):recHTML(d);
-  var w=window.open('','_blank');
-  if(!w){ toast('Please allow popups for this site to print','err'); return; }
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print</title>'+printCSS()+'</head><body>');
-  w.document.write('<div class="no-print" style="background:#1a3a5c;padding:10px 16px;display:flex;gap:10px;align-items:center;">');
-  w.document.write('<span style="color:#fff;font-weight:600;font-size:13px;">CM Doshi &amp; Company</span>');
-  w.document.write('<button onclick="window.print()" style="margin-left:auto;padding:6px 18px;background:#fff;color:#1a3a5c;border:none;border-radius:5px;font-weight:600;cursor:pointer;">&#128424; Print</button>');
-  w.document.write('<button onclick="window.close()" style="padding:6px 14px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;cursor:pointer;">Close</button>');
-  w.document.write('</div>'+html+'</body></html>');
+  var d   = printData.data;
+  var doc = printData.type==='bill' ? billHTML(d) : recHTML(d);
+  var fname = printData.type==='bill'
+    ? esc(d.billNo||'Bill') + '_' + esc((d.clientName||'').replace(/\s+/g,'_'))
+    : esc(d.receiptNo||'Receipt') + '_' + esc((d.clientName||'').replace(/\s+/g,'_'));
+  var w = window.open('','_blank');
+  if(!w){ toast('Please allow popups for this site','err'); return; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+fname+'</title>'+printCSS()+'</head><body>');
+  w.document.write('<div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#1a3a5c;padding:10px 16px;display:flex;gap:8px;align-items:center;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,.3);">');
+  w.document.write('<span style="color:#fff;font-weight:700;font-size:13px;flex:1;">'+fname+'</span>');
+  w.document.write('<button id="dlBtn" onclick="downloadPDF()" style="padding:7px 20px;background:#16a34a;color:#fff;border:none;border-radius:5px;font-weight:700;cursor:pointer;font-size:13px;">&#8595; Download PDF</button>');
+  w.document.write('<button onclick="window.print()" style="padding:7px 16px;background:#fff;color:#1a3a5c;border:none;border-radius:5px;font-weight:600;cursor:pointer;font-size:13px;">&#128424; Print</button>');
+  w.document.write('<button onclick="window.close()" style="padding:7px 14px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:5px;cursor:pointer;font-size:13px;">Close</button>');
+  w.document.write('</div>');
+  w.document.write('<div style="padding-top:52px;">'+doc+'</div>');
+  w.document.write('<scr'+'ipt src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/scr'+'ipt>');
+  w.document.write('<scr'+'ipt>');
+  w.document.write('function downloadPDF(){');
+  w.document.write('  var btn=document.getElementById("dlBtn");');
+  w.document.write('  btn.textContent="Generating\u2026";btn.disabled=true;btn.style.opacity=".6";');
+  w.document.write('  html2pdf().set({');
+  w.document.write('    margin:0,');
+  w.document.write('    filename:"'+fname+'.pdf",');
+  w.document.write('    image:{type:"jpeg",quality:0.98},');
+  w.document.write('    html2canvas:{scale:2,useCORS:true,logging:false},');
+  w.document.write('    jsPDF:{unit:"mm",format:[148,210],orientation:"portrait"}');
+  w.document.write('  }).from(document.querySelector(".doc")).save().then(function(){');
+  w.document.write('    btn.textContent="\u2193 Download PDF";btn.disabled=false;btn.style.opacity="1";');
+  w.document.write('  });');
+  w.document.write('}');
+  w.document.write('setTimeout(downloadPDF,600);');
+  w.document.write('<\/scr'+'ipt>');
+  w.document.write('</body></html>');
   w.document.close();
 }
 
@@ -1854,72 +1877,61 @@ function printCSS(){
   return '<style>'
     +'*{box-sizing:border-box;margin:0;padding:0;}'
     +'body{font-family:Arial,sans-serif;background:#fff;color:#000;}'
-    +'@page{size:A4;margin:10mm 12mm;}'
-    +'.doc{width:100%;min-height:calc(297mm - 20mm);border:2px solid #000;padding:8mm 10mm;display:flex;flex-direction:column;}'
-    +'.original-label{text-align:right;font-size:10px;font-style:italic;margin-bottom:1mm;}'
-    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm;min-height:22mm;}'
-    +'.hdr-logo{width:32mm;flex-shrink:0;overflow:visible;}'
-    +'.hdr-logo img{width:32mm;height:auto;display:block;}'
+    +'@page{size:148mm 210mm;margin:0;}'
+    +'.doc{width:148mm;height:210mm;padding:6mm 8mm;display:flex;flex-direction:column;}'
+    +'.original-label{text-align:right;font-size:9px;font-style:italic;margin-bottom:1mm;color:#000;}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3mm;min-height:18mm;}'
+    +'.hdr-logo{width:24mm;flex-shrink:0;overflow:visible;}'
+    +'.hdr-logo img{width:24mm;height:auto;display:block;}'
     +'.hdr-firm{text-align:right;}'
-    +'.hdr-firm-name{font-size:18px;font-weight:900;letter-spacing:.5px;}'
-    +'.hdr-firm-addr{font-size:12px;margin-top:3px;line-height:1.8;color:#333;}'
-    +'.hdr-divider{border:none;border-top:2px solid #000;margin-bottom:4mm;}'
-    +'.doc-type-label{text-align:center;font-size:13px;font-weight:700;margin-bottom:4mm;letter-spacing:1px;}'
-    +'.parties{display:grid;grid-template-columns:1fr auto;gap:5mm;margin-bottom:3mm;}'
-    +'.party-to{border:1px solid #ccc;padding:4mm;}'
-    +'.party-to-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#555;margin-bottom:3px;}'
-    +'.party-name{font-size:14px;font-weight:900;margin-bottom:3px;}'
-    +'.party-detail{font-size:12px;color:#000;line-height:1.8;}'
-    +'.party-meta{min-width:60mm;border:1px solid #ccc;padding:4mm;}'
-    +'.meta-row{display:flex;gap:2mm;margin-bottom:3px;font-size:11px;}'
-    +'.meta-lbl{color:#555;min-width:22mm;}'
-    +'.meta-val{font-weight:700;}'
-    +'.rc-row{font-size:10px;margin-bottom:3mm;padding:3px 4mm;border-top:1px solid #ccc;border-bottom:1px solid #ccc;}'
+    +'.hdr-firm-name{font-size:18px;font-weight:900;color:#000;}'
+    +'.hdr-firm-addr{font-size:10.5px;margin-top:3px;line-height:1.7;color:#000;}'
+    +'.hdr-divider{border:none;border-top:2px solid #000;margin-bottom:3mm;}'
+    +'.doc-type-label{text-align:center;font-size:14px;font-weight:900;margin-bottom:3mm;letter-spacing:1px;color:#000;}'
+    +'.parties{display:grid;grid-template-columns:1fr auto;gap:3mm;margin-bottom:2.5mm;}'
+    +'.party-to{border:1.5px solid #000;padding:2.5mm 3.5mm;}'
+    +'.party-to-lbl{font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.7px;color:#000;margin-bottom:2px;}'
+    +'.party-name{font-size:13px;font-weight:900;color:#000;}'
+    +'.party-detail{font-size:10.5px;color:#000;line-height:1.6;}'
+    +'.party-meta{min-width:54mm;border:1.5px solid #000;padding:2.5mm 3.5mm;}'
+    +'.meta-row{display:flex;gap:2mm;margin-bottom:2px;font-size:10.5px;}'
+    +'.meta-lbl{color:#000;min-width:19mm;}'
+    +'.meta-val{font-weight:700;color:#000;}'
+    +'.rc-row{font-size:9.5px;margin-bottom:2.5mm;padding:2.5px 3.5mm;border-top:1px solid #000;border-bottom:1px solid #000;color:#000;}'
     +'.ptbl{width:100%;border-collapse:collapse;flex-shrink:0;}'
-    +'.ptbl th{border:1px solid #000;padding:6px 8px;text-align:left;font-size:10.5px;font-weight:900;background:#f0f0f0;}'
+    +'.ptbl th{border:1.5px solid #000;padding:6px 7px;text-align:left;font-size:10.5px;font-weight:900;background:#fff;color:#000;}'
     +'.ptbl th.r,.ptbl td.r{text-align:right;}'
-    +'.ptbl td{padding:8px 8px;border:1px solid #ccc;font-size:12px;vertical-align:top;}'
-    +'.desc-main{font-weight:700;font-size:12.5px;}'
-    +'.period-tag{font-size:10px;font-weight:600;margin-top:3px;}'
+    +'.ptbl td{padding:8px 7px;border:1.5px solid #000;font-size:11.5px;vertical-align:top;color:#000;}'
+    +'.ptbl .gst-tr td{font-size:10.5px;color:#000;border-top:1px dashed #000;}'
+    +'.ptbl .total-tr td{font-size:13.5px;font-weight:900;color:#000;border-top:2px solid #000;}'
+    +'.desc-name{font-weight:700;font-size:12.5px;color:#000;}'
+    +'.period-tag{font-size:9.5px;font-weight:700;margin-top:3px;color:#000;}'
     +'.doc-spacer{flex:1;}'
-    +'.totals-block{flex-shrink:0;}'
-    +'.gst-line{display:flex;justify-content:flex-end;border:1px solid #ccc;border-top:none;padding:5px 8px;font-size:10.5px;color:#333;}'
-    +'.gst-line-lbl{flex:1;text-align:right;padding-right:4mm;}'
-    +'.gst-line-val{min-width:30mm;text-align:right;}'
-    +'.total-line{display:flex;justify-content:flex-end;border:2px solid #000;border-top:2px solid #000;padding:7px 8px;font-size:14px;font-weight:900;}'
-    +'.total-line-lbl{flex:1;text-align:right;padding-right:4mm;}'
-    +'.total-line-val{min-width:30mm;text-align:right;}'
-    +'.words-row{font-size:10.5px;padding:5px 8px;border:1px solid #ccc;border-top:none;margin-bottom:4mm;font-weight:600;letter-spacing:.2px;}'
-    +'.hsn-wrap{margin-bottom:4mm;flex-shrink:0;}'
-    +'.hsn-title{font-size:10px;font-weight:700;margin-bottom:2mm;text-transform:uppercase;letter-spacing:.5px;}'
+    +'.words-row{font-size:10.5px;padding:4.5px 7px;border:1.5px solid #000;border-top:none;margin-bottom:3mm;font-weight:600;color:#000;}'
+    +'.hsn-wrap{margin-bottom:3mm;}'
+    +'.hsn-title{font-size:9.5px;font-weight:900;margin-bottom:1.5mm;text-transform:uppercase;letter-spacing:.5px;color:#000;}'
     +'.hsn-tbl{width:100%;border-collapse:collapse;}'
-    +'.hsn-tbl th{border:1px solid #000;padding:5px 7px;font-size:10px;font-weight:900;background:#f0f0f0;text-align:right;}'
+    +'.hsn-tbl th{border:1.5px solid #000;padding:4px 6px;font-size:9.5px;font-weight:900;background:#fff;color:#000;text-align:right;}'
     +'.hsn-tbl th:first-child{text-align:left;}'
-    +'.hsn-tbl td{border:1px solid #ccc;padding:5px 7px;font-size:11px;text-align:right;}'
+    +'.hsn-tbl td{border:1.5px solid #000;padding:4px 6px;font-size:10.5px;text-align:right;color:#000;}'
     +'.hsn-tbl td:first-child{text-align:left;}'
-    +'.hsn-tbl tr.tot td{font-weight:900;border-top:2px solid #000;background:#f8f8f8;}'
-    +'.tax-words{font-size:10px;font-weight:700;padding:3px 0;margin-bottom:4mm;text-transform:uppercase;letter-spacing:.3px;}'
-    +'.footer-row{display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0;padding-top:4mm;border-top:1px solid #ccc;}'
-    +'.bank-block{font-size:12px;line-height:2;}'
-    +'.bank-title{font-weight:900;font-size:12.5px;margin-bottom:5px;}'
-    +'.sign-block{text-align:right;font-size:12px;font-weight:700;}'
-    +'.sign-block .for-lbl{font-size:10px;font-weight:400;margin-bottom:18mm;}'
-    +'.sign-block .firm-stamp{font-size:14px;font-weight:900;}'
-    +'.bhayani-credit{font-size:9.5px;color:#555;margin-top:5px;font-weight:400;}'
-    +'.rec-tbl{width:100%;border-collapse:collapse;margin-bottom:0;}'
-    +'.rec-tbl th{border:1px solid #000;padding:6px 8px;font-size:10.5px;font-weight:900;background:#f0f0f0;}'
+    +'.hsn-tbl tr.tot td{font-weight:900;border-top:2px solid #000;}'
+    +'.tax-words{font-size:9.5px;font-weight:700;padding:2px 0;margin-bottom:3mm;text-transform:uppercase;color:#000;}'
+    +'.footer-row{display:flex;justify-content:space-between;align-items:flex-start;padding-top:3mm;border-top:1.5px solid #000;flex-shrink:0;}'
+    +'.bank-block{font-size:10.5px;line-height:1.8;color:#000;}'
+    +'.bank-title{font-weight:900;font-size:11px;margin-bottom:3px;color:#000;}'
+    +'.sign-block{text-align:right;font-size:10.5px;font-weight:700;color:#000;}'
+    +'.for-lbl{font-size:9.5px;font-weight:400;margin-bottom:14mm;color:#000;}'
+    +'.firm-stamp{font-size:12.5px;font-weight:900;color:#000;}'
+    +'.bhayani-credit{font-size:8.5px;color:#000;margin-top:3px;font-weight:400;}'
+    +'.rec-tbl{width:100%;border-collapse:collapse;}'
+    +'.rec-tbl th{border:1.5px solid #000;padding:6px 7px;font-size:10.5px;font-weight:900;background:#fff;color:#000;}'
     +'.rec-tbl th.r,.rec-tbl td.r{text-align:right;}'
-    +'.rec-tbl td{border:1px solid #ccc;padding:8px 8px;font-size:12px;vertical-align:top;}'
-    +'.rec-total-row{display:flex;justify-content:flex-end;align-items:center;border:2px solid #000;padding:6px 8px;font-size:14px;font-weight:900;gap:20mm;}'
-    +'.rec-words{font-size:10.5px;font-weight:700;padding:4px 8px;border:1px solid #ccc;border-top:none;border-bottom:2px solid #000;margin-bottom:3mm;}'
-    +'.rec-remark{font-size:10.5px;padding:3px 8px;margin-bottom:4mm;border-bottom:1px solid #ccc;}'
-    +'.pay-mode{font-size:11px;margin-bottom:3mm;}'
-    +'.bill-chk-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer;font-size:12px;}'
-    +'.bill-chk-row:hover{background:#f8fafc;}.bill-chk-row:last-child{border-bottom:none;}'
-    +'.bill-chk-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}'
-    +'.bill-chk-info{flex:1;display:flex;flex-direction:column;gap:1px;}'
-    +'.bill-chk-date{font-size:11px;color:var(--muted);}'
-    +'.bill-chk-amt{font-weight:700;color:var(--accent);white-space:nowrap;}'
+    +'.rec-tbl td{border:1.5px solid #000;padding:8px 7px;font-size:11.5px;vertical-align:top;color:#000;}'
+    +'.rec-total-row{display:flex;justify-content:flex-end;align-items:center;border:1.5px solid #000;border-top:2px solid #000;padding:5px 7px;font-size:13.5px;font-weight:900;gap:16mm;color:#000;}'
+    +'.rec-words{font-size:10.5px;font-weight:700;padding:4.5px 7px;border:1.5px solid #000;border-top:none;border-bottom:2px solid #000;margin-bottom:3mm;color:#000;}'
+    +'.rec-remark{font-size:10.5px;padding:2.5px 7px;margin-bottom:3mm;border-bottom:1px solid #000;color:#000;}'
+    +'.pay-mode{font-size:10.5px;color:#000;}'
     +'@media print{.no-print{display:none!important;}body{margin:0;background:#fff;}}</style>';
 }
 
@@ -1932,45 +1944,50 @@ function billHTML(b){
   items.forEach(function(it){var a=it.amt||0,g=isTax?gstPct:0;tax+=a;gst+=a*g/100;});
   var tot=tax+gst;
   var addrLines=esc(fd.address||'').replace(/\n/g,'<br>');
+  var clientAddr=b.clientAddress?'<div class="party-detail">'+esc(b.clientAddress).replace(/\n/g,'<br>')+'</div>':'';
 
   var irows=items.map(function(it){
     var a=it.amt||0;
     return '<tr>'
-      +'<td><div class="desc-main">'+esc(it.desc||'')+'</div>'+(it.period?'<div class="period-tag">'+esc(it.period)+'</div>':'')+'</td>'
+      +'<td><div class="desc-name">'+esc(it.desc||'')+'</div>'+(it.period?'<div class="period-tag">'+esc(it.period)+'</div>':'')+'</td>'
       +'<td class="r">'+esc(it.hsn||'998231')+'</td>'
       +'<td class="r">'+fmt(a)+'</td>'
       +'</tr>';
   }).join('');
 
-  var gstLine=isTax?'<div class="gst-line"><span class="gst-line-lbl">GST '+gstPct+'% ('+gstPct/2+'% CGST + '+gstPct/2+'% SGST)</span><span class="gst-line-val">'+fmt(gst)+'</span></div>':'';
+  var gstRow=isTax
+    ?'<tr class="gst-tr"><td colspan="2" class="r">GST '+gstPct+'% &nbsp;('+gstPct/2+'% CGST + '+gstPct/2+'% SGST)</td><td class="r">'+fmt(gst)+'</td></tr>'
+    :'';
+
+  var totalRow='<tr class="total-tr"><td colspan="2" class="r">Total.</td><td class="r">INR '+fmt(tot)+'</td></tr>';
 
   var hsnBlock=isTax?'<div class="hsn-wrap">'
     +'<div class="hsn-title">HSN/SAC Summary</div>'
     +'<table class="hsn-tbl"><thead><tr>'
-    +'<th>HSN/SAC</th><th>Taxable Value</th><th>Rate</th><th>GST '+gstPct+'%</th><th>Total Tax Amt</th>'
+    +'<th>HSN/SAC</th><th>Taxable</th><th>Rate</th><th>GST '+gstPct+'%</th><th>Total Tax</th>'
     +'</tr></thead><tbody>'
     +'<tr><td>'+esc(items[0]?items[0].hsn||'998231':'998231')+'</td><td>'+fmt(tax)+'</td><td>'+gstPct+'%</td><td>'+fmt(gst)+'</td><td>'+fmt(gst)+'</td></tr>'
     +'<tr class="tot"><td>Total</td><td>'+fmt(tax)+'</td><td></td><td>'+fmt(gst)+'</td><td>'+fmt(gst)+'</td></tr>'
     +'</tbody></table>'
-    +'<div class="tax-words">Tax — '+numWords(Math.round(gst))+' Only</div>'
+    +'<div class="tax-words">Tax &mdash; '+numWords(Math.round(gst))+' Only</div>'
     +'</div>':'';
-
-  var clientAddr=b.clientAddress?'<div class="party-detail">'+esc(b.clientAddress).replace(/\n/g,'<br>')+'</div>':'';
 
   var bd=BANK_DETAILS[b.firm];
   var bankHtml=bd?'<div class="bank-block">'
     +'<div class="bank-title">Company\'s Bank Detail</div>'
-    +'<div>Bank Name : '+esc(bd.bank)+'</div>'
+    +'<div>Bank : '+esc(bd.bank)+'</div>'
     +'<div>Branch : '+esc(bd.branch)+'</div>'
     +'<div>A/C Holder : '+esc(bd.holder)+'</div>'
     +'<div>A/C No : '+esc(bd.acNo)+'</div>'
     +'<div>IFSC : '+esc(bd.ifsc)+'</div>'
     +'</div>':'<div></div>';
 
+  var showLogo = b.firm!=='Prabha Computers';
+
   return '<div class="doc">'
     +'<div class="original-label">Original</div>'
     +'<div class="hdr">'
-    +(b.firm!=='Prabha Computers'?'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>':'')
+    +(showLogo?'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>':'')
     +'<div class="hdr-firm">'
     +'<div class="hdr-firm-name">'+esc(fd.printName.toUpperCase())+'</div>'
     +'<div class="hdr-firm-addr">'+addrLines+'<br>'+FIRM_PHONE+',<br>'+FIRM_EMAIL+'</div>'
@@ -1990,19 +2007,20 @@ function billHTML(b){
     +'<div class="meta-row"><span class="meta-lbl">Currency.</span><span class="meta-val">INR</span></div>'
     +'</div>'
     +'</div>'
-    +(isTax?'<div class="rc-row">Tax is payable on reverse charge (Yes/No) : &nbsp;<strong>No</strong> &nbsp;&nbsp;&nbsp; GSTIN : <strong>'+esc(fd.gstin)+'</strong></div>':'')
-    +'<table class="ptbl"><thead><tr><th style="width:60%">Particulars</th><th class="r" style="width:20%">HSN/SAC</th><th class="r" style="width:20%">Amount</th></tr></thead>'
-    +'<tbody>'+irows+'</tbody></table>'
+    +(isTax?'<div class="rc-row">Tax is payable on reverse charge (Yes/No) : <strong>No</strong> &nbsp;&nbsp; GSTIN : <strong>'+esc(fd.gstin)+'</strong></div>':'')
+    +'<table class="ptbl"><thead><tr>'
+    +'<th style="width:60%">Particulars</th><th class="r" style="width:20%">HSN/SAC</th><th class="r" style="width:20%">Amount</th>'
+    +'</tr></thead><tbody>'
+    +irows
+    +gstRow
+    +totalRow
+    +'</tbody></table>'
     +'<div class="doc-spacer"></div>'
-    +'<div class="totals-block">'
-    +gstLine
-    +'<div class="total-line"><span class="total-line-lbl">Total.</span><span class="total-line-val">INR '+fmt(tot)+'</span></div>'
-    +'<div class="words-row">INR - '+numWords(Math.round(tot)).toUpperCase()+' ONLY</div>'
+    +'<div class="words-row"><strong>INR &mdash;</strong> '+numWords(Math.round(tot)).toUpperCase()+' ONLY</div>'
     +hsnBlock
     +'<div class="footer-row">'
     +bankHtml
     +'<div class="sign-block"><div class="for-lbl">For,</div><div class="firm-stamp">'+esc(fd.printName.toUpperCase())+'</div><div class="bhayani-credit">Powered by Bhayani Business Sol<sup>n</sup></div></div>'
-    +'</div>'
     +'</div>'
     +'</div>';
 }
@@ -2012,7 +2030,7 @@ function bankBlockHTML(firm){
   var fd=FIRM_DETAILS[firm]||{printName:firm};
   var bankHtml=bd?'<div class="bank-block">'
     +'<div class="bank-title">Company\'s Bank Detail</div>'
-    +'<div>Bank Name : '+esc(bd.bank)+'</div>'
+    +'<div>Bank : '+esc(bd.bank)+'</div>'
     +'<div>Branch : '+esc(bd.branch)+'</div>'
     +'<div>A/C Holder : '+esc(bd.holder)+'</div>'
     +'<div>A/C No : '+esc(bd.acNo)+'</div>'
@@ -2042,10 +2060,12 @@ function recHTML(r){
       }).join('')
     : '<tr><td style="text-align:center;">1</td><td>Received with thanks</td><td class="r">'+fmt(r.amount)+'</td></tr>';
 
+  var showLogo = r.firm!=='Prabha Computers';
+
   return '<div class="doc">'
     +'<div class="doc-type-label">Receipt</div>'
     +'<div class="hdr">'
-    +(r.firm!=='Prabha Computers'?'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>':'')
+    +(showLogo?'<div class="hdr-logo"><img src="'+CA_LOGO_B64+'" alt="CA India"></div>':'')
     +'<div class="hdr-firm">'
     +'<div class="hdr-firm-name">'+esc(fd.printName.toUpperCase())+'</div>'
     +'<div class="hdr-firm-addr">'+addrLines+'<br>'+FIRM_PHONE+',<br>'+FIRM_EMAIL+'</div>'
@@ -2064,11 +2084,11 @@ function recHTML(r){
     +'<div class="meta-row"><span class="meta-lbl">Currency.</span><span class="meta-val">INR</span></div>'
     +'</div>'
     +'</div>'
-    +'<table class="rec-tbl"><thead><tr><th style="width:10%">Sr.No</th><th>Particulars</th><th class="r" style="width:25%">Amount</th></tr></thead>'
+    +'<table class="rec-tbl"><thead><tr><th style="width:10%">Sr.No</th><th>Particulars</th><th class="r" style="width:28%">Amount</th></tr></thead>'
     +'<tbody>'+particRows+'</tbody></table>'
     +'<div class="doc-spacer"></div>'
     +'<div class="rec-total-row"><span>TOTAL</span><span>INR '+fmt(r.amount)+'</span></div>'
-    +'<div class="rec-words">INR - '+numWords(Math.round(r.amount)).toUpperCase()+' ONLY</div>'
+    +'<div class="rec-words">INR &mdash; '+numWords(Math.round(r.amount)).toUpperCase()+' ONLY</div>'
     +'<div class="rec-remark">Remark : '+esc(r.narration||'')+'</div>'
     +'<div class="footer-row" style="margin-top:6mm;">'
     +'<div class="pay-mode"><strong>Payment Mode : </strong>'+esc(r.mode)+(r.ref?'<br>'+esc(r.ref):'')+'</div>'
