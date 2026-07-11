@@ -991,7 +991,7 @@ function buildUI(){
 
   // Client table header
   var th=FIRMS.map(function(f){return '<th class="r" style="color:'+f.color+'">'+esc(f.label)+'</th>';}).join('');
-  document.getElementById('chead').innerHTML='<tr><th>Client</th><th>Status</th>'+th+'<th class="r">Total</th><th class="r">Actions</th></tr>';
+  document.getElementById('chead').innerHTML='<tr><th>Client</th><th>Mobile</th><th>Status</th>'+th+'<th class="r">Total</th><th class="r">Actions</th></tr>';
 
   // Firm dropdowns
   var opts=FIRMS.map(function(f){return '<option>'+esc(f.label)+'</option>';}).join('');
@@ -1017,7 +1017,7 @@ function addFirm(){
 
 // ── CLIENTS ───────────────────────────────────────────────────
 function loadAll(){
-  var cols=2+FIRMS.length+2;
+  var cols=3+FIRMS.length+2;
   document.getElementById('cbody').innerHTML=
     '<tr class="ldg"><td colspan="'+cols+'"><div style="display:flex;align-items:center;justify-content:center;gap:8px;"><div class="sp"></div> Loading clients…</div></td></tr>';
   api({action:'getAll'},function(d){
@@ -1049,7 +1049,7 @@ function renderClients(){
     if(outOnly){var t=Object.values(c.byFirm).reduce(function(a,b){return a+b;},0);if(t===0) return false;}
     return true;
   });
-  var cols=2+FIRMS.length+2;
+  var cols=3+FIRMS.length+2;
   if(!filtered.length){
     document.getElementById('cbody').innerHTML='<tr><td colspan="'+cols+'"><div class="empty"><i class="ti ti-search-off"></i>No clients found.</div></td></tr>';
     updSum([]);return;
@@ -1106,6 +1106,7 @@ function cRow(c){
     : '—';
   return '<tr class="row">'
     +'<td><div class="cname">'+esc(c.name)+'</div></td>'
+    +'<td style="font-size:12px;color:var(--muted);">'+esc(c.mobile||'—')+'</td>'
     +'<td><span class="cbadge" style="'+ss+'">'+esc(c.status||'—')+'</span></td>'
     +fc
     +'<td class="amt amtt">'+totCell+'</td>'
@@ -1290,13 +1291,13 @@ function printGroupView(){
   var tableRows='';
   rows.forEach(function(tr){
     if(tr.classList.contains('grp')){
-      var cols=2+FIRMS.length+2;
+      var cols=3+FIRMS.length+2;
       tableRows+='<tr><td colspan="'+cols+'" style="background:#1a3a5c;color:#fff;padding:6px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">'+tr.innerText.trim()+'</td></tr>';
     } else if(tr.classList.contains('row')){
       var tds=tr.querySelectorAll('td');
       var rowHtml='<tr style="border-bottom:1px solid #e2e8f0;">';
       for(var i=0;i<tds.length-1;i++){ // skip Actions column
-        var align=i>1?'text-align:right;':'';
+        var align=i>2?'text-align:right;':'';
         rowHtml+='<td style="padding:6px 8px;font-size:11px;'+align+'">'+tds[i].innerText.trim()+'</td>';
       }
       rowHtml+='</tr>';
@@ -1304,6 +1305,7 @@ function printGroupView(){
     }
   });
   var firmHdrsFull='<th style="padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:#64748b;">Client</th>'
+    +'<th style="padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:#64748b;">Mobile</th>'
     +'<th style="padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:#64748b;">Status</th>'
     +FIRMS.map(function(f){return '<th style="text-align:right;padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:'+f.color+'">'+esc(f.label)+'</th>';}).join('')
     +'<th style="text-align:right;padding:5px 8px;font-size:10px;background:#f8fafc;font-weight:700;text-transform:uppercase;color:#1a3a5c;">Total</th>';
@@ -2122,11 +2124,11 @@ function testConn(){
 }
 
 function exportCSV(){
-  var hdr=['Client','Group','Status','PAN'].concat(FIRMS.map(function(f){return f.label;})).concat(['Total']);
+  var hdr=['Client','Mobile','Group','Status','PAN'].concat(FIRMS.map(function(f){return f.label;})).concat(['Total']);
   var rows=allClients.map(function(c){
     var vals=FIRMS.map(function(f){return c.byFirm[f.label]||0;});
     var tot=vals.reduce(function(a,b){return a+b;},0);
-    return ['"'+c.name+'"','"'+(c.group||'')+'"','"'+(c.status||'')+'"','"'+(c.pan||'')+'"'].concat(vals).concat([tot]).join(',');
+    return ['"'+c.name+'"','"'+(c.mobile||'')+'"','"'+(c.group||'')+'"','"'+(c.status||'')+'"','"'+(c.pan||'')+'"'].concat(vals).concat([tot]).join(',');
   });
   var nl='\n'; var csv=[hdr.join(',')].concat(rows).join(nl);
   var a=document.createElement('a');
