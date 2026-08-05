@@ -936,55 +936,39 @@ function initApp(){
 }
 
 // ── API ───────────────────────────────────────────────────────
-// Shared fetch handler with auto-retry. Google Apps Script occasionally
-// returns an HTML error/redirect page instead of JSON (transient glitch,
-// cold start, brief auth hiccup) — this causes "Unexpected token '<'" if
-// parsed directly. We read the body as text first, try to JSON-parse it,
-// and silently retry a couple of times before surfacing an error.
-function fetchWithRetry(doFetch,cb,retriesLeft,silent){
-  doFetch()
-    .then(function(r){return r.text();})
-    .then(function(text){
-      var d;
-      try{ d=JSON.parse(text); }
-      catch(e){
-        if(retriesLeft>0){
-          setTimeout(function(){ fetchWithRetry(doFetch,cb,retriesLeft-1,true); },900);
-          return;
-        }
-        toast('Server hiccup — please click Refresh to try again','err');
-        if(cb) cb({error:'Invalid server response — please retry'});
-        return;
-      }
-      if(!silent && d.error) toast(d.error,'err');
-      if(cb) cb(d);
-    })
-    .catch(function(e){
-      if(retriesLeft>0){
-        setTimeout(function(){ fetchWithRetry(doFetch,cb,retriesLeft-1,true); },900);
-        return;
-      }
-      toast('Network error: '+e.message,'err');
-      if(cb) cb({error:e.message});
-    });
-}
 function api(params,cb){
   var qs=Object.keys(params).map(function(k){
     return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);
   }).join('&');
-  fetchWithRetry(function(){ return fetch(SCRIPT_URL+'?'+qs); },cb,2);
+  fetch(SCRIPT_URL+'?'+qs)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.error) toast(d.error,'err');
+      if(cb) cb(d);
+    })
+    .catch(function(e){
+      toast('Network error: '+e.message,'err');
+      if(cb) cb({error:e.message});
+    });
 }
 
 // POST variant — used for large payloads like document/file uploads where a
 // GET query string would exceed URL length limits.
 function apiPost(params,cb){
-  fetchWithRetry(function(){
-    return fetch(SCRIPT_URL,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'}, // avoids CORS preflight on Apps Script
-      body:JSON.stringify(params)
+  fetch(SCRIPT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'}, // avoids CORS preflight on Apps Script
+    body:JSON.stringify(params)
+  })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.error) toast(d.error,'err');
+      if(cb) cb(d);
+    })
+    .catch(function(e){
+      toast('Network error: '+e.message,'err');
+      if(cb) cb({error:e.message});
     });
-  },cb,2);
 }
 
 // ── CONFIG / FIRMS ────────────────────────────────────────────
