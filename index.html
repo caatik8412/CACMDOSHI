@@ -1524,7 +1524,8 @@ function saveBill(){
     description:items.map(function(i){return i.desc;}).filter(Boolean).join('; '),
     period:period,taxable:tax,
     gstRate:items.length?items[0].gstR:0,narration:narration,
-    clientAddress:clientAddr
+    clientAddress:clientAddr,
+    items:JSON.stringify(items)
   },function(d){
     busy=false;
     document.getElementById('saveBillBtn').disabled=false;
